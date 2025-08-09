@@ -4,7 +4,7 @@ import { APP_BLOG } from 'astrowind:config';
 import Grid from '~/components/blog/Grid.astro';
 
 import { getBlogPermalink } from '~/utils/permalinks';
-import { findLatestPosts } from '~/utils/blog';
+import { findLatestPosts, findLatestPosts as findSubjects } from '~/utils/blog';
 import WidgetWrapper from '~/components/ui/WidgetWrapper.astro';
 import type { Widget } from '~/types';
 import Button from '~/components/ui/Button.astro';
@@ -19,11 +19,10 @@ export interface Props extends Widget {
 
 const {
   title = await Astro.slots.render('title'),
-  linkText = 'View all posts',
+  linkText = 'View all subjects',
   linkUrl = getBlogPermalink(),
   information = await Astro.slots.render('information'),
   count = 4,
-
   id,
   isDark = false,
   classes = {},

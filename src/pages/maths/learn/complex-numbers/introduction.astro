@@ -1,0 +1,47 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+const metadata = {
+  title: 'Complex Numbers - Introduction',
+};
+---
+<Layout metadata={metadata}>
+  <section class="py-12">
+    <div class="max-w-4xl mx-auto px-4 md:px-6">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold mb-4">Complex Numbers - Introduction</h1>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">
+          Learn the fundamentals of complex numbers and their applications.
+        </p>
+        <a href="/maths/learn" class="inline-block text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-200 transition">&larr; Back to Learn</a>
+      </div>
+      
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
+        <h2 class="text-2xl font-bold mb-6 text-red-600 dark:text-red-400">What are Complex Numbers?</h2>
+        <p class="text-gray-700 dark:text-gray-300 mb-6">
+          Complex numbers are numbers that can be expressed in the form a + bi, where a and b are real numbers, and i is the imaginary unit defined by i² = -1.
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+          <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-6">
+            <h3 class="text-lg font-semibold mb-3 text-red-600 dark:text-red-400">Key Concepts</h3>
+            <ul class="text-gray-700 dark:text-gray-300 space-y-2">
+              <li>• Real part (a)</li>
+              <li>• Imaginary part (bi)</li>
+              <li>• Imaginary unit (i)</li>
+              <li>• Complex plane representation</li>
+            </ul>
+          </div>
+          
+          <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-6">
+            <h3 class="text-lg font-semibold mb-3 text-red-600 dark:text-red-400">Examples</h3>
+            <div class="text-gray-700 dark:text-gray-300 space-y-2">
+              <p><strong>3 + 4i</strong> - Real part: 3, Imaginary part: 4i</p>
+              <p><strong>-2 + 7i</strong> - Real part: -2, Imaginary part: 7i</p>
+              <p><strong>5i</strong> - Pure imaginary number</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout> 

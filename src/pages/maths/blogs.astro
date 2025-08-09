@@ -1,0 +1,57 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+const metadata = {
+  title: 'Maths - Blogs',
+};
+---
+<Layout metadata={metadata}>
+  <section class="py-12">
+    <div class="max-w-4xl mx-auto px-4 md:px-6">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold mb-4">Maths Blogs</h1>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">
+          Read articles, tips, and updates to help you excel in Maths.
+        </p>
+        <a href="/maths" class="inline-block text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-200 transition">&larr; Back to Maths</a>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <article class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
+          <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">March 15, 2024</div>
+          <h2 class="text-xl font-bold mb-3 text-red-600 dark:text-red-400">Top 10 Tips for Leaving Cert Maths</h2>
+          <p class="text-gray-700 dark:text-gray-300 mb-4">
+            Essential strategies to help you succeed in your Leaving Cert Maths exam.
+          </p>
+          <a href="#" class="text-red-600 dark:text-red-400 hover:underline">Read more →</a>
+        </article>
+        
+        <article class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
+          <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">March 10, 2024</div>
+          <h2 class="text-xl font-bold mb-3 text-red-600 dark:text-red-400">Understanding Calculus Made Simple</h2>
+          <p class="text-gray-700 dark:text-gray-300 mb-4">
+            Break down complex calculus concepts into easy-to-understand explanations.
+          </p>
+          <a href="#" class="text-red-600 dark:text-red-400 hover:underline">Read more →</a>
+        </article>
+        
+        <article class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
+          <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">March 5, 2024</div>
+          <h2 class="text-xl font-bold mb-3 text-red-600 dark:text-red-400">Geometry: Visual Learning Techniques</h2>
+          <p class="text-gray-700 dark:text-gray-300 mb-4">
+            Learn how to approach geometric problems with visual thinking strategies.
+          </p>
+          <a href="#" class="text-red-600 dark:text-red-400 hover:underline">Read more →</a>
+        </article>
+        
+        <article class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
+          <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">March 1, 2024</div>
+          <h2 class="text-xl font-bold mb-3 text-red-600 dark:text-red-400">Statistics in Real Life</h2>
+          <p class="text-gray-700 dark:text-gray-300 mb-4">
+            Discover how statistical concepts apply to everyday situations and decision-making.
+          </p>
+          <a href="#" class="text-red-600 dark:text-red-400 hover:underline">Read more →</a>
+        </article>
+      </div>
+    </div>
+  </section>
+</Layout> 

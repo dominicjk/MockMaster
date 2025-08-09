@@ -44,6 +44,12 @@ export interface Post {
   readingTime?: number;
 }
 
+export interface Subject {
+  id : string;
+  name : string;
+  image?: ImageMetadata | string;
+}
+
 export interface Taxonomy {
   slug: string;
   title: string;
