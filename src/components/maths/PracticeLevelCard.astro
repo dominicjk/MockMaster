@@ -1,0 +1,32 @@
+---
+export interface Props {
+  id: string;
+  title: string;
+  description?: string;
+}
+
+const { id, title, description } = Astro.props as Props;
+---
+<label class="block cursor-pointer select-none">
+  <input
+    type="checkbox"
+    class="level-checkbox sr-only"
+    name="levels"
+    value={id}
+    data-level-id={id}
+    data-level-title={title}
+    aria-label={`Select level ${title}`}
+  />
+  <div class="group relative rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm hover:shadow transition h-28 flex flex-col items-center justify-center gap-3">
+    <div class="h-20 w-full flex items-center justify-center overflow-hidden">
+      <slot name="icon" />
+    </div>
+    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</div>
+
+    {description && (
+      <div class="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-56 -translate-x-1/2 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-xs text-gray-700 dark:text-gray-200 shadow-lg opacity-0 translate-y-1 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-y-0">
+        {description}
+      </div>
+    )}
+  </div>
+</label> 

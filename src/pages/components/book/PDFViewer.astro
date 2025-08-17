@@ -1,0 +1,107 @@
+---
+/** Props:
+ *  - src: string (required) – URL/path to the PDF file
+ *  - startPage?: number (default 1)
+ *  - endPage?: number | "all" (default "all")
+ */
+ const { src, startPage = 1, endPage = "all" } = Astro.props;
+---
+
+<div
+  class="pdfjs-viewer w-full"
+  data-src={src}
+  data-start={String(startPage)}
+  data-end={String(endPage)}
+  aria-live="polite"
+></div>
+
+<style is:global>
+  .pdfjs-viewer canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto 1rem;
+  }
+  .pdfjs-error {
+    padding: .75rem 1rem;
+    border-radius: .5rem;
+    border: 1px solid rgb(229 231 235);
+    background: rgb(249 250 251);
+    color: rgb(31 41 55);
+    font-size: .875rem;
+  }
+  .dark .pdfjs-error {
+    border-color: rgb(51 65 85);
+    background: rgb(15 23 42);
+    color: rgb(203 213 225);
+  }
+</style>
+
+<script type="module">
+  import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+  import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+  // Tell PDF.js where the worker file is
+  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+
+  const container = document.currentScript?.previousElementSibling;
+  if (!container) throw new Error('PDF container not found');
+
+  const src = container.dataset.src;
+  const startPage = parseInt(container.dataset.start || '1', 10);
+  const endRaw = container.dataset.end || 'all';
+  const endPage = endRaw === 'all' ? 'all' : parseInt(endRaw, 10);
+
+  const showError = (msg) => {
+    const box = document.createElement('div');
+    box.className = 'pdfjs-error';
+    box.textContent = msg;
+    container.innerHTML = '';
+    container.appendChild(box);
+  };
+
+  const render = async () => {
+    container.innerHTML = '';
+
+    if (!src) {
+      showError('No PDF source provided.');
+      return;
+    }
+
+    try {
+      const loadingTask = pdfjs.getDocument({ url: src });
+      const pdf = await loadingTask.promise;
+
+      const first = Math.max(1, startPage);
+      const last = endPage === 'all' ? pdf.numPages : Math.min(pdf.numPages, Math.max(first, endPage));
+
+      for (let n = first; n <= last; n++) {
+        const page = await pdf.getPage(n);
+
+        // Fit to container width
+        const baseViewport = page.getViewport({ scale: 1 });
+        const targetWidth = container.clientWidth || baseViewport.width;
+        const scale = targetWidth / baseViewport.width;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+
+        container.appendChild(canvas);
+        await page.render({ canvasContext: ctx, viewport }).promise;
+      }
+    } catch (e) {
+      console.error(e);
+      showError('Could not load this PDF. Check the file path or its availability.');
+    }
+  };
+
+  await render();
+
+  // Keep pages crisp on resize
+  const ro = new ResizeObserver(() => Promise.resolve().then(render));
+  ro.observe(container);
+</script>

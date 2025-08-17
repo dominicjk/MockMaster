@@ -1,0 +1,12 @@
+---
+export interface Props { title?: string; id?: string; number?: string; }
+const { title = "Definition", id, number } = Astro.props;
+---
+<section id={id} class="rounded-xl border border-violet-200 dark:border-violet-900 bg-violet-50/60 dark:bg-violet-900/20 p-5 leading-relaxed">
+  <header class="mb-2 font-semibold text-violet-800 dark:text-violet-200 tracking-wide">
+    {title}{number ? ` ${number}` : ""}
+  </header>
+  <div class="prose dark:prose-invert max-w-none">
+    <slot />
+  </div>
+</section>

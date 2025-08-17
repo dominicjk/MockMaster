@@ -1,0 +1,53 @@
+---
+export interface Props {
+  id: string;
+  title: string;
+  iconSrc?: string;
+  iconAlt?: string;
+}
+
+const { id, title, iconSrc, iconAlt } = Astro.props as Props;
+---
+<div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg flex flex-col gap-4 min-h-72 h-full">
+  <div class="flex items-start justify-between gap-4 min-h-[4rem]">
+    <h2 class="flex-1 text-2xl font-bold text-red-600 dark:text-red-400">{title}</h2>
+    <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        class="topic-checkbox h-5 w-5 accent-red-600 cursor-pointer"
+        name="topics"
+        value={id}
+        data-topic-id={id}
+        data-topic-title={title}
+        aria-label={`Select ${title}`}
+      />
+      <span class="text-sm text-gray-600 dark:text-gray-300">Select</span>
+    </label>
+  </div>
+
+  <div class="icon-area h-32 dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden">
+    {Astro.slots.has('icon') ? (
+      <slot name="icon" />
+    ) : iconSrc ? (
+      <img src={iconSrc} alt={iconAlt ?? title} class="w-full h-full object-contain" loading="lazy" decoding="async" />
+    ) : null}
+  </div>
+
+  <div class="mt-auto">
+    <button
+      class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+      data-topic-id={id}
+      data-topic-title={title}
+      type="button"
+    >
+      Start Practice
+    </button>
+  </div>
+</div>
+
+<style>
+  .icon-area svg {
+    width: 100%;
+    height: 100%;
+  }
+</style> 

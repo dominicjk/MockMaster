@@ -1,47 +1,68 @@
 ---
 import Layout from '~/layouts/PageLayout.astro';
-const metadata = {
-  title: 'Complex Numbers - Introduction',
-};
+import Definition from 'src/pages/components/book/Definition.astro';
+import Example from 'src/pages/components/book/Example.astro';
+import Theorem from 'src/pages/components/book/Theorem.astro';
+import Proof from 'src/pages/components/book/Proof.astro';
+import Callout from 'src/pages/components/book/Callout.astro';
+import Math from 'src/pages/components/book/Math.astro';
+import WorkedExampleReveal from 'src/pages/components/book/WorkedExampleReveal.astro';
+import App from 'src/pages/components/book/App.tsx';
+
+const metadata = { title: 'Complex Numbers - Introduction' };
 ---
 <Layout metadata={metadata}>
   <section class="py-12">
-    <div class="max-w-4xl mx-auto px-4 md:px-6">
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold mb-4">Complex Numbers - Introduction</h1>
+    <div class="max-w-3xl mx-auto px-4 md:px-6">
+      <header class="text-center mb-12">
+        <h1 class="text-4xl font-bold mb-4">Complex Numbers — Introduction</h1>
         <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">
           Learn the fundamentals of complex numbers and their applications.
         </p>
         <a href="/maths/learn" class="inline-block text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-200 transition">&larr; Back to Learn</a>
+      </header>
+
+      <Definition id="def-complex" number="1.1" title="Definition">
+        A <strong>complex number</strong> is a number of the form
+        <Math tex="z=a+bi" /> where <Math tex="a,b\in\mathbb{R}" /> and
+        <Math tex="i^2=-1" />. The <em>real part</em> is <Math tex="\Re(z)=a" />,
+        and the <em>imaginary part</em> is <Math tex="\Im(z)=b" />.
+      </Definition>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <Callout kind="tip" title="Notation">
+          The set of complex numbers is denoted by <Math tex="\\mathbb{C}" />. We identify
+          real numbers with those complex numbers whose imaginary part is zero.
+        </Callout>
+
+        <Callout kind="important" title="Geometry">
+          We can represent <Math tex="z=a+bi" /> as the point <Math tex="(a,b)" /> in the
+          complex plane. Its modulus is <Math tex="|z|=\sqrt{a^2+b^2}" /> and its argument
+          is <Math tex="\arg(z)" />.
+        </Callout>
       </div>
-      
-      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
-        <h2 class="text-2xl font-bold mb-6 text-red-600 dark:text-red-400">What are Complex Numbers?</h2>
-        <p class="text-gray-700 dark:text-gray-300 mb-6">
-          Complex numbers are numbers that can be expressed in the form a + bi, where a and b are real numbers, and i is the imaginary unit defined by i² = -1.
-        </p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-          <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-3 text-red-600 dark:text-red-400">Key Concepts</h3>
-            <ul class="text-gray-700 dark:text-gray-300 space-y-2">
-              <li>• Real part (a)</li>
-              <li>• Imaginary part (bi)</li>
-              <li>• Imaginary unit (i)</li>
-              <li>• Complex plane representation</li>
-            </ul>
-          </div>
-          
-          <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-3 text-red-600 dark:text-red-400">Examples</h3>
-            <div class="text-gray-700 dark:text-gray-300 space-y-2">
-              <p><strong>3 + 4i</strong> - Real part: 3, Imaginary part: 4i</p>
-              <p><strong>-2 + 7i</strong> - Real part: -2, Imaginary part: 7i</p>
-              <p><strong>5i</strong> - Pure imaginary number</p>
-            </div>
-          </div>
-        </div>
+
+
+      <Example number="1.2" class="mt-8">
+        <p>For <Math tex="z=3+4i" />, we have <Math tex="|z|=\sqrt{3^2+4^2}=5" /> and
+        <Math tex="\\arg(z)=\\arctan\!\left(\tfrac{4}{3}\right)" />.</p>
+      </Example>
+
+      <Theorem number="1.3" title="Triangle Inequality" class="mt-8" />
+
+      <Proof>
+        Let <Math tex="z,w\in\mathbb{C}" />. Viewing them as vectors in
+        <Math tex="\\mathbb{R}^2" />, the Euclidean triangle inequality gives
+        <Math tex="|z+w|\le |z|+|w|" display /> as required.
+      </Proof>
+
+      <div class="my-8 rounded-xl shadow bg-white h-[560px]">
+        <App client:visible />
       </div>
+
+      <!-- Embed a Quarto Reveal deck you exported to /public/slides/ -->
+      <!-- <RevealEmbed src="/slides/complex-intro.html" title="Complex Numbers — Mini Deck" /> -->
+
     </div>
   </section>
-</Layout> 
+</Layout>
