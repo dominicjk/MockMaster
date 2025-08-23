@@ -1,0 +1,233 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+import { mathsStructure } from '~/data/maths-structure';
+const metadata = {
+  title: 'Maths - Learn',
+};
+---
+<Layout metadata={metadata}>
+  <section class="py-12">
+    <div class="max-w-7xl mx-auto px-4 md:px-6">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold mb-4">Learn Maths</h1>
+        <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">
+          Review key concepts, formulas, and summaries for Leaving Cert Maths.
+        </p>
+        <a href="/maths" class="inline-block text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-200 transition">&larr; Back to Maths</a>
+      </div>
+    </div>
+    
+    <div class="flex">
+      <!-- Fixed Sidebar -->
+      <div class="fixed left-0 top-0 h-screen w-80 bg-white shadow-lg p-6 overflow-y-auto" style="margin-top: 120px;">
+        <h2 class="text-xl font-bold mb-6 text-red-600">Topics</h2>
+        <div class="space-y-2">
+          {Object.entries(mathsStructure).map(([paper, subjects]) => (
+            <div class="border border-gray-200 rounded-lg">
+              <button 
+                class="w-full text-left p-3 font-semibold text-gray-900 hover:bg-gray-50 transition flex justify-between items-center"
+                onclick="toggleSection(this)"
+                data-section={"paper-" + paper.replace(/\s+/g, '-').toLowerCase()}
+              >
+                {paper}
+                <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div id={"paper-" + paper.replace(/\s+/g, '-').toLowerCase()} class="hidden">
+                {Object.entries(subjects).map(([subject, topics]) => (
+                  <div class="border-t border-gray-200">
+                    <button 
+                      class="w-full text-left p-3 pl-6 font-medium text-gray-800 hover:bg-gray-50 transition flex justify-between items-center"
+                      onclick="toggleSection(this)"
+                      data-section={"subject-" + paper.replace(/\s+/g, '-').toLowerCase() + "-" + subject.replace(/\s+/g, '-').toLowerCase()}
+                    >
+                      {subject}
+                      <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </button>
+                    <div id={"subject-" + paper.replace(/\s+/g, '-').toLowerCase() + "-" + subject.replace(/\s+/g, '-').toLowerCase()} class="hidden">
+                      {Object.entries(topics || {}).map(([topic, subtopics]) => {
+                        // Check if this is a baseline (empty object)
+                        const isBaseline = Object.keys(subtopics || {}).length === 0;
+                        
+                        if (isBaseline) {
+                          // This is a clickable link
+                          return (
+                            <button 
+                              class="w-full text-left p-3 pl-9 text-sm text-gray-600 hover:bg-gray-50 transition"
+                              onclick={`navigateToTopic(${JSON.stringify(subject)}, ${JSON.stringify(topic)})`}
+                            >
+                              {topic}
+                            </button>
+                          );
+                        } else {
+                          // This is another level of hierarchy
+                          return (
+                            <div>
+                              <button 
+                                class="w-full text-left p-3 pl-9 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center"
+                                onclick="toggleSection(this)"
+                                data-section={"topic-" + paper.replace(/\s+/g, '-').toLowerCase() + "-" + subject.replace(/\s+/g, '-').toLowerCase() + "-" + (String(topic).replace(/\s+/g, '-').toLowerCase())}
+                              >
+                                {topic}
+                                <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                              </button>
+                              <div id={"topic-" + paper.replace(/\s+/g, '-').toLowerCase() + "-" + subject.replace(/\s+/g, '-').toLowerCase() + "-" + (String(topic).replace(/\s+/g, '-').toLowerCase())} class="hidden">
+                                {Object.entries(subtopics || {}).map(([subtopic, subsubtopics]) => {
+                                  const isSubBaseline = Object.keys(subsubtopics || {}).length === 0;
+                                  
+                                  if (isSubBaseline) {
+                                    return (
+                                      <button 
+                                        class="w-full text-left p-3 pl-12 text-sm text-gray-600 hover:bg-gray-50 transition"
+                                        onclick={`navigateToTopic(${JSON.stringify(subject)}, ${JSON.stringify(topic)}, ${JSON.stringify(subtopic)})`}
+                                      >
+                                        {subtopic}
+                                      </button>
+                                    );
+                                  } else {
+                                    // Continue recursion for deeper levels
+                                    return (
+                                      <div>
+                                        <button 
+                                          class="w-full text-left p-3 pl-12 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center"
+                                          onclick="toggleSection(this)"
+                                          data-section={"subtopic-" + paper.replace(/\s+/g, '-').toLowerCase() + "-" + subject.replace(/\s+/g, '-').toLowerCase() + "-" + (String(topic).replace(/\s+/g, '-').toLowerCase()) + "-" + (String(subtopic).replace(/\s+/g, '-').toLowerCase())}
+                                        >
+                                          {subtopic}
+                                          <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                          </svg>
+                                        </button>
+                                        <div id={"subtopic-" + paper.replace(/\s+/g, '-').toLowerCase() + "-" + subject.replace(/\s+/g, '-').toLowerCase() + "-" + (String(topic).replace(/\s+/g, '-').toLowerCase()) + "-" + (String(subtopic).replace(/\s+/g, '-').toLowerCase())} class="hidden">
+                                          {Object.entries(subsubtopics || {}).map(([subsubtopic, subsubsubtopics]) => {
+                                            const isSubSubBaseline = Object.keys(subsubsubtopics || {}).length === 0;
+                                            
+                                            if (isSubSubBaseline) {
+                                              return (
+                                                <button 
+                                                  class="w-full text-left p-3 pl-15 text-sm text-gray-600 hover:bg-gray-50 transition"
+                                                  onclick={`navigateToTopic(${JSON.stringify(subject)}, ${JSON.stringify(topic)}, ${JSON.stringify(subtopic)}, ${JSON.stringify(subsubtopic)})`}
+                                                >
+                                                  {subsubtopic}
+                                                </button>
+                                              );
+                                            } else {
+                                              // For now, just show the name as a non-clickable item
+                                              return (
+                                                <div class="w-full text-left p-3 pl-15 text-sm text-gray-500">
+                                                  {subsubtopic} (more levels available)
+                                                </div>
+                                              );
+                                            }
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <!-- Content Area with left margin for fixed sidebar -->
+      <div class="ml-80 flex-1 p-8">
+        <div class="max-w-4xl mx-auto">
+          <div id="content-area" class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold mb-4 text-red-600 dark:text-red-400">Select a Topic</h2>
+            <p class="text-gray-700 dark:text-gray-300">
+              Choose a topic from the sidebar to start learning. The content will appear here.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    function slugify(text) {
+      return String(text)
+        .replace(/[’']/g, '') // remove apostrophes
+        .toLowerCase()
+        .replace(/^the\s+/, '') // drop leading 'the '
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '')
+        .replace(/-{2,}/g, '-');
+    }
+
+    window.toggleSection = function(button) {
+      console.log('toggleSection called');
+      const sectionId = button.getAttribute('data-section');
+      console.log('sectionId:', sectionId);
+      const section = document.getElementById(sectionId);
+      const icon = button.querySelector('svg');
+      
+      if (section && icon) {
+        console.log('Found section and icon');
+        
+        // Check if this is a paper section (starts with 'paper-')
+        if (sectionId.startsWith('paper-')) {
+          // Close all other paper sections first
+          const allPaperSections = document.querySelectorAll('[id^="paper-"]');
+          const allPaperIcons = document.querySelectorAll('[data-section^="paper-"] svg');
+          
+          allPaperSections.forEach((paperSection) => {
+            if (paperSection && paperSection.id !== sectionId) {
+              paperSection.classList.add('hidden');
+            }
+          });
+          
+          allPaperIcons.forEach(paperIcon => {
+            const parent = paperIcon.closest('[data-section]');
+            if (parent && parent.getAttribute('data-section') !== sectionId) {
+              paperIcon.classList.remove('rotate-180');
+            }
+          });
+        }
+        
+        // Toggle the clicked section
+        if (section.classList.contains('hidden')) {
+          section.classList.remove('hidden');
+          icon.classList.add('rotate-180');
+        } else {
+          section.classList.add('hidden');
+          icon.classList.remove('rotate-180');
+        }
+      } else {
+        console.log('Section or icon not found');
+      }
+    }
+
+    window.navigateToTopic = function(subjectName, ...segments) {
+      const overrides = new Map([
+        ['the argand diagram', 'argand-diagram'],
+        ["de moivre's theorem", 'de-moivres-theorem'],
+      ]);
+
+      const toSegment = (s) => {
+        const key = String(s).toLowerCase();
+        if (overrides.has(key)) return overrides.get(key);
+        return slugify(s);
+      };
+
+      const pathSegments = [subjectName, ...segments].map(toSegment);
+      const url = '/maths/learn/' + pathSegments.join('/');
+      console.log('Navigating to:', url);
+      window.location.href = url;
+    }
+  </script>
+</Layout> 

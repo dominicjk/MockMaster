@@ -1,0 +1,19 @@
+---
+import katex from "katex";
+import "katex/dist/katex.min.css"; // ✅ required for proper rendering & hiding MathML
+
+export interface Props {
+  tex: string;
+  display?: boolean;
+  class?: string;
+}
+
+const { tex, display = false, class: klass = "" } = Astro.props;
+
+const html = katex.renderToString(tex, {
+  displayMode: display,
+  throwOnError: false,
+  strict: "ignore",
+});
+---
+<div class={`katex-wrapper ${display ? "my-4" : ""} ${klass}`} set:html={html} />

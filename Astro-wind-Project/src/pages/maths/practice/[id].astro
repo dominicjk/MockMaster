@@ -1,0 +1,192 @@
+---
+// src/pages/maths/practice/[id].astro
+import Layout from '~/layouts/PageLayout.astro';
+
+// PDF asset as a browser URL
+
+// ✅ REQUIRED for static/prerender builds on dynamic routes
+export function getStaticPaths() {
+  const ids = [
+    'number','algebra','complex-numbers','sequences-and-series','financial-maths','induction',
+    'functions','differentiation','integration','the-line','the-circle','geometry','trigonometry',
+    'probability','statistics',
+  ];
+  return ids.map((id) => ({ params: { id } }));
+}
+
+const { id } = Astro.params;
+const metadata = { title: `Practice - ${id}` };
+
+// Use emitted URL from Vite
+// Example solution path served from /public (optional)
+// const solutionPdf = `/pdfs/${id}-solution.pdf`;
+---
+<Layout metadata={metadata}>
+  <div class="w-[90%] max-w-6xl mx-auto px-4 md:px-6">
+    <div class="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold">Question</h2>
+        <div id="meta" class="text-sm text-gray-600 dark:text-gray-300"></div>
+      </div>
+
+      <div class="w-full overflow-hidden">
+        <div class="mx-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-sm rounded-md" style="width:794px; max-width:100%;">
+          <div id="a4-question" class="max-h-[70vh] overflow-y-auto p-2">
+            <div class="flex items-center gap-3 mb-3 text-sm">
+              <button id="prev" class="px-2 py-1 rounded border dark:border-slate-600">Prev</button>
+              <button id="next" class="px-2 py-1 rounded border dark:border-slate-600">Next</button>
+              <span>Page <span id="page_num">1</span> / <span id="page_count">--</span></span>
+            </div>
+
+      <script is:inline>
+              const topic = "{id}";
+              const els = {
+                q: document.getElementById('a4-question'),
+                s: document.getElementById('a4-solution'),
+                timer: document.getElementById('timer'),
+                btnShow: document.getElementById('btn-show-solution'),
+                btnCorrect: document.getElementById('btn-mark-correct'),
+                btnWrong: document.getElementById('btn-mark-wrong'),
+                btnSkip: document.getElementById('btn-skip'),
+                btnNext: document.getElementById('btn-next'),
+                diff: document.getElementById('difficulty'),
+        details: document.getElementById('solution-accordion'),
+        status: document.getElementById('status')
+              };
+
+              function ensureStatus() {
+                if (!els.status) {
+                  const p = document.createElement('p');
+                  p.id = 'status';
+                  p.className = 'mt-4 text-sm text-gray-500';
+                  // Append near the end of main container
+                  const container = document.querySelector('[data-practice-root]') || document.body;
+                  container.appendChild(p);
+                  els.status = p;
+                }
+                return els.status;
+              }
+
+              function setStatus(message) {
+                const el = ensureStatus();
+                el.textContent = message || '';
+              }
+            
+              let current = null;
+              let remaining = 0;
+              let timerHandle = null;
+            
+              function startTimer(seconds) {
+                if (timerHandle) clearInterval(timerHandle);
+                remaining = Math.max(0, Math.floor(seconds));
+                tick();
+                timerHandle = setInterval(() => {
+                  if (remaining <= 0) {
+                    clearInterval(timerHandle); timerHandle = null;
+                    els.timer.classList.add('text-red-600');
+                    return;
+                  }
+                  remaining--; tick();
+                }, 1000);
+              }
+              function tick() {
+                const mm = String(Math.floor(remaining / 60)).padStart(2,'0');
+                const ss = String(remaining % 60).padStart(2,'0');
+                els.timer.textContent = `${mm}:${ss}`;
+              }
+            
+              async function loadQuestion(forceId) {
+                const params = new URLSearchParams();
+                if (forceId) {
+                  params.set('id', forceId);
+                } else {
+                  params.set('topic', topic);
+                }
+                const d = els.diff?.value;
+                if (d && d !== 'any') params.set('difficulty', d); // e.g. "1" or "1-2" if you wire it that way
+                params.set('onlyIncomplete', 'true');
+                setStatus('Loading question...');
+                const res = await fetch(`/api/questions?${params.toString()}`, { cache: 'no-store' });
+                if (!res.ok) {
+                  setStatus('No questions available for the current filters.');
+                  els.q.innerHTML = '<div class="p-4 text-sm text-gray-500">No questions left to practice in this topic. Try another topic or reset progress.</div>';
+                  if (els.s) els.s.innerHTML = '';
+                  return;
+                }
+                const q = await res.json();
+                current = q;
+            
+                // NOTE: Browsers don't natively render TIFF. See section 5 below.
+                // If you pre-convert to web images, simply embed <img>.
+                const questionUrl = q.questionTifUrl || q.questionPngUrl;
+                const solutionUrl = q.solutionTifUrl || q.solutionPngUrl;
+                els.q.innerHTML = `<img src="${questionUrl}" alt="Question" class="block w-full">`;
+                if (els.s) els.s.innerHTML = `<img src="${solutionUrl}" alt="Solution" class="block w-full">`;
+            
+                els.details.open = false;
+                els.timer.classList.remove('text-red-600');
+                startTimer(q.timeLimitSeconds ?? 0);
+                setStatus('');
+              }
+            
+              // Events (all guarded in case buttons not present yet)
+              els.btnShow?.addEventListener('click', () => { els.details.open = true; });
+              els.btnNext?.addEventListener('click', () => loadQuestion());
+              els.btnSkip?.addEventListener('click', () => loadQuestion());
+              els.btnWrong?.addEventListener('click', () => loadQuestion());
+              els.diff?.addEventListener('change', () => loadQuestion());
+            
+  els.btnCorrect?.addEventListener('click', async () => {
+                if (!current) return;
+                try {
+          await fetch(`/api/questions/${current.id}`, {
+                    method: 'PATCH',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ complete: true })
+                  });
+                } catch { /* ignore patch error */ }
+                loadQuestion();
+              });
+            
+              // Create timer & solution containers if not present
+              if (!els.timer) {
+                const t = document.createElement('div');
+                t.id = 'timer';
+                t.className = 'mt-2 text-sm font-mono';
+                els.q.prepend(t);
+                els.timer = t;
+              }
+              if (!els.s) {
+                const sol = document.createElement('div');
+                sol.id = 'a4-solution';
+                sol.className = 'hidden';
+                document.body.appendChild(sol);
+                els.s = sol;
+              }
+              // Initial load (random / filtered). Use loadQuestion('alg-0001') to force a specific one.
+              loadQuestion();
+            </script>
+            
+
+          </div>
+        </div>
+      </div>
+
+      <details id="solution-accordion" class="mt-4 group">
+        <summary class="cursor-pointer select-none flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 6a1 1 0 01.77.36l4.5 5.25a1 1 0 01-1.54 1.28L12 8.53l-3.73 4.36a1 1 0 11-1.54-1.28l4.5-5.25A1 1 0 0112 6z"/></svg>
+          <span class="font-medium">Reveal solution</span>
+        </summary>
+        <div class="mt-3">
+          <div class="mx-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-sm rounded-md" style="width:794px; max-width:100%;">
+            <div class="p-2 text-sm text-gray-500 dark:text-gray-400">
+              (Hook up your solution viewer here if needed.)
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <p id="status" class="mt-4 text-sm text-gray-500"></p>
+  </div>
+</Layout>

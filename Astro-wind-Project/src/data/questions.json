@@ -1,0 +1,74 @@
+[
+  {
+    "id": "alg-0001",
+    "question-type": "custom",
+    "topic": "algebra",
+    "level": "lc",
+    "difficulty": 1,
+    "timeLimitMinute": 2,
+    "questionTifUrl": "/questions/algebra/questions/alg-0001.png",
+    "solutionTifUrl": "/questions/algebra/answers/alg-0001-ans.png",
+    "tags": ["simultaneous", "equations"],
+    "complete": false
+  },
+  {
+    "id": "alg-0002",
+    "question-type": "custom",
+    "topic": "algebra",
+    "level": "lc",
+    "difficulty": 1,
+    "timeLimitMinute": 3,
+    "questionTifUrl": "/questions/algebra/questions/alg-0001.png",
+    "solutionTifUrl": "/questions/algebra/answers/alg-0001-ans.png",
+    "tags": ["placeholder"],
+    "complete": false
+  },
+    {
+    "id": "alg-0002",
+    "question-type": "custom",
+    "topic": "algebra",
+    "level": "lc",
+    "difficulty": 1,
+    "timeLimitMinute": 3,
+    "questionTifUrl": "/questions/algebra/questions/alg-0001.png",
+    "solutionTifUrl": "/questions/algebra/answers/alg-0001-ans.png",
+    "tags": ["placeholder"],
+    "complete": false
+  },
+    {
+    "id": "alg-0003",
+    "question-type": "custom",
+    "topic": "algebra",
+    "level": "lc",
+    "difficulty": 1,
+    "timeLimitMinute": 3,
+    "questionTifUrl": "/questions/algebra/questions/alg-0001.png",
+    "solutionTifUrl": "/questions/algebra/answers/alg-0001-ans.png",
+    "tags": ["placeholder"],
+    "complete": false
+  },
+    {
+    "id": "alg-0004",
+    "question-type": "custom",
+    "topic": "algebra",
+    "level": "lc",
+    "difficulty": 1,
+    "timeLimitMinute": 3,
+    "questionTifUrl": "/questions/algebra/questions/alg-0001.png",
+    "solutionTifUrl": "/questions/algebra/answers/alg-0001-ans.png",
+    "tags": ["placeholder"],
+    "complete": false
+  },
+  {
+    "id": "alg-0003",
+    "question-type": "custom",
+    "topic": "algebra",
+    "level": "lc",
+    "difficulty": 1,
+    "timeLimitMinute": 3,
+    "questionTifUrl": "/questions/algebra/questions/alg-0001.png",
+    "solutionTifUrl": "/questions/algebra/answers/alg-0001-ans.png",
+    "tags": ["placeholder"],
+    "complete": false
+  }
+]

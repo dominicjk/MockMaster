@@ -1,0 +1,445 @@
+---
+// src/pages/maths/practice/[id].astro
+import Layout from '~/layouts/PageLayout.astro';
+
+// ✅ REQUIRED for static/prerender builds on dynamic routes
+export function getStaticPaths() {
+  const ids = [
+    'number','algebra','complex-numbers','sequences-and-series','financial-maths','induction',
+    'functions','differentiation','integration','the-line','the-circle','geometry','trigonometry',
+    'probability','statistics',
+  ];
+  return ids.map((id) => ({ params: { id } }));
+}
+
+const { id } = Astro.params;
+const metadata = { title: `Practice - ${id}` };
+---
+
+<Layout metadata={metadata}>
+  <!-- Main Content Container -->
+  <div class="min-h-screen pb-24" style="margin-top: 120px;">
+    <div class="p-6">
+      <div class="flex gap-6">
+        <!-- Left Sidebar (now inline) -->
+                <!-- Left Sidebar (now inline) -->
+        <div id="sidebar" class="w-80 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg transform transition-all duration-300 relative">
+          <div class="p-6 h-full">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white sidebar-content">Practice Menu</h2>
+        <button id="sidebar-close" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Timer Section -->
+      <div class="mb-8 sidebar-content">
+        <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
+          <div class="text-2xl font-mono font-bold text-center mb-3" id="sidebar-timer">00:00</div>
+          <div class="flex gap-2">
+            <button id="timer-start" class="flex-1 px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm flex items-center justify-center" title="Start Timer">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+            <button id="timer-pause" class="flex-1 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm flex items-center justify-center" title="Pause Timer">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+              </svg>
+            </button>
+            <button id="timer-reset" class="flex-1 px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm flex items-center justify-center" title="Reset Timer">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M4 12a8 8 0 0 1 8-8V2.5L14.5 5 12 7.5V6a6 6 0 1 0-6 6H4z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question Metadata -->
+      <div class="mb-8 sidebar-content">
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Topic:</span>
+            <span id="meta-topic" class="font-medium">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Difficulty:</span>
+            <span id="meta-difficulty" class="font-medium">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Time Limit:</span>
+            <span id="meta-time-limit" class="font-medium">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="mb-6 sidebar-content">
+        <h3 class="text-lg font-semibold mb-4">Navigation</h3>
+        <div class="flex gap-2 mb-4">
+          <button id="prev-question" class="flex-1 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+            Previous
+          </button>
+          <button id="next-question" class="flex-1 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+            Next
+          </button>
+        </div>
+        <button id="skip-question" class="w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+          Skip Question
+        </button>
+      </div>
+
+      <!-- Collapsed State Indicator -->
+      <div id="collapsed-indicator" class="hidden absolute inset-0 flex items-center justify-center">
+        <!-- Only the arrow icon, nothing else -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Question Panel -->
+  <div id="question-panel" class="flex-1 transition-all duration-300">
+    <!-- Question Container -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg">
+      <div class="p-6">
+        <!-- Header with title on left and button on right -->
+        <div class="flex justify-between items-center mb-6">
+          <h1 id="question-title" class="text-2xl font-bold">Question 1</h1>
+          <button id="show-solution" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Show Solution
+          </button>
+        </div>
+        
+        <!-- Image Container -->
+        <div class="w-full max-w-4xl mx-auto">
+          <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <div id="question-container" class="h-96 overflow-auto p-4">
+              <div class="flex items-center justify-center h-full text-gray-500">
+                Loading question...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solution Container (Hidden initially) -->
+                <!-- Solution Container (Hidden initially) -->
+        <div id="solution-container" class="w-full max-w-4xl mx-auto mt-6" style="display: none;">
+          <h3 class="text-lg font-semibold mb-3">Solution</h3>
+          <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <div id="solution-content" class="h-96 overflow-auto p-4">
+              <!-- Solution will be loaded here -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Status Message -->
+        <div class="w-full max-w-4xl mx-auto mt-6">
+          <div id="status-message" class="text-center p-4 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">
+            Welcome! Load a question to begin.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script>
+    let currentQuestion = null;
+    let sidebarVisible = true;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let showingSolution = false;
+    let questionCounter = 1; // Global counter starting from 1
+
+    // Timer functions
+    function startTimer() {
+      if (!timerInterval) {
+        timerInterval = setInterval(() => {
+          timerSeconds++;
+          updateTimerDisplay();
+        }, 1000);
+        updateTimerButtons(true);
+      }
+    }
+
+    function pauseTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        updateTimerButtons(false);
+      }
+    }
+
+    function resetTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      timerSeconds = 0;
+      updateTimerDisplay();
+      updateTimerButtons(false);
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timerSeconds / 60);
+      const seconds = timerSeconds % 60;
+      const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      document.getElementById('sidebar-timer').textContent = display;
+    }
+
+    function updateTimerButtons(isRunning) {
+      const startButton = document.getElementById('timer-start');
+      if (startButton) {
+        if (isRunning) {
+          startButton.innerHTML = `
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+            </svg>
+          `;
+          startButton.title = 'Pause Timer';
+          startButton.className = 'flex-1 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm flex items-center justify-center';
+        } else {
+          startButton.innerHTML = `
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          `;
+          startButton.title = 'Start Timer';
+          startButton.className = 'flex-1 px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm flex items-center justify-center';
+        }
+      }
+    }
+
+    // Sidebar toggle function
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const closeButton = document.getElementById('sidebar-close');
+      
+      if (sidebarVisible) {
+        // Collapse sidebar - add collapsed class
+        sidebar.classList.add('collapsed');
+        if (closeButton) {
+          closeButton.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>'; // Right arrow
+          closeButton.style.position = 'absolute';
+          closeButton.style.top = '50%';
+          closeButton.style.left = '50%';
+          closeButton.style.transform = 'translate(-50%, -50%)';
+          closeButton.style.margin = '0';
+          closeButton.style.padding = '8px';
+        }
+        sidebarVisible = false;
+      } else {
+        // Expand sidebar - remove collapsed class
+        sidebar.classList.remove('collapsed');
+        if (closeButton) {
+          closeButton.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'; // X
+          closeButton.style.position = '';
+          closeButton.style.top = '';
+          closeButton.style.left = '';
+          closeButton.style.transform = '';
+          closeButton.style.margin = '';
+          closeButton.style.padding = '';
+        }
+        sidebarVisible = true;
+      }
+    }
+
+    // Question loading and display
+    async function loadQuestion() {
+      try {
+        const questionId = window.location.pathname.split('/').pop();
+        const response = await fetch(`http://localhost:3001/api/questions?id=${questionId}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        currentQuestion = data;
+        
+        // Reset solution state
+        showingSolution = false;
+        const button = document.getElementById('show-solution');
+        if (button) {
+          button.textContent = 'Show Solution';
+        }
+        
+        displayQuestion(data);
+        updateMetadata(data);
+        updateQuestionTitle();
+        
+      } catch (error) {
+        console.error('Error loading question:', error);
+        document.getElementById('question-container').innerHTML = 
+          '<div class="flex items-center justify-center h-full text-red-500">Error loading question</div>';
+      }
+    }
+
+    function displayQuestion(question) {
+      const container = document.getElementById('question-container');
+      
+      if (question.tifUrl) {
+        const imageUrl = `http://localhost:3001${question.tifUrl}`;
+        container.innerHTML = `
+          <div class="flex justify-center">
+            <img src="${imageUrl}" 
+                 alt="Question Image" 
+                 class="max-w-full h-auto rounded border border-gray-200"
+                 crossorigin="anonymous"
+                 onload="this.style.border='3px solid green'"
+                 onerror="this.style.border='3px solid red'; this.alt='Failed to load image'">
+          </div>
+        `;
+      } else {
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No question image available</div>';
+      }
+    }
+
+    function updateMetadata(question) {
+      document.getElementById('meta-id').textContent = question.id || '--';
+      document.getElementById('meta-topic').textContent = question.subject || '--';
+      document.getElementById('meta-difficulty').textContent = question.difficulty || '--';
+      document.getElementById('meta-time-limit').textContent = question.timeLimit ? `${question.timeLimit} min` : '--';
+      document.getElementById('meta-tags').textContent = question.tags ? question.tags.join(', ') : '--';
+    }
+
+    function updateQuestionTitle() {
+      const titleElement = document.getElementById('question-title');
+      if (titleElement) {
+        titleElement.textContent = `Question ${questionCounter}`;
+      }
+    }
+
+    function nextQuestion() {
+      questionCounter++;
+      updateQuestionTitle();
+      // Reset solution state
+      showingSolution = false;
+      const button = document.getElementById('show-solution');
+      if (button) {
+        button.textContent = 'Show Solution';
+      }
+      // Load the same question (as demo) but with updated counter
+      loadQuestion();
+    }
+
+    function skipQuestion() {
+      questionCounter++;
+      updateQuestionTitle();
+      // Reset solution state
+      showingSolution = false;
+      const button = document.getElementById('show-solution');
+      if (button) {
+        button.textContent = 'Show Solution';
+      }
+      const statusMsg = document.getElementById('status-message');
+      if (statusMsg) {
+        statusMsg.innerHTML = '<span class="text-yellow-600 font-medium">Question skipped</span>';
+      }
+      // Load the same question (as demo) but with updated counter
+      loadQuestion();
+    }
+
+    function toggleSolution() {
+      if (!currentQuestion) return;
+      
+      const container = document.getElementById('question-container');
+      const button = document.getElementById('show-solution');
+      
+      if (!showingSolution) {
+        // Show solution
+        if (currentQuestion.solutionTifUrl) {
+          const imageUrl = `http://localhost:3001${currentQuestion.solutionTifUrl}`;
+          container.innerHTML = `
+            <div class="flex justify-center">
+              <img src="${imageUrl}" 
+                   alt="Solution Image" 
+                   class="max-w-full h-auto rounded border border-gray-200"
+                   crossorigin="anonymous"
+                   onload="this.style.border='3px solid green'"
+                   onerror="this.style.border='3px solid red'; this.alt='Failed to load solution image'">
+            </div>
+          `;
+          button.textContent = 'Show Question';
+          document.getElementById('status-message').innerHTML = '<span class="text-blue-600 font-medium">Solution displayed</span>';
+        } else {
+          container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No solution available</div>';
+        }
+        showingSolution = true;
+      } else {
+        // Show question
+        displayQuestion(currentQuestion);
+        button.textContent = 'Show Solution';
+        document.getElementById('status-message').innerHTML = '<span class="text-gray-600 font-medium">Question displayed</span>';
+        showingSolution = false;
+      }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Update initial question title
+      updateQuestionTitle();
+      
+      // Load question
+      loadQuestion();
+      
+      // Timer controls
+      document.getElementById('timer-start').addEventListener('click', () => {
+        if (timerInterval) {
+          pauseTimer();
+        } else {
+          startTimer();
+        }
+      });
+      document.getElementById('timer-pause').addEventListener('click', pauseTimer);
+      document.getElementById('timer-reset').addEventListener('click', resetTimer);
+      
+      // Sidebar controls
+      document.getElementById('sidebar-close').addEventListener('click', toggleSidebar);
+      
+      // Action buttons
+      document.getElementById('show-solution').addEventListener('click', toggleSolution);
+      
+      // Navigation buttons
+      document.getElementById('next-question').addEventListener('click', nextQuestion);
+      document.getElementById('skip-question').addEventListener('click', skipQuestion);
+    });
+  </script>
+
+  <style>
+    #sidebar {
+      transition: all 0.3s ease;
+      width: 20rem; /* w-80 */
+      flex-shrink: 0;
+      overflow: hidden; /* Prevent content from leaking when collapsed */
+      position: relative;
+    }
+
+    /* When collapsed, hide all content */
+    #sidebar.collapsed {
+      width: 40px !important;
+      padding: 0 !important;
+    }
+
+    #sidebar.collapsed .sidebar-content {
+      display: none !important;
+    }
+
+    .sidebar-content {
+      transition: all 0.3s ease;
+    }
+
+    #collapsed-indicator {
+      transition: all 0.3s ease;
+    }
+
+    #question-panel {
+      transition: margin-left 0.3s ease;
+    }
+  </style>
+</Layout>
