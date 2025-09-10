@@ -17,7 +17,7 @@ const metadata = { title: `Practice - ${id}` };
 
 <Layout metadata={metadata}>
   <!-- Main Content Container -->
-  <div class="min-h-screen pb-24" style="margin-top: 15px;">
+  <div class="min-h-screen pb-24" style="margin-top: 10px;">
     <div class="p-6">
       <div class="flex gap-6">
         <!-- Left Sidebar (now inline) -->
@@ -71,7 +71,6 @@ const metadata = { title: `Practice - ${id}` };
 
       <!-- Navigation -->
       <div class="mb-6 sidebar-content">
-        <h3 class="text-lg font-semibold mb-4">Navigation</h3>
         <div class="flex gap-2 mb-4">
           <button id="prev-question" class="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 flex items-center justify-center" title="Previous Question">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,6 +86,16 @@ const metadata = { title: `Practice - ${id}` };
         <button id="skip-question" class="w-full px-4 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600">
           Skip Question
         </button>
+
+        <!-- Solution button -->
+        <button id="show-solution" class="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600">
+          Show Solution
+        </button>
+    <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded px-1 py-1 shadow text-xs">
+      <button id="zoom-out" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom Out" style="min-width:1.5em;">-</button>
+      <span id="zoom-level" class="w-8 text-center">100%</span>
+      <button id="zoom-in" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom In" style="min-width:1.5em;">+</button>
+    </div>
       </div>
 
       <!-- Collapsed State Indicator -->
@@ -98,7 +107,6 @@ const metadata = { title: `Practice - ${id}` };
         </button>
       </div>
     </div>
-
   </div>
 
   <!-- Question Panel -->
@@ -108,11 +116,7 @@ const metadata = { title: `Practice - ${id}` };
       <div class="p-6">
   <!-- Header with zoom controls (thinner, visible) -->
   <div class="flex justify-end items-center mb-2">
-    <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded px-1 py-1 shadow text-xs">
-      <button id="zoom-out" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom Out" style="min-width:1.5em;">-</button>
-      <span id="zoom-level" class="w-8 text-center">100%</span>
-      <button id="zoom-in" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom In" style="min-width:1.5em;">+</button>
-    </div>
+
   </div>
         <!-- Image Container -->
         <div class="w-full max-w-4xl mx-auto">
@@ -122,15 +126,6 @@ const metadata = { title: `Practice - ${id}` };
                 Loading question...
               </div>
             </div>
-          </div>
-        </div>
-        <!-- Header with title on left and button on right -->
-        <div class="flex justify-between items-center mb-6">
-          <div class="flex items-center gap-2">
-            <!-- Solution button -->
-            <button id="show-solution" class="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600">
-              Show Solution
-            </button>
           </div>
         </div>
 
