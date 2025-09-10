@@ -1,0 +1,30 @@
+[
+    {
+        "id": "num-1001",
+        "question-type":"lc", 
+        "topic": ["number-systems"],
+        "level": "lc",
+        "difficulty": 1,
+        "timeLimitMinute": 6,
+        "questionTifUrl": "src/assets/questions/number-systems/questions/num-1001.png",
+        "solutionTifUrl": "src/assets/questions/number-systems/answers/num-1001-ans.png",
+        "tags": ["proof-by-contradiction"],
+        "complete": false,
+        "isShort":true,
+        "name": "2023 P1 Question 3"
+    },
+    {
+        "id": "num-1003",
+        "question-type":"lc", 
+        "topic": ["number-systems", "algebra"],
+        "level": "lc",
+        "difficulty": 2,
+        "timeLimitMinute": 10,
+        "questionTifUrl": "src/assets/questions/number-systems/questions/num-1003.png",
+        "solutionTifUrl": "src/assets/questions/number-systems/answers/num-1003-ans.png",
+        "tags": ["surd-theory", "proof-by-contradiction"],
+        "complete": false,
+        "isShort":true,
+        "name": "2019 P1 Question 6"
+    }
+]

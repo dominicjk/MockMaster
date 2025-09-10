@@ -47,71 +47,79 @@ const paper2Topics: Topic[] = [
 ];
 ---
 <Layout metadata={metadata}>
-  <section class="py-12">
-    <div class="w-[80%] max-w-6xl mx-auto px-4 md:px-6">
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold mb-4">Practice Maths</h1>
-        <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">
-          Test your skills with exam-style practice questions and solutions.
-        </p>
-        <a href="/maths" class="inline-block text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-200 transition">&larr; Back to Maths</a>
-      </div>
-
-      <div class="sticky top-0 z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 dark:supports-[backdrop-filter]:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 mb-4">
-        <div class="flex items-center justify-between gap-4">
-          <div class="grow min-w-0">
-            <p id="selectionHint" class="text-sm text-gray-700 dark:text-gray-300">Select multiple subjects to practice together.</p>
-            <div id="selectedHeaderTags" class="hidden flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden h-9 items-center"></div>
-          </div>
-          <button id="globalStart" class="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition" disabled>
-            Start Practice
-          </button>
+  <!-- Light pink background section -->
+  <div class="bg-pink-50 dark:bg-pink-950/20">
+    <section class="py-12">
+      <div class="w-[80%] max-w-6xl mx-auto px-4 md:px-6">
+        <div class="text-center mb-8">
+          <h1 class="text-4xl font-bold mb-4">Practice Maths</h1>
+          <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">
+            Test your skills with exam-style practice questions and solutions.
+          </p>
         </div>
-      </div>
 
-      <div class="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div class="sticky top-0 z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 dark:supports-[backdrop-filter]:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 mb-4">
+          <div class="flex items-center justify-between gap-4">
+            <div class="grow min-w-0">
+              <p id="selectionHint" class="text-sm text-gray-700 dark:text-gray-300">Select multiple subjects to practice together.</p>
+              <div id="selectedHeaderTags" class="hidden flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden h-9 items-center"></div>
+            </div>
+            <button id="globalStart" class="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition" disabled>
+              Start Practice
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div class="relative">
           <button id="optionsToggle" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition" aria-expanded="false" aria-controls="optionsPanel">
-            Options
+            Advanced Filter
             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.25 8.29a.75.75 0 01-.02-1.08z"/></svg>
           </button>
           <div id="optionsPanel" class="hidden absolute mt-2 z-20 w-80 sm:w-96 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg p-4">
             <div class="space-y-4">
-              <div>
-                <label for="optionsQuestions" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of questions</label>
-                <select id="optionsQuestions" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
-                  <option value="5">5</option>
-                  <option value="10" selected>10</option>
-                  <option value="15">15</option>
-                  <option value="20">20</option>
-                  <option value="30">30</option>
-                </select>
-              </div>
-              <div>
-                <label for="optionsDifficulty" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Difficulty</label>
-                <select id="optionsDifficulty" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
-                  <option value="mixed" selected>Mixed</option>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-              <div>
-                <label for="optionsTime" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time limit</label>
-                <select id="optionsTime" class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
-                  <option value="none" selected>None</option>
-                  <option value="10">10 minutes</option>
-                  <option value="20">20 minutes</option>
-                  <option value="30">30 minutes</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-3">
                 <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input id="optionsPast" type="checkbox" class="h-4 w-4 accent-red-600" checked /> Include past exam questions
+                  <input id="optionsExamOnly" type="checkbox" class="h-4 w-4 accent-red-600" /> State Exam Questions Only
                 </label>
                 <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input id="optionsShuffle" type="checkbox" class="h-4 w-4 accent-red-600" checked /> Shuffle order
+                  <input id="optionsLongOnly" type="checkbox" class="h-4 w-4 accent-red-600" /> Long Questions Only
                 </label>
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input id="optionsShortOnly" type="checkbox" class="h-4 w-4 accent-red-600" /> Short Questions Only
+                </label>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year Range</label>
+                <div class="flex items-center gap-2">
+                  <select id="optionsYearFrom" class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
+                    <option value="2024" selected>2024</option>
+                    <option value="2024 Deferred">2024 Deferred</option>
+                    <option value="2023">2023</option>
+                    <option value="2023 Deferred">2023 Deferred</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2017">2017</option>
+                    <option value="2016">2016</option>
+                    <option value="2015">2015</option>
+                  </select>
+                  <span class="text-gray-500 dark:text-gray-400">to</span>
+                  <select id="optionsYearTo" class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022" selected>2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2017">2017</option>
+                    <option value="2016">2016</option>
+                    <option value="2015">2015</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -139,7 +147,13 @@ const paper2Topics: Topic[] = [
           <span class="text-sm text-gray-700 dark:text-gray-300">Select all subjects</span>
         </label>
       </div>
+    </div>
+    </section>
+  </div>
 
+  <!-- Regular background section for Paper 1 and Paper 2 -->
+  <section class="py-8">
+    <div class="w-[80%] max-w-6xl mx-auto px-4 md:px-6">
       <div class="space-y-12">
         <section>
           <h2 class="text-3xl font-extrabold mb-6">Paper 1</h2>
@@ -200,18 +214,20 @@ const paper2Topics: Topic[] = [
     }
 
     function getOptions() {
-      const qEl = document.getElementById('optionsQuestions');
-      const dEl = document.getElementById('optionsDifficulty');
-      const tEl = document.getElementById('optionsTime');
-      const pastEl = document.getElementById('optionsPast');
-      const shuffleEl = document.getElementById('optionsShuffle');
-      const questions = qEl && qEl instanceof HTMLSelectElement ? qEl.value : '10';
-      const difficulty = dEl && dEl instanceof HTMLSelectElement ? dEl.value : 'mixed';
-      const time = tEl && tEl instanceof HTMLSelectElement ? tEl.value : 'none';
-      const past = pastEl && pastEl instanceof HTMLInputElement ? String(pastEl.checked) : 'true';
-      const shuffle = shuffleEl && shuffleEl instanceof HTMLInputElement ? String(shuffleEl.checked) : 'true';
+      const examOnlyEl = document.getElementById('optionsExamOnly');
+      const longOnlyEl = document.getElementById('optionsLongOnly');
+      const shortOnlyEl = document.getElementById('optionsShortOnly');
+      const yearFromEl = document.getElementById('optionsYearFrom');
+      const yearToEl = document.getElementById('optionsYearTo');
+      
+      const examOnly = examOnlyEl && examOnlyEl instanceof HTMLInputElement ? String(examOnlyEl.checked) : 'false';
+      const longOnly = longOnlyEl && longOnlyEl instanceof HTMLInputElement ? String(longOnlyEl.checked) : 'false';
+      const shortOnly = shortOnlyEl && shortOnlyEl instanceof HTMLInputElement ? String(shortOnlyEl.checked) : 'false';
+      const yearFrom = yearFromEl && yearFromEl instanceof HTMLSelectElement ? yearFromEl.value : '2024';
+      const yearTo = yearToEl && yearToEl instanceof HTMLSelectElement ? yearToEl.value : '2022';
       const levels = getSelectedLevels().join(',');
-      return { questions, difficulty, time, past, shuffle, levels };
+      
+      return { examOnly, longOnly, shortOnly, yearFrom, yearTo, levels };
     }
 
     function updateGlobalButtonState() {

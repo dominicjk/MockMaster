@@ -8,7 +8,7 @@ export interface Props {
 
 const { id, title, iconSrc, iconAlt } = Astro.props as Props;
 ---
-<div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg flex flex-col gap-4 min-h-72 h-full">
+<div class="bg-gray-100 dark:bg-slate-800 rounded-xl p-6 shadow-lg flex flex-col gap-4 min-h-72 h-full">
   <div class="flex items-start justify-between gap-4 min-h-[4rem]">
     <h2 class="flex-1 text-2xl font-bold text-red-600 dark:text-red-400">{title}</h2>
     <label class="inline-flex items-center gap-2 cursor-pointer select-none">

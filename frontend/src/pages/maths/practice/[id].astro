@@ -2,7 +2,6 @@
 // src/pages/maths/practice/[id].astro
 import Layout from '~/layouts/PageLayout.astro';
 
-// ✅ REQUIRED for static/prerender builds on dynamic routes
 export function getStaticPaths() {
   const ids = [
     'number','algebra','complex-numbers','sequences-and-series','financial-maths','induction',
@@ -18,7 +17,7 @@ const metadata = { title: `Practice - ${id}` };
 
 <Layout metadata={metadata}>
   <!-- Main Content Container -->
-  <div class="min-h-screen pb-24" style="margin-top: 120px;">
+  <div class="min-h-screen pb-24" style="margin-top: 15px;">
     <div class="p-6">
       <div class="flex gap-6">
         <!-- Left Sidebar (now inline) -->
@@ -27,10 +26,17 @@ const metadata = { title: `Practice - ${id}` };
           <div class="p-6 h-full">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white sidebar-content">Practice Menu</h2>
-        <button id="sidebar-close" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <!-- Star (favourite) icon on the left -->
+        <button id="sidebar-favourite" class="p-2 rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-900 mr-2" title="Add to Favourites" style="display: block;" >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </button>
+        <h2 id="question-title" class="text-xl font-bold text-gray-900 dark:text-white sidebar-content flex-1">Question 1</h2>
+        <!-- Arrow icon for collapse on the right -->
+        <button id="sidebar-close" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 ml-2" title="Collapse Sidebar">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12l-7-7v14l7-7z"/>
           </svg>
         </button>
       </div>
@@ -40,17 +46,12 @@ const metadata = { title: `Practice - ${id}` };
         <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
           <div class="text-2xl font-mono font-bold text-center mb-3" id="sidebar-timer">00:00</div>
           <div class="flex gap-2">
-            <button id="timer-start" class="flex-1 px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm flex items-center justify-center" title="Start Timer">
+            <button id="timer-start" class="flex-1 px-2 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 text-sm flex items-center justify-center" title="Start Timer">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
               </svg>
             </button>
-            <button id="timer-pause" class="flex-1 px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm flex items-center justify-center" title="Pause Timer">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-              </svg>
-            </button>
-            <button id="timer-reset" class="flex-1 px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm flex items-center justify-center" title="Reset Timer">
+            <button id="timer-reset" class="flex-1 px-2 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 text-sm flex items-center justify-center" title="Reset Timer">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M4 12a8 8 0 0 1 8-8V2.5L14.5 5 12 7.5V6a6 6 0 1 0-6 6H4z"/>
               </svg>
@@ -62,17 +63,8 @@ const metadata = { title: `Practice - ${id}` };
       <!-- Question Metadata -->
       <div class="mb-8 sidebar-content">
         <div class="space-y-3 text-sm">
-          <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Topic:</span>
-            <span id="meta-topic" class="font-medium">--</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Difficulty:</span>
-            <span id="meta-difficulty" class="font-medium">--</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Time Limit:</span>
-            <span id="meta-time-limit" class="font-medium">--</span>
+          <div class="flex justify-between items-center">
+            <span id="meta-topic" class="font-medium flex items-center"></span>
           </div>
         </div>
       </div>
@@ -81,21 +73,29 @@ const metadata = { title: `Practice - ${id}` };
       <div class="mb-6 sidebar-content">
         <h3 class="text-lg font-semibold mb-4">Navigation</h3>
         <div class="flex gap-2 mb-4">
-          <button id="prev-question" class="flex-1 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
-            Previous
+          <button id="prev-question" class="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 flex items-center justify-center" title="Previous Question">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
           </button>
-          <button id="next-question" class="flex-1 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-            Next
+          <button id="next-question" class="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 flex items-center justify-center" title="Next Question">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
           </button>
         </div>
-        <button id="skip-question" class="w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+        <button id="skip-question" class="w-full px-4 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600">
           Skip Question
         </button>
       </div>
 
       <!-- Collapsed State Indicator -->
       <div id="collapsed-indicator" class="hidden absolute inset-0 flex items-center justify-center">
-        <!-- Only the arrow icon, nothing else -->
+        <button id="sidebar-expand" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700" title="Expand Sidebar">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l7 7V5l-7 7z"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -106,14 +106,14 @@ const metadata = { title: `Practice - ${id}` };
     <!-- Question Container -->
     <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg">
       <div class="p-6">
-        <!-- Header with title on left and button on right -->
-        <div class="flex justify-between items-center mb-6">
-          <h1 id="question-title" class="text-2xl font-bold">Question 1</h1>
-          <button id="show-solution" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-            Show Solution
-          </button>
-        </div>
-        
+  <!-- Header with zoom controls (thinner, visible) -->
+  <div class="flex justify-end items-center mb-2">
+    <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded px-1 py-1 shadow text-xs">
+      <button id="zoom-out" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom Out" style="min-width:1.5em;">-</button>
+      <span id="zoom-level" class="w-8 text-center">100%</span>
+      <button id="zoom-in" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom In" style="min-width:1.5em;">+</button>
+    </div>
+  </div>
         <!-- Image Container -->
         <div class="w-full max-w-4xl mx-auto">
           <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
@@ -122,6 +122,15 @@ const metadata = { title: `Practice - ${id}` };
                 Loading question...
               </div>
             </div>
+          </div>
+        </div>
+        <!-- Header with title on left and button on right -->
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center gap-2">
+            <!-- Solution button -->
+            <button id="show-solution" class="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600">
+              Show Solution
+            </button>
           </div>
         </div>
 
@@ -135,13 +144,6 @@ const metadata = { title: `Practice - ${id}` };
             </div>
           </div>
         </div>
-        
-        <!-- Status Message -->
-        <div class="w-full max-w-4xl mx-auto mt-6">
-          <div id="status-message" class="text-center p-4 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">
-            Welcome! Load a question to begin.
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -149,12 +151,44 @@ const metadata = { title: `Practice - ${id}` };
 
 
   <script>
-    let currentQuestion = null;
+    interface PracticeQuestion {
+      id?: string;
+      topic?: string;
+      subject?: string;
+      difficulty?: string | number;
+      timeLimitMinute?: number;
+      timeLimit?: number;
+      tags?: string[];
+      questionImageUrl?: string;
+      questionImagePath?: string;
+      solutionImageUrl?: string;
+      solutionImagePath?: string;
+      image?: string;
+      // Accept any extra fields (for solutionTifUrl, etc)
+      [key: string]: any;
+    }
+
+    // Rectangle type for highlights
+    type HighlightRect = { x: number, y: number, w: number, h: number };
+    let highlightRects: HighlightRect[] = [];
+    let questionHistory: Array<{
+      question: PracticeQuestion,
+      timerSeconds: number,
+      zoomLevel: number,
+      highlightRects: HighlightRect[],
+      showingSolution: boolean
+    }> = [];
+
+
+    let currentQuestion: PracticeQuestion | null = null; // Holds the currently loaded question object from the API
     let sidebarVisible = true;
     let timerSeconds = 0;
-    let timerInterval = null;
+    let timerInterval: ReturnType<typeof setInterval> | null = null;
     let showingSolution = false;
     let questionCounter = 1; // Global counter starting from 1
+
+    // State history for each question
+  // (Removed duplicate declaration of questionHistory)
 
     // Timer functions
     function startTimer() {
@@ -162,6 +196,7 @@ const metadata = { title: `Practice - ${id}` };
         timerInterval = setInterval(() => {
           timerSeconds++;
           updateTimerDisplay();
+
         }, 1000);
         updateTimerButtons(true);
       }
@@ -189,7 +224,8 @@ const metadata = { title: `Practice - ${id}` };
       const minutes = Math.floor(timerSeconds / 60);
       const seconds = timerSeconds % 60;
       const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      document.getElementById('sidebar-timer').textContent = display;
+      const el = document.getElementById('sidebar-timer');
+      if (el) el.textContent = display;
     }
 
     function updateTimerButtons(isRunning) {
@@ -219,12 +255,11 @@ const metadata = { title: `Practice - ${id}` };
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const closeButton = document.getElementById('sidebar-close');
-      
       if (sidebarVisible) {
         // Collapse sidebar - add collapsed class
-        sidebar.classList.add('collapsed');
+        if (sidebar) sidebar.classList.add('collapsed');
         if (closeButton) {
-          closeButton.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>'; // Right arrow
+          closeButton.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12l-7-7v14l7-7z"/></svg>';
           closeButton.style.position = 'absolute';
           closeButton.style.top = '50%';
           closeButton.style.left = '50%';
@@ -235,9 +270,9 @@ const metadata = { title: `Practice - ${id}` };
         sidebarVisible = false;
       } else {
         // Expand sidebar - remove collapsed class
-        sidebar.classList.remove('collapsed');
+        if (sidebar) sidebar.classList.remove('collapsed');
         if (closeButton) {
-          closeButton.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'; // X
+          closeButton.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12l-7-7v14l7-7z"/></svg>';
           closeButton.style.position = '';
           closeButton.style.top = '';
           closeButton.style.left = '';
@@ -250,62 +285,183 @@ const metadata = { title: `Practice - ${id}` };
     }
 
     // Question loading and display
-    async function loadQuestion() {
+
+    async function loadQuestion({fromHistory = false, historyIndex = null} = {}) {
+      if (fromHistory && historyIndex !== null && questionHistory[historyIndex]) {
+        // Restore from history
+        const state = questionHistory[historyIndex];
+        currentQuestion = state.question;
+        timerSeconds = state.timerSeconds;
+        zoomLevel = state.zoomLevel;
+        highlightRects = JSON.parse(JSON.stringify(state.highlightRects || []));
+        showingSolution = state.showingSolution;
+        updateTimerDisplay();
+        updateTimerButtons(false);
+        if (showingSolution) {
+          displaySolution();
+        } else {
+          displayQuestion(currentQuestion);
+        }
+        updateMetadata(currentQuestion);
+        updateQuestionTitle();
+        drawHighlights();
+        return;
+      }
       try {
-        const questionId = window.location.pathname.split('/').pop();
-        const response = await fetch(`http://localhost:3001/api/questions?id=${questionId}`);
-        
+        // Use the topic from the Astro.params id
+        const topic = window.location.pathname.split('/').pop();
+        const response = await fetch('http://localhost:3001/api/topics/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topics: [topic] })
+        });
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const data = await response.json();
+
+        const result = await response.json();
+        if (!result.matchingQuestions || result.matchingQuestions.length === 0) {
+          const qc = document.getElementById('question-container');
+          if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No question found for this topic.</div>';
+          return;
+        }
+
+        // Pick a random question from the matches
+        const data = result.matchingQuestions[Math.floor(Math.random() * result.matchingQuestions.length)];
         currentQuestion = data;
-        
+
         // Reset solution state
         showingSolution = false;
         const button = document.getElementById('show-solution');
         if (button) {
           button.textContent = 'Show Solution';
         }
-        
+
+        // Save state to history
+        questionHistory = questionHistory.slice(0, questionCounter - 1); // Truncate forward history if any
+        questionHistory.push({
+          question: currentQuestion,
+          timerSeconds,
+          zoomLevel,
+          highlightRects: JSON.parse(JSON.stringify(highlightRects)),
+          showingSolution
+        });
+
         displayQuestion(data);
         updateMetadata(data);
         updateQuestionTitle();
-        
+
       } catch (error) {
         console.error('Error loading question:', error);
-        document.getElementById('question-container').innerHTML = 
-          '<div class="flex items-center justify-center h-full text-red-500">Error loading question</div>';
+        const qc = document.getElementById('question-container');
+        if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">Error loading question</div>';
       }
     }
 
+    let zoomLevel = 1.0;
     function displayQuestion(question) {
       const container = document.getElementById('question-container');
-      
-      if (question.tifUrl) {
-        const imageUrl = `http://localhost:3001${question.tifUrl}`;
+      if (!container) return;
+      if (!question) {
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">No question data</div>';
+        return;
+      }
+      // Support legacy and new API fields for image path
+      const rawUrl = question.questionTifUrl || question.questionImageUrl || question.questionImagePath || question.tifUrl || question.image || '';
+      if (rawUrl) {
+        const imageUrl = rawUrl.startsWith('http') ? rawUrl : `http://localhost:3001${rawUrl}`;
         container.innerHTML = `
-          <div class="flex justify-center">
-            <img src="${imageUrl}" 
-                 alt="Question Image" 
-                 class="max-w-full h-auto rounded border border-gray-200"
-                 crossorigin="anonymous"
-                 onload="this.style.border='3px solid green'"
-                 onerror="this.style.border='3px solid red'; this.alt='Failed to load image'">
-          </div>
-        `;
+      <div class="flex justify-center items-start h-full">
+        <img id="question-img" src="${imageUrl}" 
+          alt="Question Image" 
+          class="w-full max-w-[700px] h-auto"
+          style="width: 100%; max-width: 1000px; height: auto; transform: scale(${zoomLevel}); transform-origin: top center; transition: transform 0.2s; display: block; margin-top: 0;"
+          loading="lazy"
+          crossorigin="anonymous"
+          onerror="this.closest('div').innerHTML='Failed to load question image';">
+      </div>
+    `;
+    updateZoomDisplay();
+    // Scroll 10% down by default
+    setTimeout(() => {
+      container.scrollTop = container.scrollHeight * 0.1;
+    }, 0);
       } else {
         container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No question image available</div>';
       }
     }
 
+    function updateZoomDisplay() {
+      const zoomDisplay = document.getElementById('zoom-level');
+      if (zoomDisplay) zoomDisplay.textContent = Math.round(zoomLevel * 100) + '%';
+      const img = document.getElementById('question-img');
+      if (img) img.style.transform = `scale(${zoomLevel})`;
+    }
+
+    // Dictionary mapping topic to mini-icon filename (without extension)
+    const topicMiniIcons = {
+      'number': 'number-mini-icon',
+      'algebra': 'algebra-mini-icon',
+      'complex-numbers': 'complex-numbers-mini-icon',
+      'sequences-and-series': 'sequences-and-series-mini-icon',
+      'financial-maths': 'financial-mathematics-mini-icon',
+      'induction': 'induction-mini-icon',
+      'functions': 'functions-mini-icon',
+      'differentiation': 'differentiation-mini-icon',
+      'integration': 'integration-mini-icon',
+      'the-line': 'the-line-mini-icon',
+      'the-circle': 'the-circle-mini-icon',
+      'geometry': 'geometry-mini-icon',
+      'trigonometry': 'trigonometry-mini-icon',
+      'probability': 'probability-mini-icon',
+      'statistics': 'statistics-mini-icon',
+    };
+
     function updateMetadata(question) {
-      document.getElementById('meta-id').textContent = question.id || '--';
-      document.getElementById('meta-topic').textContent = question.subject || '--';
-      document.getElementById('meta-difficulty').textContent = question.difficulty || '--';
-      document.getElementById('meta-time-limit').textContent = question.timeLimit ? `${question.timeLimit} min` : '--';
-      document.getElementById('meta-tags').textContent = question.tags ? question.tags.join(', ') : '--';
+      // Only update elements that actually exist in the markup
+      const topicEl = document.getElementById('meta-topic');
+      const diffEl = document.getElementById('meta-difficulty');
+      const timeEl = document.getElementById('meta-time-limit');
+      // API returns: id, topic, difficulty, timeLimitMinute, tags
+      if (topicEl) {
+        // Clear previous content
+        topicEl.innerHTML = '';
+        let topics = question.topic || question.subject || '--';
+        // If topics is a string, make it an array for uniform handling
+        if (typeof topics === 'string') {
+          topics = [topics];
+        }
+        if (Array.isArray(topics)) {
+          let foundIcon = false;
+          topics.forEach(topic => {
+            if (topicMiniIcons[topic]) {
+              const iconPath = `/mini-icons/${topicMiniIcons[topic]}.svg`;
+              const img = document.createElement('img');
+              img.src = iconPath;
+              img.alt = topic;
+              img.title = topic;
+              img.style.width = '2.5em';
+              img.style.height = '2.5em';
+              img.style.display = 'inline';
+              img.style.verticalAlign = 'middle';
+              img.style.marginRight = '0.25em';
+              topicEl.appendChild(img);
+              foundIcon = true;
+            }
+          });
+          // If no icons found, fallback to showing the topic(s) as text
+          if (!foundIcon) {
+            topicEl.textContent = topics.join(', ');
+          }
+        } else {
+          // fallback for unexpected types
+          topicEl.textContent = String(topics);
+        }
+      }
+      if (diffEl) diffEl.textContent = (question.difficulty != null ? question.difficulty : '--');
+      const limit = question.timeLimitMinute || question.timeLimit;
+      if (timeEl) timeEl.textContent = limit ? `${limit} min` : '--';
     }
 
     function updateQuestionTitle() {
@@ -315,7 +471,28 @@ const metadata = { title: `Practice - ${id}` };
       }
     }
 
+
     function nextQuestion() {
+      // Save current state before moving forward
+      if (currentQuestion) {
+        if (questionHistory.length < questionCounter) {
+          questionHistory.push({
+            question: currentQuestion,
+            timerSeconds,
+            zoomLevel,
+            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
+            showingSolution
+          });
+        } else {
+          questionHistory[questionCounter - 1] = {
+            question: currentQuestion,
+            timerSeconds,
+            zoomLevel,
+            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
+            showingSolution
+          };
+        }
+      }
       questionCounter++;
       updateQuestionTitle();
       // Reset solution state
@@ -324,11 +501,32 @@ const metadata = { title: `Practice - ${id}` };
       if (button) {
         button.textContent = 'Show Solution';
       }
-      // Load the same question (as demo) but with updated counter
+      // Load a new question
       loadQuestion();
     }
 
+
     function skipQuestion() {
+      // Save current state before skipping
+      if (currentQuestion) {
+        if (questionHistory.length < questionCounter) {
+          questionHistory.push({
+            question: currentQuestion,
+            timerSeconds,
+            zoomLevel,
+            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
+            showingSolution
+          });
+        } else {
+          questionHistory[questionCounter - 1] = {
+            question: currentQuestion,
+            timerSeconds,
+            zoomLevel,
+            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
+            showingSolution
+          };
+        }
+      }
       questionCounter++;
       updateQuestionTitle();
       // Reset solution state
@@ -341,47 +539,138 @@ const metadata = { title: `Practice - ${id}` };
       if (statusMsg) {
         statusMsg.innerHTML = '<span class="text-yellow-600 font-medium">Question skipped</span>';
       }
-      // Load the same question (as demo) but with updated counter
+      // Load a new question
       loadQuestion();
     }
 
-    function toggleSolution() {
-      if (!currentQuestion) return;
-      
-      const container = document.getElementById('question-container');
-      const button = document.getElementById('show-solution');
-      
-      if (!showingSolution) {
-        // Show solution
-        if (currentQuestion.solutionTifUrl) {
-          const imageUrl = `http://localhost:3001${currentQuestion.solutionTifUrl}`;
-          container.innerHTML = `
-            <div class="flex justify-center">
-              <img src="${imageUrl}" 
-                   alt="Solution Image" 
-                   class="max-w-full h-auto rounded border border-gray-200"
-                   crossorigin="anonymous"
-                   onload="this.style.border='3px solid green'"
-                   onerror="this.style.border='3px solid red'; this.alt='Failed to load solution image'">
-            </div>
-          `;
-          button.textContent = 'Show Question';
-          document.getElementById('status-message').innerHTML = '<span class="text-blue-600 font-medium">Solution displayed</span>';
-        } else {
-          container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No solution available</div>';
-        }
-        showingSolution = true;
-      } else {
-        // Show question
-        displayQuestion(currentQuestion);
-        button.textContent = 'Show Solution';
-        document.getElementById('status-message').innerHTML = '<span class="text-gray-600 font-medium">Question displayed</span>';
-        showingSolution = false;
+    function prevQuestion() {
+      if (questionCounter <= 1) return;
+      // Save current state before moving back
+      if (currentQuestion) {
+        questionHistory[questionCounter - 1] = {
+          question: currentQuestion,
+          timerSeconds,
+          zoomLevel,
+          highlightRects: JSON.parse(JSON.stringify(highlightRects)),
+          showingSolution
+        };
       }
+      questionCounter--;
+      updateQuestionTitle();
+      // Restore previous state ONLY from history
+      const idx = questionCounter - 1;
+      if (questionHistory[idx]) {
+        const state = questionHistory[idx];
+        currentQuestion = state.question;
+        timerSeconds = state.timerSeconds;
+        zoomLevel = state.zoomLevel;
+        highlightRects = JSON.parse(JSON.stringify(state.highlightRects || []));
+        showingSolution = state.showingSolution;
+        updateTimerDisplay();
+        updateTimerButtons(false);
+        if (showingSolution) {
+          displaySolution();
+        } else {
+          displayQuestion(currentQuestion);
+          // Scroll 10% down by default when restoring
+          const container = document.getElementById('question-container');
+          if (container) setTimeout(() => { container.scrollTop = container.scrollHeight * 0.1; }, 0);
+        }
+        updateMetadata(currentQuestion);
+        updateQuestionTitle();
+        drawHighlights();
+      }
+      // If no history, do nothing (do not generate a new question)
     }
 
+  function displaySolution() {
+    const container = document.getElementById('question-container');
+    if (!container || !currentQuestion) return;
+    // Accept solutionImageUrl, solutionImagePath, or solutionTifUrl (if present)
+    const rawSolutionUrl = currentQuestion.solutionTifUrl || currentQuestion.solutionImageUrl || currentQuestion.solutionImagePath;
+    if (rawSolutionUrl) {
+      const imageUrl = rawSolutionUrl.startsWith('http') ? rawSolutionUrl : `http://localhost:3001${rawSolutionUrl}`;
+      container.innerHTML = `
+        <div class="flex justify-center" style="position: relative;">
+          <img id="solution-img" src="${imageUrl}" 
+               alt="Solution Image" 
+               class="max-w-full h-auto rounded"
+               style="transform: scale(${zoomLevel}); transform-origin: top center; transition: transform 0.2s; display: block; margin-top: 0;"
+               loading="lazy"
+               crossorigin="anonymous"
+               onerror="this.closest('div').innerHTML='Failed to load solution image';">
+          <canvas id="highlight-canvas" style="position: absolute; left: 0; top: 0; pointer-events: none;"></canvas>
+        </div>
+      `;
+      updateZoomDisplay();
+      setTimeout(setupHighlighter, 100);
+    } else {
+      container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No solution available</div>';
+    }
+  }
+
+  function drawHighlights() {
+    const img = document.getElementById('question-img') || document.getElementById('solution-img');
+    const canvas = document.getElementById('highlight-canvas') as HTMLCanvasElement | null;
+    if (!img || !canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    highlightRects.forEach(rect => drawRect(rect, 'rgba(255,255,0,0.3)'));
+  }
+
+  function drawRect(rect: HighlightRect, color: string) {
+    const canvas = document.getElementById('highlight-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,215,0,0.8)';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function setupHighlighter() {
+    // Dummy function for now, implement as needed for highlight interaction
+    // This should set up mouse events for drawing highlights
+  }
+
+  function toggleSolution() {
+    if (!currentQuestion) return;
+    const button = document.getElementById('show-solution');
+    const statusMsg = document.getElementById('status-message');
+    if (!button) return;
+    if (!showingSolution) {
+      displaySolution();
+      button.textContent = 'Show Question';
+      if (statusMsg) statusMsg.innerHTML = '<span class="text-blue-600 font-medium">Solution displayed</span>';
+      showingSolution = true;
+    } else {
+      displayQuestion(currentQuestion);
+      button.textContent = 'Show Solution';
+      if (statusMsg) statusMsg.innerHTML = '<span class="text-gray-600 font-medium">Question displayed</span>';
+      showingSolution = false;
+    }
+  }
+
     // Event listeners
-    document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
+      // Zoom controls
+      const zoomInBtn = document.getElementById('zoom-in');
+      const zoomOutBtn = document.getElementById('zoom-out');
+      if (zoomInBtn) zoomInBtn.addEventListener('click', () => {
+        zoomLevel = Math.min(zoomLevel + 0.1, 3.0);
+        updateZoomDisplay();
+      });
+      if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => {
+        zoomLevel = Math.max(zoomLevel - 0.1, 0.2);
+        updateZoomDisplay();
+      });
       // Update initial question title
       updateQuestionTitle();
       
@@ -389,25 +678,67 @@ const metadata = { title: `Practice - ${id}` };
       loadQuestion();
       
       // Timer controls
-      document.getElementById('timer-start').addEventListener('click', () => {
-        if (timerInterval) {
-          pauseTimer();
-        } else {
-          startTimer();
+      const startBtn = document.getElementById('timer-start');
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          if (timerInterval) {
+            pauseTimer();
+          } else {
+            startTimer();
+          }
+        });
+      }
+      const resetBtn = document.getElementById('timer-reset');
+      if (resetBtn) resetBtn.addEventListener('click', resetTimer);
+
+      // Sidebar controls
+      const closeBtn = document.getElementById('sidebar-close');
+      if (closeBtn) closeBtn.addEventListener('click', () => {
+        toggleSidebar();
+        // Show collapsed indicator when sidebar is collapsed
+        const sidebar = document.getElementById('sidebar');
+        const collapsed = document.getElementById('collapsed-indicator');
+        const favBtn = document.getElementById('sidebar-favourite');
+        if (sidebar && collapsed && favBtn) {
+          setTimeout(() => {
+            if (sidebar.classList.contains('collapsed')) {
+              collapsed.classList.remove('hidden');
+              favBtn.style.display = 'none';
+            } else {
+              collapsed.classList.add('hidden');
+              favBtn.style.display = 'block';
+            }
+          }, 300);
         }
       });
-      document.getElementById('timer-pause').addEventListener('click', pauseTimer);
-      document.getElementById('timer-reset').addEventListener('click', resetTimer);
-      
-      // Sidebar controls
-      document.getElementById('sidebar-close').addEventListener('click', toggleSidebar);
-      
+      // Expand sidebar from collapsed indicator
+      const expandBtn = document.getElementById('sidebar-expand');
+      if (expandBtn) expandBtn.addEventListener('click', () => {
+        toggleSidebar();
+        const collapsed = document.getElementById('collapsed-indicator');
+        const favBtn = document.getElementById('sidebar-favourite');
+        if (collapsed) collapsed.classList.add('hidden');
+        if (favBtn) favBtn.style.display = 'block';
+      });
+      // Favourite (star) button
+      const favBtn = document.getElementById('sidebar-favourite');
+      if (favBtn) favBtn.addEventListener('click', () => {
+        // TODO: Implement add/remove favourite logic here
+        favBtn.classList.toggle('text-yellow-400');
+        favBtn.classList.toggle('fill-yellow-400');
+      });
+
       // Action buttons
-      document.getElementById('show-solution').addEventListener('click', toggleSolution);
-      
+      const solutionBtn = document.getElementById('show-solution');
+      if (solutionBtn) solutionBtn.addEventListener('click', toggleSolution);
+
       // Navigation buttons
-      document.getElementById('next-question').addEventListener('click', nextQuestion);
-      document.getElementById('skip-question').addEventListener('click', skipQuestion);
+      const nextBtn = document.getElementById('next-question');
+      if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
+      const skipBtn = document.getElementById('skip-question');
+      if (skipBtn) skipBtn.addEventListener('click', skipQuestion);
+      const prevBtn = document.getElementById('prev-question');
+      if (prevBtn) prevBtn.addEventListener('click', prevQuestion);
     });
   </script>
 

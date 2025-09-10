@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import questionsRouter from './routes/questions.js';
+import topicsRouter from './routes/topics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,10 +34,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (question images)
-app.use('/questions', express.static(path.join(__dirname, '../public/questions')));
+app.use('/questions', express.static(path.join(__dirname, 'data/questions')));
 
 // Routes
 app.use('/api/questions', questionsRouter);
+app.use('/api/topics', topicsRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -56,6 +58,8 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`📝 API endpoints available at http://localhost:${PORT}/api/questions`);
+  console.log(`📝 API endpoints available:`);
+  console.log(`   - http://localhost:${PORT}/api/questions`);
+  console.log(`   - http://localhost:${PORT}/api/topics`);
   console.log(`🖼️  Static files served from http://localhost:${PORT}/questions`);
 });

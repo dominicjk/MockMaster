@@ -1,0 +1,72 @@
+[
+    {
+        "id": "ind-1001",
+        "question-type":"lc", 
+        "topic": "induction",
+        "level": "lc",
+        "difficulty": 3,
+        "timeLimitMinute": 25,
+        "questionTifUrl": "src/assets/questions/induction/questions/ind-1001.png",
+        "solutionTifUrl": "src/assets/questions/induction/answers/ind-1001-ans.png",
+        "tags": ["divisability"],
+        "complete": false,
+        "isShort": true,
+        "name": "2023 Deferred P1 Question 4"
+    },
+    {
+        "id": "ind-1002",
+        "question-type":"lc", 
+        "topic": ["induction", "sequences-and-series"],
+        "level": "lc",
+        "difficulty": 2,
+        "timeLimitMinute": 12,
+        "questionTifUrl": "src/assets/questions/induction/questions/ind-1002.png",
+        "solutionTifUrl": "src/assets/questions/induction/answers/ind-1002-ans.png",
+        "tags": ["divisability", "arithmetic"],
+        "complete": false,
+        "isShort": true,
+        "name": "2021 P1 Question 3"
+    },
+    {
+        "id": "ind-1003",
+        "question-type":"lc", 
+        "topic": ["induction", "algebra"],
+        "level": "lc",
+        "difficulty": 2,
+        "timeLimitMinute": 10,
+        "questionTifUrl": "src/assets/questions/induction/questions/ind-1003.png",
+        "solutionTifUrl": "src/assets/questions/induction/answers/ind-1003-ans.png",
+        "tags": ["divisability", "logarithms"],
+        "complete": false,
+        "isShort": true,
+        "name": "2016 P1 Question 4"
+    },
+    {
+        "id": "ind-1004",
+        "question-type":"lc", 
+        "topic": ["induction", "sequences-and-series", "algebra"],
+        "level": "lc",
+        "difficulty": 2,
+        "timeLimitMinute": 10,
+        "questionTifUrl": "src/assets/questions/induction/questions/ind-1004.png",
+        "solutionTifUrl": "src/assets/questions/induction/answers/ind-1004-ans.png",
+        "tags": ["series", "logarithms"],
+        "complete": false,
+        "isShort": true,
+        "name": "2014 Sample P1 Question 2"
+    },
+    {
+        "id": "ind-1005",
+        "question-type":"lc", 
+        "topic": ["induction", "number-systems"],
+        "level": "lc",
+        "difficulty": 3,
+        "timeLimitMinute": 12,
+        "questionTifUrl": "src/assets/questions/induction/questions/ind-1005.png",
+        "solutionTifUrl": "src/assets/questions/induction/answers/ind-1005-ans.png",
+        "tags": ["series", "proving-odd-even"],
+        "complete": false,
+        "isShort": true,
+        "name": "2014 P1 Question 3"
+    }
+]
