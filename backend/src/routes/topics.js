@@ -81,6 +81,7 @@ function formatQuestionResponse(question) {
   
   return {
     id: question.id,
+    name: question.name || question.id || 'Unknown', // Add name field using id as fallback
     topic: question.topic || question.topics,
     level: question.level,
     difficulty: question.difficulty,
