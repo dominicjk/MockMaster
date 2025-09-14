@@ -20,9 +20,8 @@ const metadata = { title: `Practice - ${id}` };
   <div class="min-h-screen pb-24" style="margin-top: 10px;">
     <div class="p-6">
       <div class="flex gap-6">
-        <!-- Left Sidebar (now inline) -->
-                <!-- Left Sidebar (now inline) -->
-        <div id="sidebar" class="w-80 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg transform transition-all duration-300 relative">
+        <!-- Fixed Left Sidebar -->
+        <div id="sidebar" class="fixed w-80 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg z-10 overflow-hidden" style="top: 135px; left: 24px; height: calc(100vh - 130px);">
           <!-- Top Toggle Tabs (true top slice of sidebar) -->
           <div class="w-full rounded-t-lg overflow-hidden mb-2" style="background: #e5e7eb;">
             <div class="flex flex-row w-full">
@@ -36,7 +35,7 @@ const metadata = { title: `Practice - ${id}` };
           <div id="question-year" class="text-lg font-semibold text-gray-800 dark:text-gray-200 text-left">--</div>
         </div>
         
-        <!-- Header -->
+        <!-- Favorite Star -->
         <div class="flex items-center justify-between mb-3">
           <!-- Star (favourite) icon on the left -->
           <button id="sidebar-favourite" class="p-2 rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-900 mr-2" title="Add to Favourites" style="display: block;" >
@@ -121,23 +120,24 @@ const metadata = { title: `Practice - ${id}` };
           <span class="text-sm">Report Question</span>
         </button>
       </div>
-    </div>
-  </div>
-
-  <!-- Question Panel -->
-  <div id="question-panel" class="flex-1 transition-all duration-300">
-    <!-- Question Container -->
-    <div id="question-container" class="border-2 border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden">
-      <div class="flex items-center justify-center h-96 text-gray-500 bg-white dark:bg-slate-900">
-        Loading question...
+        </div>
       </div>
-    </div>
 
-    <!-- Solution Container (Hidden initially) -->
-    <div id="solution-container" class="mt-6" style="display: none;">
-      <h3 class="text-lg font-semibold mb-3">Solution</h3>
-      <div id="solution-content" class="border-2 border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden">
-        <!-- Solution will be loaded here -->
+        <!-- Question Panel -->
+        <div id="question-panel" class="flex-1 transition-all duration-300" style="margin-left: 20rem;">
+      <!-- Question Container -->
+      <div id="question-container" class="border-2 border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden">
+        <div class="flex items-center justify-center h-96 text-gray-500 bg-white dark:bg-slate-900">
+          Loading question...
+        </div>
+      </div>
+
+      <!-- Solution Container (Hidden initially) -->
+      <div id="solution-container" class="mt-6" style="display: none;">
+        <h3 class="text-lg font-semibold mb-3">Solution</h3>
+        <div id="solution-content" class="border-2 border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden">
+          <!-- Solution will be loaded here -->
+        </div>
       </div>
     </div>
   </div>
@@ -176,7 +176,6 @@ const metadata = { title: `Practice - ${id}` };
 
 
     let currentQuestion: PracticeQuestion | null = null; // Holds the currently loaded question object from the API
-    let sidebarVisible = true;
     let timerSeconds = 0;
     let timerInterval: ReturnType<typeof setInterval> | null = null;
     let showingSolution = false;
@@ -243,39 +242,6 @@ const metadata = { title: `Practice - ${id}` };
           startButton.title = 'Start Timer';
           startButton.className = 'p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors';
         }
-      }
-    }
-
-    // Sidebar toggle function
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const closeButton = document.getElementById('sidebar-close');
-      if (sidebarVisible) {
-        // Collapse sidebar - add collapsed class
-        if (sidebar) sidebar.classList.add('collapsed');
-        if (closeButton) {
-          closeButton.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12l-7-7v14l7-7z"/></svg>';
-          closeButton.style.position = 'absolute';
-          closeButton.style.top = '50%';
-          closeButton.style.left = '50%';
-          closeButton.style.transform = 'translate(-50%, -50%)';
-          closeButton.style.margin = '0';
-          closeButton.style.padding = '8px';
-        }
-        sidebarVisible = false;
-      } else {
-        // Expand sidebar - remove collapsed class
-        if (sidebar) sidebar.classList.remove('collapsed');
-        if (closeButton) {
-          closeButton.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12l-7-7v14l7-7z"/></svg>';
-          closeButton.style.position = '';
-          closeButton.style.top = '';
-          closeButton.style.left = '';
-          closeButton.style.transform = '';
-          closeButton.style.margin = '';
-          closeButton.style.padding = '';
-        }
-        sidebarVisible = true;
       }
     }
 
@@ -720,35 +686,6 @@ const metadata = { title: `Practice - ${id}` };
       const resetBtn = document.getElementById('timer-reset');
       if (resetBtn) resetBtn.addEventListener('click', resetTimer);
 
-      // Sidebar controls
-      const closeBtn = document.getElementById('sidebar-close');
-      if (closeBtn) closeBtn.addEventListener('click', () => {
-        toggleSidebar();
-        // Show collapsed indicator when sidebar is collapsed
-        const sidebar = document.getElementById('sidebar');
-        const collapsed = document.getElementById('collapsed-indicator');
-        const favBtn = document.getElementById('sidebar-favourite');
-        if (sidebar && collapsed && favBtn) {
-          setTimeout(() => {
-            if (sidebar.classList.contains('collapsed')) {
-              collapsed.classList.remove('hidden');
-              favBtn.style.display = 'none';
-            } else {
-              collapsed.classList.add('hidden');
-              favBtn.style.display = 'block';
-            }
-          }, 300);
-        }
-      });
-      // Expand sidebar from collapsed indicator
-      const expandBtn = document.getElementById('sidebar-expand');
-      if (expandBtn) expandBtn.addEventListener('click', () => {
-        toggleSidebar();
-        const collapsed = document.getElementById('collapsed-indicator');
-        const favBtn = document.getElementById('sidebar-favourite');
-        if (collapsed) collapsed.classList.add('hidden');
-        if (favBtn) favBtn.style.display = 'block';
-      });
       // Favourite (star) button
       const favBtn = document.getElementById('sidebar-favourite');
       if (favBtn) favBtn.addEventListener('click', () => {
@@ -797,33 +734,30 @@ const metadata = { title: `Practice - ${id}` };
 
   <style>
     #sidebar {
-      transition: all 0.3s ease;
       width: 20rem; /* w-80 */
-      flex-shrink: 0;
-      overflow: hidden; /* Prevent content from leaking when collapsed */
-      position: relative;
-    }
-
-    /* When collapsed, hide all content */
-    #sidebar.collapsed {
-      width: 40px !important;
-      padding: 0 !important;
-    }
-
-    #sidebar.collapsed .sidebar-content {
-      display: none !important;
-    }
-
-    .sidebar-content {
-      transition: all 0.3s ease;
-    }
-
-    #collapsed-indicator {
-      transition: all 0.3s ease;
     }
 
     #question-panel {
       transition: margin-left 0.3s ease;
+    }
+
+    /* Responsive behavior for smaller screens */
+    @media (max-width: 1280px) {
+      #sidebar {
+        width: 18rem;
+      }
+      #question-panel {
+        margin-left: 18rem !important;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      #sidebar {
+        width: 16rem;
+      }
+      #question-panel {
+        margin-left: 16rem !important;
+      }
     }
   </style>
 </Layout>
