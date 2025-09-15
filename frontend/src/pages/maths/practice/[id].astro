@@ -16,6 +16,15 @@ const metadata = { title: `Practice - ${id}` };
 ---
 
 <Layout metadata={metadata}>
+  <!-- Loading Screen Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Loading Practice Session</h2>
+      <p class="text-gray-600 dark:text-gray-400" id="loading-message">Preparing your questions...</p>
+    </div>
+  </div>
+
   <!-- Main Content Container -->
   <div class="min-h-screen pb-24" style="margin-top: 10px;">
     <div class="p-6">
@@ -181,6 +190,11 @@ const metadata = { title: `Practice - ${id}` };
     let showingSolution = false;
     let questionCounter = 1; // Global counter starting from 1
 
+    // Question caching system
+    let questionBuffer: PracticeQuestion[] = []; // Cache of 5 validated questions
+    let bufferIndex = 0; // Current position in the buffer
+    let isLoadingBuffer = false; // Prevent concurrent buffer loads
+
     // State history for each question
   // (Removed duplicate declaration of questionHistory)
 
@@ -245,6 +259,213 @@ const metadata = { title: `Practice - ${id}` };
       }
     }
 
+    // Question validation function
+    async function validateQuestion(question: PracticeQuestion): Promise<boolean> {
+      const questionUrl = question.questionTifUrl || question.questionImageUrl || question.questionImagePath || question.tifUrl || question.image || '';
+      const solutionUrl = question.solutionTifUrl || question.solutionImageUrl || question.solutionImagePath || '';
+      
+      if (!questionUrl || !solutionUrl) {
+        console.log('Question validation failed: Missing image URLs', { questionUrl, solutionUrl });
+        return false;
+      }
+
+      try {
+        // Validate question image
+        const questionImageUrl = questionUrl.startsWith('http') ? questionUrl : `http://localhost:3001${questionUrl}`;
+        const questionResponse = await fetch(questionImageUrl, { method: 'HEAD' });
+        
+        // Validate solution image
+        const solutionImageUrl = solutionUrl.startsWith('http') ? solutionUrl : `http://localhost:3001${solutionUrl}`;
+        const solutionResponse = await fetch(solutionImageUrl, { method: 'HEAD' });
+        
+        const isValid = questionResponse.ok && solutionResponse.ok;
+        if (!isValid) {
+          console.log('Question validation failed: Images not accessible', {
+            question: questionResponse.status,
+            solution: solutionResponse.status
+          });
+        }
+        return isValid;
+      } catch (error) {
+        console.log('Question validation failed: Network error', error);
+        return false;
+      }
+    }
+
+    // Buffer management functions
+    async function loadQuestionBuffer() {
+      if (isLoadingBuffer) return;
+      isLoadingBuffer = true;
+
+      try {
+        updateLoadingMessage("Loading question set...");
+        const topic = window.location.pathname.split('/').pop();
+        const response = await fetch('http://localhost:3001/api/topics/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topics: [topic] })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (!result.matchingQuestions || result.matchingQuestions.length === 0) {
+          throw new Error('No questions available for this topic');
+        }
+
+        updateLoadingMessage("Validating questions...");
+        
+        // Shuffle and validate questions until we have 5 valid ones
+        const shuffledQuestions = [...result.matchingQuestions].sort(() => Math.random() - 0.5);
+        const validQuestions: PracticeQuestion[] = [];
+        
+        for (const question of shuffledQuestions) {
+          if (validQuestions.length >= 5) break;
+          
+          updateLoadingMessage(`Validating question ${validQuestions.length + 1}/5...`);
+          const isValid = await validateQuestion(question);
+          if (isValid) {
+            validQuestions.push(question);
+          }
+        }
+
+        if (validQuestions.length === 0) {
+          throw new Error('No valid questions found with accessible images');
+        }
+
+        questionBuffer.splice(0, questionBuffer.length, ...validQuestions);
+        bufferIndex = 0;
+        console.log(`Loaded ${validQuestions.length} validated questions into buffer`);
+        
+      } catch (error) {
+        console.error('Error loading question buffer:', error);
+        throw error;
+      } finally {
+        isLoadingBuffer = false;
+      }
+    }
+
+    function getNextQuestionFromBuffer(): PracticeQuestion | null {
+      if (questionBuffer.length === 0) return null;
+      
+      const question = questionBuffer[bufferIndex];
+      bufferIndex = (bufferIndex + 1) % questionBuffer.length;
+      
+      // If we've cycled through all questions, trigger a reload for variety
+      if (bufferIndex === 0) {
+        console.log('Buffer cycled, will reload on next request');
+        // Don't await this, let it load in background
+        setTimeout(() => loadQuestionBuffer().catch(console.error), 100);
+      }
+      
+      return question;
+    }
+
+    // Function to load a specific question by ID using direct API lookup
+    async function loadSpecificQuestion(questionId: string): Promise<boolean> {
+      try {
+        showLoadingScreen("Loading specific question...");
+        console.log(`Loading specific question: ${questionId}`);
+        
+        // Use direct question lookup API - this bypasses topic filtering
+        const response = await fetch(`http://localhost:3001/api/questions?id=${encodeURIComponent(questionId)}`);
+        
+        if (response.ok) {
+          const specificQuestion = await response.json();
+          console.log('Successfully loaded question via direct lookup:', specificQuestion);
+          
+          // Verify the question ID matches exactly
+          if (specificQuestion.id !== questionId) {
+            console.error(`Question ID mismatch! Requested: "${questionId}", Received: "${specificQuestion.id}"`);
+            return false;
+          }
+          
+          // Validate the specific question
+          updateLoadingMessage("Validating specific question...");
+          const isValid = await validateQuestion(specificQuestion);
+          if (!isValid) {
+            console.log(`Question ${questionId} failed validation, loading random question instead`);
+            return false;
+          }
+
+          // Set this as the current question
+          currentQuestion = specificQuestion;
+          showingSolution = false;
+          
+          // Initialize history with this question
+          questionHistory = [{
+            question: currentQuestion,
+            timerSeconds: 0,
+            zoomLevel: 1.0,
+            highlightRects: [],
+            showingSolution: false
+          }];
+
+          updateLoadingMessage("Displaying question...");
+          displayQuestion(currentQuestion);
+          updateMetadata(currentQuestion);
+          updateTabAppearance();
+          
+          setTimeout(() => {
+            hideLoadingScreen();
+          }, 300);
+          
+          console.log(`✓ Question loaded successfully: ${currentQuestion.name || currentQuestion.id} (ID: ${currentQuestion.id})`);
+          return true;
+          
+        } else if (response.status === 404) {
+          console.log(`Question with ID "${questionId}" not found`);
+          return false;
+        } else {
+          console.error('Failed to fetch question, status:', response.status);
+          return false;
+        }
+
+      } catch (error) {
+        console.error('Error loading specific question:', error);
+        return false;
+      }
+    }
+
+
+
+    // Initialize buffer on page load
+    async function initializeQuestionSystem() {
+      try {
+        showLoadingScreen("Initializing practice session...");
+        await loadQuestionBuffer();
+        console.log('Question system initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize question system:', error);
+        // Continue anyway - loadQuestion will handle the error
+      }
+    }
+
+    // Loading screen functions
+    function showLoadingScreen(message = "Preparing your questions...") {
+      const overlay = document.getElementById('loading-overlay');
+      const messageEl = document.getElementById('loading-message');
+      if (overlay) overlay.style.display = 'flex';
+      if (messageEl) messageEl.textContent = message;
+    }
+
+    function hideLoadingScreen() {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 300);
+      }
+    }
+
+    function updateLoadingMessage(message) {
+      const messageEl = document.getElementById('loading-message');
+      if (messageEl) messageEl.textContent = message;
+    }
+
     // Question loading and display
 
     async function loadQuestion({fromHistory = false, historyIndex = null} = {}) {
@@ -269,28 +490,19 @@ const metadata = { title: `Practice - ${id}` };
         drawHighlights();
         return;
       }
+      
       try {
-        // Use the topic from the Astro.params id
-        const topic = window.location.pathname.split('/').pop();
-        const response = await fetch('http://localhost:3001/api/topics/questions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topics: [topic] })
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        // Check if buffer needs loading
+        if (questionBuffer.length === 0 && !isLoadingBuffer) {
+          await loadQuestionBuffer();
         }
-
-        const result = await response.json();
-        if (!result.matchingQuestions || result.matchingQuestions.length === 0) {
-          const qc = document.getElementById('question-container');
-          if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No question found for this topic.</div>';
-          return;
+        
+        // Get next question from buffer
+        const data = getNextQuestionFromBuffer();
+        if (!data) {
+          throw new Error('No valid questions available in buffer');
         }
-
-        // Pick a random question from the matches
-        const data = result.matchingQuestions[Math.floor(Math.random() * result.matchingQuestions.length)];
+        
         currentQuestion = data;
 
         // Reset solution state
@@ -310,14 +522,24 @@ const metadata = { title: `Practice - ${id}` };
           showingSolution
         });
 
+        updateLoadingMessage("Displaying question...");
         displayQuestion(data);
         updateMetadata(data);
         updateTabAppearance();
+        
+        // Hide loading screen once everything is loaded
+        setTimeout(() => {
+          hideLoadingScreen();
+        }, 300);
 
       } catch (error) {
         console.error('Error loading question:', error);
-        const qc = document.getElementById('question-container');
-        if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">Error loading question</div>';
+        updateLoadingMessage("Error loading questions");
+        setTimeout(() => {
+          hideLoadingScreen();
+          const qc = document.getElementById('question-container');
+          if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">Error loading question. Please try again.</div>';
+        }, 1000);
       }
     }
 
@@ -328,6 +550,35 @@ const metadata = { title: `Practice - ${id}` };
       if (!question) {
         container.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">No question data</div>';
         return;
+      }
+
+      // Verify the displayed question matches what was requested (if coming from specific question)
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestedQuestionId = urlParams.get('q');
+      
+      if (requestedQuestionId && question.id !== requestedQuestionId) {
+        console.error(`🚨 QUESTION MISMATCH DETECTED!`);
+        console.error(`Expected: ${requestedQuestionId}`);
+        console.error(`Got: ${question.id}`);
+        console.error('Question object:', question);
+        
+        // Show warning to user
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full text-center p-8">
+            <div class="text-red-500 text-xl mb-4">⚠️ Question Mismatch Detected</div>
+            <div class="text-gray-600 mb-2">Expected: <code>${requestedQuestionId}</code></div>
+            <div class="text-gray-600 mb-4">Got: <code>${question.id || 'Unknown'}</code></div>
+            <button onclick="window.history.back()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+              Go Back to Questions
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Log successful question display
+      if (requestedQuestionId) {
+        console.log(`✅ Displaying correct question: ${question.name || question.id} (ID: ${question.id})`);
       }
       // Support legacy and new API fields for image path
       const rawUrl = question.questionTifUrl || question.questionImageUrl || question.questionImagePath || question.tifUrl || question.image || '';
@@ -666,11 +917,65 @@ const metadata = { title: `Practice - ${id}` };
       // Update initial question title
       updateQuestionTitle();
       
-      // Load question
-      loadQuestion();
+      // Check for specific question ID in URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const specificQuestionId = urlParams.get('q');
       
-      // Initialize tab appearance
-      updateTabAppearance();
+      if (specificQuestionId) {
+        console.log(`🎯 Attempting to load specific question with ID: ${specificQuestionId}`);
+        
+        // Load specific question
+        loadSpecificQuestion(specificQuestionId).then((success) => {
+          if (!success) {
+            // If specific question loading failed, show clear warning and fall back to random
+            console.warn(`❌ Failed to load specific question "${specificQuestionId}"`);
+            console.warn('🔄 Falling back to random question loading as safety measure');
+            
+            // Show user notification about fallback
+            showLoadingScreen(`Question "${specificQuestionId}" not found. Loading a random question...`);
+            setTimeout(() => {
+              initializeQuestionSystem().then(() => {
+                loadQuestion();
+                updateTabAppearance();
+              }).catch((error) => {
+                console.error('Initialization failed:', error);
+                loadQuestion();
+                updateTabAppearance();
+              });
+            }, 2000); // Give user time to see the message
+          } else {
+            console.log(`✅ Successfully loaded specific question: ${specificQuestionId}`);
+            // Successfully loaded specific question, still load buffer for navigation
+            initializeQuestionSystem().catch(console.error);
+          }
+        }).catch((error) => {
+          console.error('❌ Error during specific question loading:', error);
+          console.warn('🔄 Falling back to random question loading');
+          
+          // Show user notification about error
+          showLoadingScreen('Error loading specific question. Loading a random question...');
+          setTimeout(() => {
+            initializeQuestionSystem().then(() => {
+              loadQuestion();
+              updateTabAppearance();
+            }).catch((error) => {
+              console.error('Initialization failed:', error);
+              loadQuestion();
+              updateTabAppearance();
+            });
+          }, 2000);
+        });
+      } else {
+        // Normal initialization - no specific question requested
+        initializeQuestionSystem().then(() => {
+          loadQuestion();
+          updateTabAppearance();
+        }).catch((error) => {
+          console.error('Initialization failed, falling back to direct load:', error);
+          loadQuestion();
+          updateTabAppearance();
+        });
+      }
       
       // Timer controls
       const startBtn = document.getElementById('timer-start');
@@ -739,6 +1044,10 @@ const metadata = { title: `Practice - ${id}` };
 
     #question-panel {
       transition: margin-left 0.3s ease;
+    }
+
+    #loading-overlay {
+      transition: opacity 0.3s ease;
     }
 
     /* Responsive behavior for smaller screens */

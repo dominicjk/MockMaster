@@ -54,6 +54,14 @@ router.get('/', async (req, res) => {
       if (!question) {
         return res.status(404).json({ error: 'Question not found' });
       }
+      
+      // Add cache headers for individual questions
+      res.set({
+        'Cache-Control': 'public, max-age=600, s-maxage=1200', // 10 minutes client, 20 minutes proxy
+        'ETag': `"question-${id}-${Date.now()}"`,
+        'Last-Modified': new Date().toUTCString()
+      });
+      
       return res.json(serializeQuestion(question));
     }
 
@@ -93,6 +101,13 @@ router.get('/', async (req, res) => {
 // GET /api/questions/all - Get all questions (for admin/debug)
 router.get('/all', async (req, res) => {
   try {
+    // Add cache headers for better browser caching
+    res.set({
+      'Cache-Control': 'public, max-age=300, s-maxage=600', // 5 minutes client, 10 minutes proxy
+      'ETag': `"questions-${Date.now()}"`,
+      'Last-Modified': new Date().toUTCString()
+    });
+    
     const questions = await readAllQuestions();
     res.json(questions.map(serializeQuestion));
   } catch (error) {

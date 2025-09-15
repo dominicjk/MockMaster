@@ -203,6 +203,35 @@ router.get('/questions', async (req, res) => {
   }
 });
 
+// GET /api/topics - Get list of all available topics (main endpoint)
+router.get('/', async (req, res) => {
+  try {
+    const allQuestions = await readAllQuestionPairs();
+    
+    const topicsSet = new Set();
+    
+    allQuestions.forEach(question => {
+      const questionTopics = normalizeTopics(question.topic || question.topics);
+      questionTopics.forEach(topic => topicsSet.add(topic));
+    });
+    
+    const availableTopics = Array.from(topicsSet).sort();
+    
+    res.json({
+      message: 'Available topics retrieved successfully',
+      totalTopics: availableTopics.length,
+      topics: availableTopics
+    });
+    
+  } catch (error) {
+    console.error('Error in /topics:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to retrieve available topics'
+    });
+  }
+});
+
 // GET /api/topics/available - Get list of all available topics
 router.get('/available', async (req, res) => {
   try {

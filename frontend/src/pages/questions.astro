@@ -1,0 +1,909 @@
+---
+// src/pages/questions.astro
+import Layout from '~/layouts/PageLayout.astro';
+
+const metadata = {
+  title: 'Questions - Browse All Problems',
+  description: 'Browse and practice all available mathematics problems organized by topic and difficulty.',
+};
+---
+
+<Layout metadata={metadata}>
+  <!-- Loading Screen Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Loading Questions</h2>
+      <p class="text-gray-600 dark:text-gray-400" id="loading-message">Fetching question database...</p>
+    </div>
+  </div>
+
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <!-- User Profile Section (Top Third - Reserved for later) -->
+    <div class="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-xl p-6" style="min-height: 200px;">
+      <div class="flex items-center justify-center h-full">
+        <div class="text-center">
+          <div class="w-16 h-16 bg-gray-300 dark:bg-slate-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <svg class="w-8 h-8 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">User Profile Section</h2>
+          <p class="text-gray-500 dark:text-gray-400">This space is reserved for user profile and statistics</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions List Section (Bottom Two Thirds) -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-600">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Questions</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
+              <span id="total-questions">0</span> problems available
+            </p>
+          </div>
+          <div class="flex items-center gap-4">
+            <!-- Sort Dropdown -->
+            <select id="sort-filter" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+              <option value="default">Default Order</option>
+              <option value="title-asc">Title (A-Z)</option>
+              <option value="title-desc">Title (Z-A)</option>
+              <option value="difficulty-asc">Difficulty (Easy to Hard)</option>
+              <option value="difficulty-desc">Difficulty (Hard to Easy)</option>
+              <option value="year-asc">Year (Old to New)</option>
+              <option value="year-desc">Year (New to Old)</option>
+              <option value="topics-asc">Topics (A-Z)</option>
+              <option value="completed">Completed First</option>
+              <option value="incomplete">Incomplete First</option>
+            </select>
+            
+            <!-- Filters -->
+            <select id="topic-filter" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+              <option value="">All Topics</option>
+            </select>
+            <select id="difficulty-filter" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+              <option value="">All Difficulties</option>
+              <option value="1">Easy</option>
+              <option value="2">Medium</option>
+              <option value="3">Hard</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Questions Table -->
+      <div class="overflow-hidden">
+        <!-- Table Header -->
+        <div class="px-6 py-3 bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
+          <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <div class="col-span-1 text-center">Status</div>
+            <div class="col-span-5">Title</div>
+            <div class="col-span-4">Topics</div>
+            <div class="col-span-2">Difficulty</div>
+          </div>
+        </div>
+
+        <!-- Questions List Container -->
+        <div id="questions-container" class="divide-y divide-gray-200 dark:divide-slate-600">
+          <!-- Questions will be dynamically loaded here -->
+        </div>
+
+        <!-- Loading More Indicator -->
+        <div id="loading-more" class="hidden px-6 py-4 text-center">
+          <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span class="ml-2 text-gray-600 dark:text-gray-400">Loading more questions...</span>
+        </div>
+
+        <!-- Load More Button -->
+        <div id="load-more-section" class="hidden px-6 py-6 text-center border-t border-gray-200 dark:border-slate-600">
+          <button id="load-more-btn" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <span class="mr-2">Load More Questions</span>
+            <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+          </button>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            Showing <span id="questions-shown">0</span> of <span id="questions-total">0</span> questions
+          </p>
+        </div>
+
+        <!-- End of Results Message -->
+        <div id="end-of-results" class="hidden px-6 py-4 text-center border-t border-gray-200 dark:border-slate-600">
+          <div class="flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414-1.414L9 5.586 7.707 4.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414z" clip-rule="evenodd"/>
+            </svg>
+            <span>You've reached the end of all questions!</span>
+          </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results" class="hidden px-6 py-12 text-center">
+          <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No questions found</h3>
+          <p class="text-gray-500 dark:text-gray-400">Try adjusting your filters or check back later.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    interface Question {
+        id: string;
+        name?: string;
+        topic?: string | string[];
+        subject?: string | string[];
+        difficulty?: number | string;
+        tags?: string[];
+        completed?: boolean;
+        title?: string;
+        // Allow any additional fields
+        [key: string]: unknown;
+      }
+
+      let allQuestions: Question[] = [];
+      let displayedQuestions: Question[] = [];
+      let filteredQuestions: Question[] = [];
+      let currentlyShown = 0;
+      let currentSort = 'default';
+      const questionsPerPage = 20;
+
+    // Difficulty mapping
+    const difficultyConfig = {
+      1: { label: 'Easy', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+      2: { label: 'Medium', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300' },
+      3: { label: 'Hard', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' }
+    };
+
+    // Caching variables
+    let questionsCache: Question[] | null = null;
+    let cacheTimestamp: number | null = null;
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    // Cache management functions
+    function isCacheValid(): boolean {
+      if (!questionsCache || !cacheTimestamp) return false;
+      return (Date.now() - cacheTimestamp) < CACHE_DURATION;
+    }
+
+    function setCacheData(data: Question[]): void {
+      questionsCache = data;
+      cacheTimestamp = Date.now();
+      // Also store in sessionStorage for persistence across navigation
+      try {
+        sessionStorage.setItem('questionsCache', JSON.stringify({
+          data: data,
+          timestamp: cacheTimestamp
+        }));
+        console.log('📦 Questions cached to sessionStorage');
+      } catch (e) {
+        console.warn('Failed to store cache in sessionStorage:', e);
+      }
+    }
+
+    function getCacheData(): Question[] | null {
+      // First check memory cache
+      if (isCacheValid()) {
+        console.log('📦 Using memory cache');
+        return questionsCache;
+      }
+      
+      // Then check sessionStorage
+      try {
+        const stored = sessionStorage.getItem('questionsCache');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const age = Date.now() - parsed.timestamp;
+          if (age < CACHE_DURATION) {
+            questionsCache = parsed.data;
+            cacheTimestamp = parsed.timestamp;
+            const minutes = Math.floor(age / 60000);
+            console.log(`📦 Using sessionStorage cache (${minutes} minute${minutes !== 1 ? 's' : ''} old)`);
+            return questionsCache;
+          } else {
+            console.log('🗑️ Cache expired, removing old data');
+            sessionStorage.removeItem('questionsCache');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to retrieve cache from sessionStorage:', e);
+      }
+      
+      return null;
+    }
+
+    function clearCache(): void {
+      questionsCache = null;
+      cacheTimestamp = null;
+      try {
+        sessionStorage.removeItem('questionsCache');
+        console.log('🗑️ Cache cleared');
+      } catch (e) {
+        console.warn('Failed to clear cache from sessionStorage:', e);
+      }
+    }
+
+    async function loadAllQuestions() {
+      try {
+        // Check if we have valid cached data
+        const cachedData = getCacheData();
+        if (cachedData) {
+          showLoadingScreen("Loading from cache...");
+          
+          allQuestions = cachedData;
+          
+          // Add completed field if not present (default to false)
+          allQuestions = allQuestions.map((q, index) => ({
+            ...q,
+            id: q.id || `question-${index}`,
+            completed: q.completed || false
+          }));
+
+          console.log(`✅ Loaded ${allQuestions.length} questions from cache`);
+          
+          // Populate topic filter
+          populateTopicFilter();
+          
+          // Display questions
+          displayQuestions();
+          updateTotalCount();
+          
+          hideLoadingScreen();
+          return; // Exit early with cached data
+        }
+
+        // No valid cache, fetch fresh data
+        console.log('🌐 Fetching fresh questions data from API');
+        showLoadingScreen("Fetching questions from database...");
+        
+        // Get all available topics first
+        const topicsResponse = await fetch('http://localhost:3001/api/topics');
+        if (!topicsResponse.ok) {
+          throw new Error(`Failed to fetch topics: ${topicsResponse.status}`);
+        }
+        
+        const topicsData = await topicsResponse.json();
+        const topics = topicsData.topics || [];
+        
+        showLoadingScreen("Loading questions for all topics...");
+        
+        // Fetch questions for all topics
+        const questionsResponse = await fetch('http://localhost:3001/api/topics/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topics })
+        });
+
+        if (!questionsResponse.ok) {
+          throw new Error(`Failed to fetch questions: ${questionsResponse.status}`);
+        }
+
+        const questionsData = await questionsResponse.json();
+        const freshQuestions = questionsData.matchingQuestions || [];
+        
+        // Cache the fresh data
+        setCacheData(freshQuestions);
+        
+        allQuestions = freshQuestions;
+        
+        // Add completed field if not present (default to false)
+        allQuestions = allQuestions.map((q, index) => ({
+          ...q,
+          id: q.id || `question-${index}`,
+          completed: q.completed || false
+        }));
+
+        console.log(`Loaded ${allQuestions.length} questions`);
+        
+        // Populate topic filter
+        populateTopicFilter();
+        
+        // Display questions
+        displayQuestions();
+        updateTotalCount();
+        
+      } catch (error) {
+        console.error('Error loading questions:', error);
+        showError('Failed to load questions. Please try refreshing the page.');
+      } finally {
+        hideLoadingScreen();
+      }
+    }
+
+    function populateTopicFilter() {
+      const topicFilter = document.getElementById('topic-filter') as HTMLSelectElement;
+      if (!topicFilter) return;
+
+      // Get unique topics
+      const topics = new Set<string>();
+      allQuestions.forEach(q => {
+        const topicData = q.topic || q.subject;
+        if (topicData) {
+          // Handle both string and array cases
+          if (Array.isArray(topicData)) {
+            topicData.forEach(t => {
+              if (typeof t === 'string') topics.add(t);
+            });
+          } else if (typeof topicData === 'string') {
+            topics.add(topicData);
+          }
+        }
+      });
+
+      // Clear existing options (except "All Topics")
+      while (topicFilter.children.length > 1) {
+        topicFilter.removeChild(topicFilter.lastChild!);
+      }
+
+      // Add topic options
+      Array.from(topics).sort().forEach(topic => {
+        const option = document.createElement('option');
+        option.value = topic;
+        option.textContent = topic.charAt(0).toUpperCase() + topic.slice(1).replace('-', ' ');
+        topicFilter.appendChild(option);
+      });
+    }
+
+    function sortQuestions(questions: Question[], sortBy: string): Question[] {
+      const sorted = [...questions];
+      
+      switch (sortBy) {
+        case 'title-asc':
+          return sorted.sort((a, b) => {
+            const nameA = (a.name || a.title || '').toLowerCase();
+            const nameB = (b.name || b.title || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+          });
+          
+        case 'title-desc':
+          return sorted.sort((a, b) => {
+            const nameA = (a.name || a.title || '').toLowerCase();
+            const nameB = (b.name || b.title || '').toLowerCase();
+            return nameB.localeCompare(nameA);
+          });
+          
+        case 'difficulty-asc':
+          return sorted.sort((a, b) => {
+            const diffA = Number(a.difficulty) || 1;
+            const diffB = Number(b.difficulty) || 1;
+            return diffA - diffB;
+          });
+          
+        case 'difficulty-desc':
+          return sorted.sort((a, b) => {
+            const diffA = Number(a.difficulty) || 1;
+            const diffB = Number(b.difficulty) || 1;
+            return diffB - diffA;
+          });
+          
+        case 'year-asc':
+          return sorted.sort((a, b) => {
+            // Extract year from title - you can modify this logic
+            const yearA = extractYearFromTitle(a.name || a.title || '');
+            const yearB = extractYearFromTitle(b.name || b.title || '');
+            return yearA - yearB;
+          });
+          
+        case 'year-desc':
+          return sorted.sort((a, b) => {
+            const yearA = extractYearFromTitle(a.name || a.title || '');
+            const yearB = extractYearFromTitle(b.name || b.title || '');
+            return yearB - yearA;
+          });
+          
+        case 'topics-asc':
+          return sorted.sort((a, b) => {
+            const topicA = getFirstTopic(a.topic || a.subject || '');
+            const topicB = getFirstTopic(b.topic || b.subject || '');
+            return topicA.localeCompare(topicB);
+          });
+          
+        case 'completed':
+          return sorted.sort((a, b) => {
+            const completedA = a.completed ? 1 : 0;
+            const completedB = b.completed ? 1 : 0;
+            return completedB - completedA;
+          });
+          
+        case 'incomplete':
+          return sorted.sort((a, b) => {
+            const completedA = a.completed ? 1 : 0;
+            const completedB = b.completed ? 1 : 0;
+            return completedA - completedB;
+          });
+          
+        default:
+          return sorted; // Keep original order
+      }
+    }
+
+    function extractYearFromTitle(title: string): number {
+      // Look for 4-digit years in the title
+      const yearMatch = title.match(/\b(19|20)\d{2}\b/);
+      if (yearMatch) {
+        return parseInt(yearMatch[0]);
+      }
+      
+      // Look for common year patterns
+      const patterns = [
+        /year\s*(\d{4})/i,
+        /(\d{4})\s*paper/i,
+        /exam\s*(\d{4})/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = title.match(pattern);
+        if (match) {
+          const year = parseInt(match[1]);
+          if (year >= 1900 && year <= 2030) {
+            return year;
+          }
+        }
+      }
+      
+      // Default year if no year found (will sort to end)
+      return 0;
+    }
+
+    function getFirstTopic(topicData: string | string[]): string {
+      if (Array.isArray(topicData)) {
+        return topicData.length > 0 ? topicData[0].toLowerCase() : '';
+      }
+      return typeof topicData === 'string' ? topicData.toLowerCase() : '';
+    }
+
+    function displayQuestions(filterTopic = '', filterDifficulty = '', sortBy = '', reset = true) {
+      const container = document.getElementById('questions-container');
+      const noResults = document.getElementById('no-results');
+      const loadMoreSection = document.getElementById('load-more-section');
+      const endOfResults = document.getElementById('end-of-results');
+      
+      if (!container || !noResults) return;
+
+      // Update current sort if provided
+      if (sortBy) {
+        currentSort = sortBy;
+      }
+
+      // Filter questions
+      filteredQuestions = allQuestions;
+      
+      if (filterTopic) {
+        filteredQuestions = filteredQuestions.filter(q => {
+          const topicData = q.topic || q.subject;
+          if (Array.isArray(topicData)) {
+            return topicData.includes(filterTopic);
+          }
+          return topicData === filterTopic;
+        });
+      }
+      
+      if (filterDifficulty) {
+        filteredQuestions = filteredQuestions.filter(q => 
+          String(q.difficulty || '') === filterDifficulty
+        );
+      }
+
+      // Apply sorting
+      filteredQuestions = sortQuestions(filteredQuestions, currentSort);
+
+      // Reset pagination when filters change
+      if (reset) {
+        currentlyShown = 0;
+        container.innerHTML = '';
+      }
+
+      displayedQuestions = filteredQuestions;
+
+      if (displayedQuestions.length === 0) {
+        noResults.classList.remove('hidden');
+        loadMoreSection?.classList.add('hidden');
+        endOfResults?.classList.add('hidden');
+        return;
+      }
+
+      noResults.classList.add('hidden');
+
+      // Calculate which questions to show
+      const startIndex = currentlyShown;
+      const endIndex = Math.min(currentlyShown + questionsPerPage, displayedQuestions.length);
+      const questionsToShow = displayedQuestions.slice(startIndex, endIndex);
+
+      // Add questions to container
+      questionsToShow.forEach((question, index) => {
+        const questionRow = createQuestionRow(question, startIndex + index);
+        container.appendChild(questionRow);
+      });
+
+      // Update pagination state
+      currentlyShown = endIndex;
+      updatePaginationControls();
+    }
+
+    function loadMoreQuestions() {
+      if (currentlyShown < filteredQuestions.length) {
+        const loadingMore = document.getElementById('loading-more');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        
+        // Show loading state
+        loadingMore?.classList.remove('hidden');
+        loadMoreBtn?.setAttribute('disabled', 'true');
+        
+        // Simulate network delay for better UX
+        setTimeout(() => {
+          displayQuestions('', '', '', false); // Don't reset, just add more
+          loadingMore?.classList.add('hidden');
+          loadMoreBtn?.removeAttribute('disabled');
+        }, 300);
+      }
+    }
+
+    function updatePaginationControls() {
+      const questionsShown = document.getElementById('questions-shown');
+      const questionsTotal = document.getElementById('questions-total');
+      const loadMoreSection = document.getElementById('load-more-section');
+      const endOfResults = document.getElementById('end-of-results');
+
+      if (questionsShown) questionsShown.textContent = currentlyShown.toString();
+      if (questionsTotal) questionsTotal.textContent = filteredQuestions.length.toString();
+
+      // Show/hide load more button based on remaining questions
+      if (currentlyShown < filteredQuestions.length) {
+        loadMoreSection?.classList.remove('hidden');
+        endOfResults?.classList.add('hidden');
+      } else {
+        loadMoreSection?.classList.add('hidden');
+        if (currentlyShown > 0) {
+          endOfResults?.classList.remove('hidden');
+        }
+      }
+    }
+
+    function createQuestionRow(question: Question, index: number): HTMLElement {
+      const row = document.createElement('div');
+      row.className = 'px-6 py-4 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors question-row-enter';
+      
+      const difficulty = question.difficulty || 1;
+      const difficultyNum = typeof difficulty === 'string' ? parseInt(difficulty) || 1 : difficulty;
+      const normalizedDifficulty = Math.min(Math.max(difficultyNum, 1), 3) as 1 | 2 | 3;
+      const difficultyInfo = difficultyConfig[normalizedDifficulty];
+      
+      // Handle topic data (can be string or array)
+      const topicData = question.topic || question.subject;
+      let topicsHtml = '';
+      
+      if (Array.isArray(topicData)) {
+        // If array, display all topics with better spacing
+        const topics = topicData.map(topic => 
+          `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">
+            ${String(topic).charAt(0).toUpperCase() + String(topic).slice(1).replace(/-/g, ' ')}
+          </span>`
+        ).join('');
+        topicsHtml = topics || '<span class="text-gray-500 text-xs">Unknown</span>';
+      } else if (typeof topicData === 'string') {
+        topicsHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">
+          ${topicData.charAt(0).toUpperCase() + topicData.slice(1).replace(/-/g, ' ')}
+        </span>`;
+      } else {
+        topicsHtml = '<span class="text-gray-500 text-xs">Unknown</span>';
+      }
+      
+      const name = question.name || question.title || `Question ${index + 1}`;
+      
+      row.innerHTML = `
+        <div class="grid grid-cols-12 gap-3 items-center question-grid py-2">
+          <!-- Status Column -->
+          <div class="col-span-1 flex justify-center">
+            <div class="relative">
+              <input 
+                type="checkbox" 
+                ${question.completed ? 'checked' : ''} 
+                class="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                onchange="toggleQuestionCompleted('${question.id}', this.checked)"
+              />
+              ${question.completed ? 
+                '<svg class="w-3 h-3 text-green-600 absolute top-0.5 left-0.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : 
+                ''
+              }
+            </div>
+          </div>
+          
+          <!-- Title Column -->
+          <div class="col-span-5 title-column">
+            <div class="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate pr-2" title="${name}">
+              ${name}
+            </div>
+          </div>
+          
+          <!-- Topics Column -->
+          <div class="col-span-4">
+            <div class="flex flex-wrap items-center gap-1 max-h-12 overflow-hidden">
+              ${topicsHtml}
+            </div>
+          </div>
+          
+          <!-- Difficulty Column -->
+          <div class="col-span-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${difficultyInfo.color} whitespace-nowrap">
+              ${difficultyInfo.label}
+            </span>
+          </div>
+        </div>
+      `;
+
+      // Add click handler to navigate to practice page with specific question
+      row.addEventListener('click', (e) => {
+        // Don't navigate if checkbox was clicked
+        const target = e.target as HTMLInputElement;
+        if (target.type === 'checkbox') return;
+        
+        const topicData = question.topic || question.subject || '';
+        let topicForUrl = '';
+        
+        if (Array.isArray(topicData)) {
+          topicForUrl = topicData.length > 0 ? topicData[0] : '';
+        } else if (typeof topicData === 'string') {
+          topicForUrl = topicData;
+        }
+        
+        // Verify question data before navigation
+        if (!question.id) {
+          console.error('❌ Cannot navigate: Question has no ID', question);
+          alert('Error: This question has no ID. Please try another question.');
+          return;
+        }
+        
+        if (!topicForUrl) {
+          console.error('❌ Cannot navigate: Question has no topic', question);
+          alert('Error: This question has no topic. Please try another question.');
+          return;
+        }
+        
+        // Log navigation attempt for debugging
+        console.log(`🎯 Navigating to specific question:`, {
+          id: question.id,
+          name: question.name || question.title || 'Unknown',
+          topic: topicForUrl,
+          url: `/maths/practice/${topicForUrl}?q=${encodeURIComponent(question.id)}`
+        });
+        
+        if (topicForUrl && question.id) {
+          // Navigate to practice page with specific question ID
+          const navigationUrl = `/maths/practice/${topicForUrl}?q=${encodeURIComponent(question.id)}`;
+          console.log(`🚀 Navigating to: ${navigationUrl}`);
+          window.location.href = navigationUrl;
+        } else if (topicForUrl) {
+          // This should not happen due to the checks above, but keep as fallback
+          console.warn('⚠️ Fallback navigation to topic only (no question ID)');
+          window.location.href = `/maths/practice/${topicForUrl}`;
+        }
+      });
+
+      return row;
+    }
+
+    function toggleQuestionCompleted(questionId: string, completed: boolean) {
+      // Find and update the question
+      const question = allQuestions.find(q => q.id === questionId);
+      if (question) {
+        question.completed = completed;
+        // Here you would typically send this update to the backend
+        console.log(`Question ${questionId} marked as ${completed ? 'completed' : 'not completed'}`);
+      }
+    }
+
+    function updateTotalCount() {
+      const totalElement = document.getElementById('total-questions');
+      if (totalElement) {
+        totalElement.textContent = allQuestions.length.toString();
+      }
+    }
+
+    function showLoadingScreen(message = "Loading questions...") {
+      const overlay = document.getElementById('loading-overlay');
+      const messageEl = document.getElementById('loading-message');
+      if (overlay) overlay.style.display = 'flex';
+      if (messageEl) messageEl.textContent = message;
+    }
+
+    function hideLoadingScreen() {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          overlay.style.opacity = '1';
+        }, 300);
+      }
+    }
+
+    function showError(message: string) {
+      const container = document.getElementById('questions-container');
+      if (container) {
+        container.innerHTML = `
+          <div class="px-6 py-12 text-center">
+            <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Error Loading Questions</h3>
+            <p class="text-gray-500 dark:text-gray-400">${message}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load questions when page loads
+      loadAllQuestions();
+
+      // Filter event listeners
+      const topicFilter = document.getElementById('topic-filter') as HTMLSelectElement;
+      const difficultyFilter = document.getElementById('difficulty-filter') as HTMLSelectElement;
+      const sortFilter = document.getElementById('sort-filter') as HTMLSelectElement;
+      const loadMoreBtn = document.getElementById('load-more-btn');
+
+      if (topicFilter) {
+        topicFilter.addEventListener('change', () => {
+          displayQuestions(topicFilter.value, difficultyFilter?.value || '', sortFilter?.value || '', true);
+        });
+      }
+
+      if (difficultyFilter) {
+        difficultyFilter.addEventListener('change', () => {
+          displayQuestions(topicFilter?.value || '', difficultyFilter.value, sortFilter?.value || '', true);
+        });
+      }
+
+      if (sortFilter) {
+        sortFilter.addEventListener('change', () => {
+          displayQuestions(topicFilter?.value || '', difficultyFilter?.value || '', sortFilter.value, true);
+        });
+      }
+
+      // Load more button event listener
+      if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreQuestions);
+      }
+
+      // Scroll-to-load functionality (optional enhancement)
+      let isLoadingMore = false;
+      window.addEventListener('scroll', () => {
+        if (isLoadingMore) return;
+        
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+        
+        // Trigger load more when 80% scrolled
+        if (scrollPercentage > 0.8 && currentlyShown < filteredQuestions.length) {
+          isLoadingMore = true;
+          loadMoreQuestions();
+          setTimeout(() => { isLoadingMore = false; }, 1000);
+        }
+      });
+
+      // Add cache refresh functionality
+      function refreshCache() {
+        clearCache();
+        console.log('🔄 Manual cache refresh triggered');
+        loadAllQuestions();
+      }
+
+      // Add keyboard shortcut to refresh cache (Ctrl+Shift+R)
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+          e.preventDefault();
+          refreshCache();
+        }
+      });
+
+      // Optional: Add a refresh button to the UI (you can uncomment this)
+      /*
+      const refreshBtn = document.createElement('button');
+      refreshBtn.textContent = '🔄 Refresh Cache';
+      refreshBtn.className = 'px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600';
+      refreshBtn.onclick = refreshCache;
+      document.querySelector('.flex.flex-wrap.gap-4.mb-6')?.appendChild(refreshBtn);
+      */
+
+    // Make function available globally for the onclick handler
+    (window as Window & typeof globalThis & { toggleQuestionCompleted: typeof toggleQuestionCompleted }).toggleQuestionCompleted = toggleQuestionCompleted;
+    });
+  </script>
+
+  <style>
+    #loading-overlay {
+      transition: opacity 0.3s ease;
+    }
+
+    /* Custom checkbox styling */
+    input[type="checkbox"]:checked {
+      background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-8-8a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L5 6.207l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
+    }
+
+    /* Hover effects for question rows */
+    .cursor-pointer:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Smooth transitions for all interactive elements */
+    .transition-colors {
+      transition: color 0.2s ease, background-color 0.2s ease;
+    }
+
+    /* Load More Button Animations */
+    #load-more-btn {
+      transition: all 0.2s ease;
+    }
+
+    #load-more-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    #load-more-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Bounce animation for the arrow */
+    @keyframes bounce-gentle {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-2px);
+      }
+    }
+
+    .animate-bounce {
+      animation: bounce-gentle 1s ease-in-out infinite;
+    }
+
+    /* Fade in animation for newly loaded questions */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .question-row-enter {
+      animation: fadeInUp 0.3s ease-out;
+    }
+
+    /* Loading state styling */
+    #loading-more {
+      animation: fadeInUp 0.2s ease-out;
+    }
+
+    /* Topic tags styling to prevent overflow */
+    .topic-tag {
+      max-width: calc(100% - 4px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Improved grid layout for better space utilization */
+    .question-grid {
+      min-height: 60px;
+      align-items: center;
+    }
+
+    /* Title column truncation for better space management */
+    .title-column {
+      min-width: 0; /* Allows flex shrinking */
+    }
+  </style>
+</Layout>
