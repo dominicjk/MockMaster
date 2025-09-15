@@ -18,24 +18,26 @@ const metadata = {
     </div>
   </div>
 
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-    <!-- User Profile Section (Top Third - Reserved for later) -->
-    <div class="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-xl p-6" style="min-height: 200px;">
-      <div class="flex items-center justify-center h-full">
-        <div class="text-center">
-          <div class="w-16 h-16 bg-gray-300 dark:bg-slate-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <svg class="w-8 h-8 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-            </svg>
+  <!-- Pink background similar to practice page -->
+  <div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <!-- User Profile Section (Top Third - Reserved for later) -->
+      <div class="mb-8 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-pink-100/50 dark:border-slate-700/50" style="min-height: 200px;">
+        <div class="flex items-center justify-center h-full">
+          <div class="text-center">
+            <div class="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 dark:bg-gradient-to-br dark:from-slate-600 dark:to-slate-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <svg class="w-8 h-8 text-pink-600 dark:text-pink-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">User Profile Section</h2>
+            <p class="text-gray-500 dark:text-gray-400">This space is reserved for user profile and statistics</p>
           </div>
-          <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">User Profile Section</h2>
-          <p class="text-gray-500 dark:text-gray-400">This space is reserved for user profile and statistics</p>
         </div>
       </div>
-    </div>
 
-    <!-- Questions List Section (Bottom Two Thirds) -->
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+      <!-- Questions List Section (Bottom Two Thirds) -->
+      <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-pink-100/50 dark:border-slate-700/50">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-600">
         <div class="flex items-center justify-between">
@@ -47,24 +49,22 @@ const metadata = {
           </div>
           <div class="flex items-center gap-4">
             <!-- Sort Dropdown -->
-            <select id="sort-filter" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-              <option value="default">Default Order</option>
-              <option value="title-asc">Title (A-Z)</option>
-              <option value="title-desc">Title (Z-A)</option>
-              <option value="difficulty-asc">Difficulty (Easy to Hard)</option>
-              <option value="difficulty-desc">Difficulty (Hard to Easy)</option>
-              <option value="year-asc">Year (Old to New)</option>
-              <option value="year-desc">Year (New to Old)</option>
-              <option value="topics-asc">Topics (A-Z)</option>
-              <option value="completed">Completed First</option>
-              <option value="incomplete">Incomplete First</option>
+            <select id="sort-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
+              <option value="year-desc" selected>Newest First</option>
+              <option value="year-asc">Oldest First</option>
+              <option value="completed">Completed</option>
+              <option value="incomplete">Incomplete</option>
+              <option value="state-exams">State Exams</option>
+              <option value="custom-questions">Custom Questions</option>
+              <option value="paper-1">Paper 1</option>
+              <option value="paper-2">Paper 2</option>
             </select>
             
             <!-- Filters -->
-            <select id="topic-filter" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+            <select id="topic-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="">All Topics</option>
             </select>
-            <select id="difficulty-filter" class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+            <select id="difficulty-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="">All Difficulties</option>
               <option value="1">Easy</option>
               <option value="2">Medium</option>
@@ -150,8 +150,11 @@ const metadata = {
       let displayedQuestions: Question[] = [];
       let filteredQuestions: Question[] = [];
       let currentlyShown = 0;
-      let currentSort = 'default';
+      let currentSort = 'year-desc';
       const questionsPerPage = 20;
+      let loadingTimeout: number | null = null;
+      let warningTimeout: number | null = null;
+      let isLoaded = false;
 
     // Difficulty mapping
     const difficultyConfig = {
@@ -349,73 +352,239 @@ const metadata = {
       });
     }
 
+    // Utility function to format topic names properly
+    function formatTopicName(topic: string): string {
+      if (!topic) return '';
+      
+      const topicStr = String(topic).toLowerCase();
+      
+      // Special case mappings
+      const specialMappings: { [key: string]: string } = {
+        'sequences-and-series': 'Sequences & Series',
+        'sequences-series': 'Sequences & Series',
+        'sequences and series': 'Sequences & Series',
+        'prob-stat': 'Probability-Statistics',
+        'probability-statistics': 'Probability-Statistics',
+        'prob stat': 'Probability-Statistics',
+        'the-line': 'The Line',
+        'complex-numbers': 'Complex Numbers',
+        'complex numbers': 'Complex Numbers',
+        'financial-maths': 'Financial Maths',
+        'financial maths': 'Financial Maths',
+        'compound-interest': 'Compound Interest',
+        'compound interest': 'Compound Interest',
+        'mathematical-induction': 'Mathematical Induction',
+        'mathematical induction': 'Mathematical Induction',
+        'proof-by-induction': 'Proof by Induction',
+        'proof by induction': 'Proof by Induction',
+        'differentiation': 'Differentiation',
+        'integration': 'Integration',
+        'algebra': 'Algebra',
+        'geometry': 'Geometry',
+        'trigonometry': 'Trigonometry',
+        'statistics': 'Statistics',
+        'probability': 'Probability'
+      };
+      
+      // Check for exact matches first
+      if (specialMappings[topicStr]) {
+        return specialMappings[topicStr];
+      }
+      
+      // Check for partial matches
+      for (const [key, value] of Object.entries(specialMappings)) {
+        if (topicStr.includes(key) || key.includes(topicStr)) {
+          return value;
+        }
+      }
+      
+      // Default formatting: capitalize each word and replace dashes/underscores with spaces
+      return topicStr
+        .replace(/[-_]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    // Paper 1 topics: algebra, complex numbers, differentiation, integration, sequences, financial maths, induction
+    const paper1Topics = [
+      'algebra', 'algebraic', 'polynomial', 'quadratic',
+      'complex', 'complex-numbers', 'imaginary',
+      'differentiation', 'derivative', 'diff',
+      'integration', 'integral', 'integrate',
+      'sequences', 'sequence', 'series', 'arithmetic', 'geometric',
+      'financial', 'financial-maths', 'compound-interest', 'annuity',
+      'induction', 'mathematical-induction', 'proof-by-induction'
+    ];
+    
+    function isPaper1Question(question: Question): boolean {
+      const topics = Array.isArray(question.topic) ? question.topic : [question.topic || question.subject];
+      return topics.some(topic => {
+        const topicStr = String(topic || '').toLowerCase().replace(/[-_\s]/g, '');
+        return paper1Topics.some(p1Topic => {
+          const p1TopicStr = p1Topic.toLowerCase().replace(/[-_\s]/g, '');
+          return topicStr.includes(p1TopicStr) || p1TopicStr.includes(topicStr);
+        });
+      });
+    }
+
+    function compareExamQuestions(a: Question, b: Question, oldestFirst: boolean = false): number {
+      const titleA = a.name || a.title || '';
+      const titleB = b.name || b.title || '';
+      
+      // Extract exam info including priority
+      const examInfoA = parseExamInfo(titleA, a);
+      const examInfoB = parseExamInfo(titleB, b);
+      
+      // Sort by exam priority (which already encodes year and exam type order)
+      if (examInfoA.examTypePriority !== examInfoB.examTypePriority) {
+        return oldestFirst ? examInfoB.examTypePriority - examInfoA.examTypePriority : examInfoA.examTypePriority - examInfoB.examTypePriority;
+      }
+      
+      // Same exam, sort by paper (P1 before P2)
+      if (examInfoA.paper !== examInfoB.paper) {
+        return examInfoA.paper - examInfoB.paper;
+      }
+      
+      // Same paper, sort by question number
+      return examInfoA.questionNumber - examInfoB.questionNumber;
+    }
+    
+    function parseExamInfo(title: string, question?: Question): {
+      year: number;
+      examTypePriority: number;
+      paper: number;
+      questionNumber: number;
+    } {
+      const year = extractYearFromTitle(title);
+      const titleLower = title.toLowerCase();
+      
+      // Define exact exam order based on your specification
+      const examOrder = [
+        { year: 2024, type: 'main', priority: 1 },
+        { year: 2024, type: 'deferred', priority: 2 },
+        { year: 2023, type: 'main', priority: 3 },
+        { year: 2023, type: 'deferred', priority: 4 },
+        { year: 2022, type: 'main', priority: 5 },
+        { year: 2022, type: 'deferred', priority: 6 },
+        { year: 2021, type: 'main', priority: 7 },
+        { year: 2020, type: 'main', priority: 8 },
+        { year: 2019, type: 'main', priority: 9 },
+        { year: 2018, type: 'main', priority: 10 },
+        { year: 2017, type: 'main', priority: 11 },
+        { year: 2016, type: 'main', priority: 12 },
+        { year: 2015, type: 'main', priority: 13 },
+        { year: 2014, type: 'main', priority: 14 },
+        { year: 2014, type: 'project', priority: 15 },
+        { year: 2014, type: 'sample', priority: 16 },
+        { year: 2013, type: 'main', priority: 17 },
+        { year: 2013, type: 'project', priority: 18 },
+        { year: 2012, type: 'project', priority: 19 }
+      ];
+      
+      // Determine exam type and get priority
+      let examTypePriority = 999; // Default for unknown exams
+      
+      if (titleLower.includes('project maths') || titleLower.includes('project-maths')) {
+        const match = examOrder.find(e => e.year === year && e.type === 'project');
+        if (match) examTypePriority = match.priority;
+      } else if (titleLower.includes('deferred')) {
+        const match = examOrder.find(e => e.year === year && e.type === 'deferred');
+        if (match) examTypePriority = match.priority;
+      } else if (titleLower.includes('sample')) {
+        const match = examOrder.find(e => e.year === year && e.type === 'sample');
+        if (match) examTypePriority = match.priority;
+      } else {
+        // Main exam (no special keywords)
+        const match = examOrder.find(e => e.year === year && e.type === 'main');
+        if (match) examTypePriority = match.priority;
+      }
+      
+      // Determine paper number
+      let paper = 1; // Default to Paper 1
+      
+      // First, try to get paper from title explicitly
+      const paperMatch = title.match(/p(?:aper)?\s*(\d+)|section\s*([ab])/i);
+      if (paperMatch) {
+        if (paperMatch[1]) {
+          paper = parseInt(paperMatch[1]);
+        } else if (paperMatch[2]) {
+          // Handle Section A/B format (A=1, B=2)
+          paper = paperMatch[2].toLowerCase() === 'a' ? 1 : 2;
+        }
+      } else if (question) {
+        // If no explicit paper info in title, determine by topics
+        paper = isPaper1Question(question) ? 1 : 2;
+      }
+      
+      // Extract question number - try multiple patterns
+      let questionNumber = 0;
+      const questionPatterns = [
+        /(?:question|q)\s*(\d+)/i,
+        /(\d+)\s*$/,  // Number at the end
+        /#(\d+)/,     // Hashtag format
+        /\b(\d+)\b/   // Any number
+      ];
+      
+      for (const pattern of questionPatterns) {
+        const match = title.match(pattern);
+        if (match) {
+          questionNumber = parseInt(match[1]);
+          break;
+        }
+      }
+      
+      return {
+        year,
+        examTypePriority,
+        paper,
+        questionNumber
+      };
+    }
+
+    function isStateExam(question: Question): boolean {
+      const id = question.id || '';
+      const match = id.match(/(\w+)-(\d+)/);
+      return match ? match[2].startsWith('1') : false; // IDs starting with 1 are state exams
+    }
+    
+    function isCustomQuestion(question: Question): boolean {
+      const id = question.id || '';
+      const match = id.match(/(\w+)-(\d+)/);
+      return match ? match[2].startsWith('0') : false; // IDs starting with 0 are custom questions
+    }
+
     function sortQuestions(questions: Question[], sortBy: string): Question[] {
       const sorted = [...questions];
       
       switch (sortBy) {
-        case 'title-asc':
-          return sorted.sort((a, b) => {
-            const nameA = (a.name || a.title || '').toLowerCase();
-            const nameB = (b.name || b.title || '').toLowerCase();
-            return nameA.localeCompare(nameB);
-          });
-          
-        case 'title-desc':
-          return sorted.sort((a, b) => {
-            const nameA = (a.name || a.title || '').toLowerCase();
-            const nameB = (b.name || b.title || '').toLowerCase();
-            return nameB.localeCompare(nameA);
-          });
-          
-        case 'difficulty-asc':
-          return sorted.sort((a, b) => {
-            const diffA = Number(a.difficulty) || 1;
-            const diffB = Number(b.difficulty) || 1;
-            return diffA - diffB;
-          });
-          
-        case 'difficulty-desc':
-          return sorted.sort((a, b) => {
-            const diffA = Number(a.difficulty) || 1;
-            const diffB = Number(b.difficulty) || 1;
-            return diffB - diffA;
-          });
-          
         case 'year-asc':
           return sorted.sort((a, b) => {
-            // Extract year from title - you can modify this logic
-            const yearA = extractYearFromTitle(a.name || a.title || '');
-            const yearB = extractYearFromTitle(b.name || b.title || '');
-            return yearA - yearB;
+            return compareExamQuestions(a, b, true); // true = oldest first
           });
           
         case 'year-desc':
           return sorted.sort((a, b) => {
-            const yearA = extractYearFromTitle(a.name || a.title || '');
-            const yearB = extractYearFromTitle(b.name || b.title || '');
-            return yearB - yearA;
-          });
-          
-        case 'topics-asc':
-          return sorted.sort((a, b) => {
-            const topicA = getFirstTopic(a.topic || a.subject || '');
-            const topicB = getFirstTopic(b.topic || b.subject || '');
-            return topicA.localeCompare(topicB);
+            return compareExamQuestions(a, b, false); // false = newest first
           });
           
         case 'completed':
-          return sorted.sort((a, b) => {
-            const completedA = a.completed ? 1 : 0;
-            const completedB = b.completed ? 1 : 0;
-            return completedB - completedA;
-          });
+          return sorted.filter(q => q.completed);
           
         case 'incomplete':
-          return sorted.sort((a, b) => {
-            const completedA = a.completed ? 1 : 0;
-            const completedB = b.completed ? 1 : 0;
-            return completedA - completedB;
-          });
+          return sorted.filter(q => !q.completed);
+          
+        case 'state-exams':
+          return sorted.filter(q => isStateExam(q));
+          
+        case 'custom-questions':
+          return sorted.filter(q => isCustomQuestion(q));
+          
+        case 'paper-1':
+          return sorted.filter(q => isPaper1Question(q));
+          
+        case 'paper-2':
+          return sorted.filter(q => !isPaper1Question(q));
           
         default:
           return sorted; // Keep original order
@@ -450,13 +619,6 @@ const metadata = {
       return 0;
     }
 
-    function getFirstTopic(topicData: string | string[]): string {
-      if (Array.isArray(topicData)) {
-        return topicData.length > 0 ? topicData[0].toLowerCase() : '';
-      }
-      return typeof topicData === 'string' ? topicData.toLowerCase() : '';
-    }
-
     function displayQuestions(filterTopic = '', filterDifficulty = '', sortBy = '', reset = true) {
       const container = document.getElementById('questions-container');
       const noResults = document.getElementById('no-results');
@@ -465,9 +627,12 @@ const metadata = {
       
       if (!container || !noResults) return;
 
-      // Update current sort if provided
+      // Update current sort if provided, otherwise use default
       if (sortBy) {
         currentSort = sortBy;
+      } else if (!sortBy && currentSort === 'year-desc') {
+        // Use the default sort when no sort is specified
+        currentSort = 'year-desc';
       }
 
       // Filter questions
@@ -566,7 +731,7 @@ const metadata = {
 
     function createQuestionRow(question: Question, index: number): HTMLElement {
       const row = document.createElement('div');
-      row.className = 'px-6 py-4 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors question-row-enter';
+      row.className = 'px-4 py-2 hover:bg-pink-50/50 dark:hover:bg-slate-700/50 cursor-pointer transition-all duration-200 question-row-enter hover:shadow-md hover:scale-[1.01] border-b border-pink-100/30 dark:border-slate-700/30';
       
       const difficulty = question.difficulty || 1;
       const difficultyNum = typeof difficulty === 'string' ? parseInt(difficulty) || 1 : difficulty;
@@ -578,58 +743,69 @@ const metadata = {
       let topicsHtml = '';
       
       if (Array.isArray(topicData)) {
-        // If array, display all topics with better spacing
+        // If array, display all topics with proper formatting
         const topics = topicData.map(topic => 
-          `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">
-            ${String(topic).charAt(0).toUpperCase() + String(topic).slice(1).replace(/-/g, ' ')}
+          `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300 whitespace-nowrap">
+            ${formatTopicName(String(topic))}
           </span>`
         ).join('');
         topicsHtml = topics || '<span class="text-gray-500 text-xs">Unknown</span>';
       } else if (typeof topicData === 'string') {
-        topicsHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">
-          ${topicData.charAt(0).toUpperCase() + topicData.slice(1).replace(/-/g, ' ')}
+        topicsHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300 whitespace-nowrap">
+          ${formatTopicName(topicData)}
         </span>`;
       } else {
         topicsHtml = '<span class="text-gray-500 text-xs">Unknown</span>';
       }
       
-      const name = question.name || question.title || `Question ${index + 1}`;
+      // Handle custom question naming based on ID
+      let name;
+      const id = question.id || '';
+      const match = id.match(/(\w+)-(\d+)/); // Match format like "alg-0001" or "alg-1001"
+      
+      if (match) {
+        const numPart = match[2];
+        
+        if (numPart.startsWith('0')) {
+          // Custom questions (IDs starting with 0 like alg-0001)
+          const customNumber = parseInt(numPart) + 1; // Convert 0001 to 1, 0002 to 2, etc.
+          name = `Custom Question ${customNumber}`;
+        } else if (numPart.startsWith('1')) {
+          // Exam questions (IDs starting with 1 like alg-1001) - use existing name
+          name = question.name || question.title || `Question ${index + 1}`;
+        } else {
+          // Other formats
+          name = question.name || question.title || `Question ${index + 1}`;
+        }
+      } else {
+        // No match - use existing name or fallback
+        name = question.name || question.title || `Question ${index + 1}`;
+      }
       
       row.innerHTML = `
-        <div class="grid grid-cols-12 gap-3 items-center question-grid py-2">
-          <!-- Status Column -->
+        <div class="grid grid-cols-12 gap-3 items-center question-grid py-1">
+          <!-- Status Column (no checkbox, just status indicator) -->
           <div class="col-span-1 flex justify-center">
-            <div class="relative">
-              <input 
-                type="checkbox" 
-                ${question.completed ? 'checked' : ''} 
-                class="w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                onchange="toggleQuestionCompleted('${question.id}', this.checked)"
-              />
-              ${question.completed ? 
-                '<svg class="w-3 h-3 text-green-600 absolute top-0.5 left-0.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : 
-                ''
-              }
-            </div>
+            <div class="w-3 h-3 rounded-full ${question.completed ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'} transition-colors duration-200"></div>
           </div>
           
           <!-- Title Column -->
           <div class="col-span-5 title-column">
-            <div class="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate pr-2" title="${name}">
+            <div class="font-medium text-gray-900 dark:text-white transition-colors truncate pr-2" title="${name}">
               ${name}
             </div>
           </div>
           
           <!-- Topics Column -->
           <div class="col-span-4">
-            <div class="flex flex-wrap items-center gap-1 max-h-12 overflow-hidden">
+            <div class="flex flex-wrap items-center gap-1 max-h-8 overflow-hidden">
               ${topicsHtml}
             </div>
           </div>
           
           <!-- Difficulty Column -->
           <div class="col-span-2">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${difficultyInfo.color} whitespace-nowrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${difficultyInfo.color} whitespace-nowrap">
               ${difficultyInfo.label}
             </span>
           </div>
@@ -638,9 +814,19 @@ const metadata = {
 
       // Add click handler to navigate to practice page with specific question
       row.addEventListener('click', (e) => {
-        // Don't navigate if checkbox was clicked
-        const target = e.target as HTMLInputElement;
-        if (target.type === 'checkbox') return;
+        // Check if clicking on status indicator to toggle completion
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('w-3') && target.classList.contains('h-3')) {
+          e.stopPropagation();
+          toggleQuestionCompleted(question.id, !question.completed);
+          // Update the visual indicator
+          if (question.completed) {
+            target.className = 'w-3 h-3 rounded-full bg-green-500 transition-colors duration-200';
+          } else {
+            target.className = 'w-3 h-3 rounded-full bg-gray-300 dark:bg-slate-600 transition-colors duration-200';
+          }
+          return;
+        }
         
         const topicData = question.topic || question.subject || '';
         let topicForUrl = '';
@@ -720,6 +906,9 @@ const metadata = {
           overlay.style.opacity = '1';
         }, 300);
       }
+      
+      // Clear loading timeout since page has successfully loaded
+      clearLoadingTimeout();
     }
 
     function showError(message: string) {
@@ -737,10 +926,72 @@ const metadata = {
       }
     }
 
+    // Auto-refresh timeout mechanism
+    function startLoadingTimeout() {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+      if (warningTimeout) {
+        clearTimeout(warningTimeout);
+      }
+      
+      console.log('⏱️ Starting 3-second loading timeout...');
+      
+      // Show warning at 2.5 seconds, then refresh at 3 seconds
+      warningTimeout = window.setTimeout(() => {
+        if (!isLoaded) {
+          console.warn('⚠️ Questions loading slowly, preparing to refresh...');
+          showLoadingScreen("Loading taking longer than expected. Auto-refresh in 1 second...");
+        }
+      }, 2500);
+      
+      loadingTimeout = window.setTimeout(() => {
+        if (!isLoaded) {
+          console.warn('🔄 Questions taking too long to load, auto-refreshing page...');
+          showLoadingScreen("Refreshing page for faster loading...");
+          
+          // Add a small delay to show the message, then refresh
+          setTimeout(() => {
+            console.log('🔄 Auto-refreshing page now...');
+            window.location.reload();
+          }, 800);
+        } else {
+          if (warningTimeout) clearTimeout(warningTimeout);
+        }
+      }, 3000); // 3 seconds timeout
+    }
+
+    function clearLoadingTimeout() {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
+      if (warningTimeout) {
+        clearTimeout(warningTimeout);
+        warningTimeout = null;
+      }
+      isLoaded = true;
+      console.log('✅ Loading completed successfully, timeout cleared');
+    }
+
+    // Enhanced loadAllQuestions with timeout handling
+    async function loadAllQuestionsWithTimeout() {
+      startLoadingTimeout();
+      
+      try {
+        await loadAllQuestions();
+        clearLoadingTimeout();
+      } catch (error) {
+        console.error('Failed to load questions:', error);
+        clearLoadingTimeout();
+        throw error;
+      }
+    }
+
     // Event listeners
     document.addEventListener('DOMContentLoaded', () => {
-      // Load questions when page loads
-      loadAllQuestions();
+      // Load questions when page loads with timeout protection
+      loadAllQuestionsWithTimeout();
 
       // Filter event listeners
       const topicFilter = document.getElementById('topic-filter') as HTMLSelectElement;
@@ -761,6 +1012,9 @@ const metadata = {
       }
 
       if (sortFilter) {
+        // Set default sort to year-desc (Newest First)
+        sortFilter.value = 'year-desc';
+        
         sortFilter.addEventListener('change', () => {
           displayQuestions(topicFilter?.value || '', difficultyFilter?.value || '', sortFilter.value, true);
         });
@@ -821,20 +1075,43 @@ const metadata = {
       transition: opacity 0.3s ease;
     }
 
-    /* Custom checkbox styling */
-    input[type="checkbox"]:checked {
-      background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-8-8a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L5 6.207l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
+    /* Remove all focus outlines and rings */
+    *:focus {
+      outline: none !important;
+      box-shadow: none !important;
     }
 
-    /* Hover effects for question rows */
-    .cursor-pointer:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    button:focus,
+    select:focus,
+    input:focus {
+      outline: none !important;
+      box-shadow: none !important;
+      border-color: inherit !important;
+    }
+
+    /* Enhanced hover effects for question rows */
+    .question-row-enter:hover {
+      background: linear-gradient(135deg, rgba(252, 231, 243, 0.6), rgba(255, 255, 255, 0.8)) !important;
+      border-left: 3px solid #ec4899;
+      padding-left: 13px; /* Adjust for border */
+    }
+
+    /* Dark mode hover effects */
+    .dark .question-row-enter:hover {
+      background: linear-gradient(135deg, rgba(100, 116, 139, 0.3), rgba(51, 65, 85, 0.8)) !important;
+      border-left: 3px solid #f472b6;
+    }
+
+    /* Status indicator hover effect */
+    .w-3.h-3.rounded-full:hover {
+      transform: scale(1.2);
+      cursor: pointer;
     }
 
     /* Smooth transitions for all interactive elements */
-    .transition-colors {
-      transition: color 0.2s ease, background-color 0.2s ease;
+    .transition-colors,
+    .transition-all {
+      transition: all 0.2s ease;
     }
 
     /* Load More Button Animations */
@@ -895,9 +1172,9 @@ const metadata = {
       text-overflow: ellipsis;
     }
 
-    /* Improved grid layout for better space utilization */
+    /* Improved grid layout for better space utilization - thinner rows */
     .question-grid {
-      min-height: 60px;
+      min-height: 40px;
       align-items: center;
     }
 
