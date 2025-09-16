@@ -26,6 +26,113 @@ const metadata = { title: `Practice - ${id}` };
     </div>
   </div>
 
+  <!-- Save Attempt Modal -->
+  <div id="save-attempt-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Save Your Attempt</h3>
+      
+      <!-- Question Title Display -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Question:</label>
+        <div id="modal-question-title" class="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg text-gray-800 dark:text-gray-200">
+          --
+        </div>
+      </div>
+      
+      <!-- Time Display -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Taken:</label>
+        <div id="modal-time-taken" class="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg font-mono text-gray-800 dark:text-gray-200">
+          00:00
+        </div>
+      </div>
+      
+      <!-- Notes Input -->
+      <div class="mb-6">
+        <label for="attempt-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes:</label>
+        <textarea 
+          id="attempt-notes" 
+          rows="4" 
+          class="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-gray-200 resize-none"
+          placeholder="Add your notes about this question attempt..."
+        ></textarea>
+      </div>
+      
+      <!-- Modal Actions -->
+      <div class="flex gap-3">
+        <button id="cancel-save-attempt" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 dark:bg-slate-600 dark:text-gray-200 dark:hover:bg-slate-500">
+          Cancel
+        </button>
+        <button id="confirm-save-attempt" class="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
+          Save Attempt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Question Modal -->
+  <div id="report-question-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Report Question</h3>
+      
+      <!-- Question Title Display -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Question:</label>
+        <div id="report-question-title" class="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg text-gray-800 dark:text-gray-200">
+          --
+        </div>
+      </div>
+      
+      <!-- Report Reason Selection -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Select issue:</label>
+        <div class="space-y-2">
+          <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Question too blurry">
+            Question too blurry
+          </button>
+          <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Question too hard">
+            Question too hard
+          </button>
+          <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Incorrect solution">
+            Incorrect solution
+          </button>
+          <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Other">
+            Other
+          </button>
+        </div>
+      </div>
+      
+      <!-- Custom Description (Hidden initially) -->
+      <div id="custom-description-section" class="mb-4 hidden">
+        <label for="custom-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Please describe the issue:</label>
+        <textarea 
+          id="custom-description" 
+          rows="3" 
+          class="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-slate-700 dark:text-gray-200 resize-none"
+          placeholder="Please describe what's wrong with this question..."
+        ></textarea>
+      </div>
+      
+      <!-- Selected Reason Display -->
+      <div id="selected-reason-section" class="mb-4 hidden">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Issue:</label>
+        <div id="selected-reason" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300">
+          --
+        </div>
+      </div>
+      
+      <!-- Modal Actions -->
+      <div class="flex gap-3">
+        <button id="cancel-report" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 dark:bg-slate-600 dark:text-gray-200 dark:hover:bg-slate-500">
+          Cancel
+        </button>
+        <button id="submit-report" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          Submit Report
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Content Container -->
   <div class="min-h-screen pb-24" style="margin-top: 10px;">
     <div class="p-6">
@@ -73,7 +180,7 @@ const metadata = { title: `Practice - ${id}` };
             </button>
             <button id="timer-reset" class="p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors" title="Reset Timer">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M4 12a8 8 0 0 1 8-8V2.5L14.5 5 12 7.5V6a6 6 0 1 0-6 6H4z"/>
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
               </svg>
             </button>
           </div>
@@ -95,14 +202,13 @@ const metadata = { title: `Practice - ${id}` };
 
       <!-- Question Metadata -->
       <div class="mb-8 sidebar-content">
-        <div class="space-y-3 text-sm">
+        <div class="space-y-3">
           <div class="w-full">
-            <div id="meta-topic" class="font-medium flex flex-wrap items-start gap-1"></div>
+            <div id="meta-topic" class="font-medium text-base flex flex-wrap items-start gap-1"></div>
           </div>
           <div class="w-full">
             <div class="flex items-center gap-2">
-              <span class="text-gray-500 text-xs">Difficulty:</span>
-              <span id="meta-difficulty" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">--</span>
+              <span id="meta-difficulty" class="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">--</span>
             </div>
           </div>
         </div>
@@ -122,8 +228,11 @@ const metadata = { title: `Practice - ${id}` };
             </svg>
           </button>
         </div>
-        <button id="skip-question" class="w-full px-4 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600">
+        <button id="skip-question" class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">
           Skip Question
+        </button>
+        <button id="save-attempt" class="w-full px-4 py-2 mt-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700">
+          Save Attempt
         </button>
       </div>
 
@@ -131,7 +240,7 @@ const metadata = { title: `Practice - ${id}` };
       <div class="sidebar-content">
         <button id="report-question" class="w-full p-3 rounded-lg bg-transparent text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2" title="Report Question">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M12 9v2m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 0 1 2-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 0 1-2-2zm9-13.5V9"/>
           </svg>
           <span class="text-sm">Report Question</span>
         </button>
@@ -301,6 +410,205 @@ const metadata = { title: `Practice - ${id}` };
       timerSeconds = 0;
       updateTimerDisplay();
       updateTimerButtons(false);
+    }
+
+    // Save Attempt Modal Functions
+    function showSaveAttemptModal() {
+      // Stop the timer when showing the modal
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      
+      // Update modal content
+      const modalQuestionTitle = document.getElementById('modal-question-title');
+      const modalTimeTaken = document.getElementById('modal-time-taken');
+      
+      if (modalQuestionTitle && currentQuestion) {
+        modalQuestionTitle.textContent = currentQuestion.name || currentQuestion.id || 'Unknown Question';
+      }
+      
+      if (modalTimeTaken) {
+        const minutes = Math.floor(timerSeconds / 60);
+        const seconds = timerSeconds % 60;
+        modalTimeTaken.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
+      
+      // Show the modal
+      const modal = document.getElementById('save-attempt-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        // Prevent body scroll while modal is open
+        document.body.style.overflow = 'hidden';
+      }
+      
+      // Clear previous notes and focus without scrolling
+      const notesInput = document.getElementById('attempt-notes') as HTMLTextAreaElement;
+      if (notesInput) {
+        notesInput.value = '';
+        // Focus without scrolling
+        setTimeout(() => {
+          notesInput.focus({ preventScroll: true });
+        }, 100);
+      }
+    }
+    
+    function hideSaveAttemptModal() {
+      const modal = document.getElementById('save-attempt-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        // Restore body scroll
+        document.body.style.overflow = '';
+      }
+    }
+    
+    function saveAttempt() {
+      const notesInput = document.getElementById('attempt-notes') as HTMLTextAreaElement;
+      const notes = notesInput ? notesInput.value : '';
+      
+      // Create attempt data
+      const attemptData = {
+        questionId: currentQuestion?.id || '',
+        questionName: currentQuestion?.name || currentQuestion?.id || '',
+        timeTaken: timerSeconds,
+        notes: notes,
+        timestamp: new Date().toISOString(),
+        topic: currentQuestion?.topic || '',
+        difficulty: currentQuestion?.difficulty || ''
+      };
+      
+      // Store in localStorage (you could also send to backend API)
+      const existingAttempts = JSON.parse(localStorage.getItem('questionAttempts') || '[]');
+      existingAttempts.push(attemptData);
+      localStorage.setItem('questionAttempts', JSON.stringify(existingAttempts));
+      
+      console.log('Attempt saved:', attemptData);
+      
+      // Hide modal
+      hideSaveAttemptModal();
+      
+      // Show success message (optional)
+      // You can add a status message element if needed
+      console.log('Attempt saved successfully!');
+      
+      // Optionally move to next question
+      nextQuestion();
+    }
+
+    // Report Question Modal Functions
+    let selectedReportReason = '';
+    
+    function showReportQuestionModal() {
+      // Update modal content
+      const reportQuestionTitle = document.getElementById('report-question-title');
+      
+      if (reportQuestionTitle && currentQuestion) {
+        reportQuestionTitle.textContent = currentQuestion.name || currentQuestion.id || 'Unknown Question';
+      }
+      
+      // Reset modal state
+      selectedReportReason = '';
+      const selectedSection = document.getElementById('selected-reason-section');
+      const customSection = document.getElementById('custom-description-section');
+      const submitBtn = document.getElementById('submit-report') as HTMLButtonElement;
+      
+      if (selectedSection) selectedSection.classList.add('hidden');
+      if (customSection) customSection.classList.add('hidden');
+      if (submitBtn) submitBtn.disabled = true;
+      
+      // Clear custom description
+      const customInput = document.getElementById('custom-description') as HTMLTextAreaElement;
+      if (customInput) customInput.value = '';
+      
+      // Reset button styles
+      document.querySelectorAll('.report-reason-btn').forEach(btn => {
+        btn.classList.remove('bg-red-100', 'dark:bg-red-900/30', 'border-red-300', 'dark:border-red-600');
+        btn.classList.add('border-gray-300', 'dark:border-slate-600');
+      });
+      
+      // Show the modal
+      const modal = document.getElementById('report-question-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    
+    function hideReportQuestionModal() {
+      const modal = document.getElementById('report-question-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+    
+    function selectReportReason(reason: string, buttonElement: HTMLElement) {
+      selectedReportReason = reason;
+      
+      // Reset all buttons
+      document.querySelectorAll('.report-reason-btn').forEach(btn => {
+        btn.classList.remove('bg-red-100', 'dark:bg-red-900/30', 'border-red-300', 'dark:border-red-600');
+        btn.classList.add('border-gray-300', 'dark:border-slate-600');
+      });
+      
+      // Highlight selected button
+      buttonElement.classList.remove('border-gray-300', 'dark:border-slate-600');
+      buttonElement.classList.add('bg-red-100', 'dark:bg-red-900/30', 'border-red-300', 'dark:border-red-600');
+      
+      const selectedSection = document.getElementById('selected-reason-section');
+      const selectedReasonEl = document.getElementById('selected-reason');
+      const customSection = document.getElementById('custom-description-section');
+      const submitBtn = document.getElementById('submit-report') as HTMLButtonElement;
+      
+      if (reason === 'Other') {
+        // Show custom description input
+        if (customSection) customSection.classList.remove('hidden');
+        if (selectedSection) selectedSection.classList.add('hidden');
+        if (submitBtn) submitBtn.disabled = true; // Will be enabled when text is entered
+      } else {
+        // Show selected reason
+        if (selectedReasonEl) selectedReasonEl.textContent = reason;
+        if (selectedSection) selectedSection.classList.remove('hidden');
+        if (customSection) customSection.classList.add('hidden');
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+    
+    function submitReport() {
+      let reportReason = selectedReportReason;
+      let description = '';
+      
+      if (selectedReportReason === 'Other') {
+        const customInput = document.getElementById('custom-description') as HTMLTextAreaElement;
+        description = customInput ? customInput.value.trim() : '';
+        reportReason = description;
+      }
+      
+      if (!reportReason) return;
+      
+      // Create report data
+      const reportData = {
+        questionId: currentQuestion?.id || '',
+        questionName: currentQuestion?.name || currentQuestion?.id || '',
+        reason: reportReason,
+        description: description,
+        timestamp: new Date().toISOString(),
+        topic: currentQuestion?.topic || '',
+        difficulty: currentQuestion?.difficulty || ''
+      };
+      
+      // Store in localStorage (you could also send to backend API)
+      const existingReports = JSON.parse(localStorage.getItem('questionReports') || '[]');
+      existingReports.push(reportData);
+      localStorage.setItem('questionReports', JSON.stringify(existingReports));
+      
+      console.log('Question reported:', reportData);
+      
+      // Hide modal
+      hideReportQuestionModal();
+      
+      // Show success message
+      console.log('Question reported successfully!');
     }
 
     function updateTimerDisplay() {
@@ -749,7 +1057,6 @@ const metadata = { title: `Practice - ${id}` };
       }
     }
 
-
     function nextQuestion() {
       // Save current state before moving forward
       if (currentQuestion) {
@@ -1085,8 +1392,43 @@ const metadata = { title: `Practice - ${id}` };
       if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
       const skipBtn = document.getElementById('skip-question');
       if (skipBtn) skipBtn.addEventListener('click', skipQuestion);
+      const saveAttemptBtn = document.getElementById('save-attempt');
+      if (saveAttemptBtn) saveAttemptBtn.addEventListener('click', showSaveAttemptModal);
       const prevBtn = document.getElementById('prev-question');
       if (prevBtn) prevBtn.addEventListener('click', prevQuestion);
+
+      // Save Attempt Modal event listeners
+      const cancelSaveBtn = document.getElementById('cancel-save-attempt');
+      if (cancelSaveBtn) cancelSaveBtn.addEventListener('click', hideSaveAttemptModal);
+      const confirmSaveBtn = document.getElementById('confirm-save-attempt');
+      if (confirmSaveBtn) confirmSaveBtn.addEventListener('click', saveAttempt);
+
+      // Report Question Modal event listeners
+      const reportBtn = document.getElementById('report-question');
+      if (reportBtn) reportBtn.addEventListener('click', showReportQuestionModal);
+      const cancelReportBtn = document.getElementById('cancel-report');
+      if (cancelReportBtn) cancelReportBtn.addEventListener('click', hideReportQuestionModal);
+      const submitReportBtn = document.getElementById('submit-report');
+      if (submitReportBtn) submitReportBtn.addEventListener('click', submitReport);
+      
+      // Report reason buttons
+      document.querySelectorAll('.report-reason-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const reason = btn.getAttribute('data-reason') || '';
+          selectReportReason(reason, btn as HTMLElement);
+        });
+      });
+      
+      // Custom description input validation
+      const customDescInput = document.getElementById('custom-description') as HTMLTextAreaElement;
+      if (customDescInput) {
+        customDescInput.addEventListener('input', () => {
+          const submitBtn = document.getElementById('submit-report') as HTMLButtonElement;
+          if (selectedReportReason === 'Other' && submitBtn) {
+            submitBtn.disabled = customDescInput.value.trim().length === 0;
+          }
+        });
+      }
     });
   </script>
 

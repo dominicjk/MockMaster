@@ -30,11 +30,11 @@ const topicMapping = {
   'trigonometry': 'trigonometry'
 };
 
-// Parse question ID to extract details
+// Parse question ID to extract details and generate exam-style names
 function parseQuestionId(filename, topicFolder) {
   const baseId = filename.replace('.png', '');
   
-  // Determine difficulty based on ID number range (you can adjust this logic)
+  // Extract the numeric part from the ID (e.g., "geo-1025" -> "1025")
   const match = baseId.match(/(\d+)$/);
   const number = match ? parseInt(match[1]) : 1001;
   
@@ -43,15 +43,69 @@ function parseQuestionId(filename, topicFolder) {
   if (number >= 1020) difficulty = 3; // Hard
   
   // Determine level - defaulting to 'lc' (leaving cert) for now
-  // You can adjust this based on your numbering system
   const level = 'lc';
+  
+  // Generate exam-style question name
+  // Parse the number to extract year and question info
+  const name = generateExamQuestionName(number, topicFolder);
   
   return {
     id: baseId,
     difficulty,
     level,
-    number
+    number,
+    name
   };
+}
+
+// Generate exam-style question names like "2024 P1 Question 4"
+function generateExamQuestionName(number, topicFolder) {
+  // Convert 4-digit number to year and question format
+  // Examples of different parsing strategies:
+  
+  // Strategy 1: First 2 digits = year offset, last 2 = question number
+  // 1001 -> 2010 Q1, 1025 -> 2010 Q25, 2001 -> 2020 Q1
+  const yearOffset = Math.floor(number / 100);
+  const questionNum = number % 100;
+  
+  // Map year offset to actual years (you can adjust this mapping)
+  let year;
+  if (yearOffset >= 10 && yearOffset < 15) {
+    year = 2000 + yearOffset; // 10xx -> 201x, 11xx -> 201x, etc.
+  } else if (yearOffset >= 20 && yearOffset < 30) {
+    year = 2000 + yearOffset; // 20xx -> 202x
+  } else {
+    // Fallback for other ranges
+    year = 2020 + (yearOffset - 10); // Adjust as needed
+  }
+  
+  // Determine paper based on question number or topic
+  // You can customize this logic based on your exam structure
+  let paper;
+  if (questionNum <= 15) {
+    paper = 'P1';
+  } else if (questionNum <= 30) {
+    paper = 'P2';
+  } else {
+    paper = 'P1'; // Default fallback
+  }
+  
+  // Alternative naming strategies (uncomment the one you prefer):
+  
+  // Strategy 2: More specific year mapping
+  // if (number >= 1001 && number <= 1040) year = 2023;
+  // else if (number >= 1041 && number <= 1080) year = 2024;
+  // else year = 2024; // Default to current year
+  
+  // Strategy 3: Simple sequential numbering
+  // return `${year} Question ${questionNum}`;
+  
+  // Strategy 4: Include topic in name
+  // const topicName = topicMapping[topicFolder] || topicFolder;
+  // return `${year} ${paper} ${topicName} Q${questionNum}`;
+  
+  // Current strategy: Standard exam format
+  return `${year} ${paper} Question ${questionNum}`;
 }
 
 // Get estimated time limit based on difficulty
@@ -123,6 +177,7 @@ async function scanQuestionsDirectory() {
         
         const question = {
           id: parsedInfo.id,
+          name: parsedInfo.name,
           "question-type": "custom",
           topic: topicMapping[topicFolder] || topicFolder,
           level: parsedInfo.level,
