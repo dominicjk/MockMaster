@@ -161,7 +161,7 @@ const metadata = { title: `Practice - ${id}` };
             </svg>
           </button>
           <!-- Zoom controls on the right -->
-          <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded px-1 py-1 shadow text-xs ml-auto">
+          <div class="flex items-center gap-1 bg-gray-200 dark:bg-slate-600 rounded-tr-xl px-1 py-1 shadow text-xs ml-auto">
             <button id="zoom-out" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom Out" style="min-width:1.5em;">-</button>
             <span id="zoom-level" class="w-8 text-center">100%</span>
             <button id="zoom-in" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom In" style="min-width:1.5em;">+</button>
@@ -169,10 +169,10 @@ const metadata = { title: `Practice - ${id}` };
         </div>
       <!-- LeetCode-style Options Panel with Top Toggle Slice -->
       <div class="mb-8 sidebar-content">
-        <div class="bg-gray-50 dark:bg-slate-700 rounded-b-lg p-4 flex flex-col gap-4">
+        <div class="bg-gray-200 dark:bg-slate-600 rounded-b-xl p-4 flex flex-col gap-4">
           <!-- Timer Section -->
           <div class="flex flex-row items-center gap-3">
-            <div class="text-xl font-mono font-bold bg-gray-200 dark:bg-slate-600 px-3 py-2 rounded-lg" id="sidebar-timer">00:00</div>
+            <div class="text-xl font-mono font-bold bg-gray-300 dark:bg-gray-700 px-3 py-2 rounded-xl" id="sidebar-timer">00:00</div>
             <button id="timer-start" class="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors" title="Start Timer">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
