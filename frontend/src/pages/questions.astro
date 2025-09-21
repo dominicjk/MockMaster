@@ -992,8 +992,8 @@ const metadata = {
       }
     }
 
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', () => {
+    // Initialize page function
+    function initializePage() {
       // Load questions when page loads with timeout protection
       loadAllQuestionsWithTimeout();
 
@@ -1069,9 +1069,15 @@ const metadata = {
       document.querySelector('.flex.flex-wrap.gap-4.mb-6')?.appendChild(refreshBtn);
       */
 
-    // Make function available globally for the onclick handler
-    (window as Window & typeof globalThis & { toggleQuestionCompleted: typeof toggleQuestionCompleted }).toggleQuestionCompleted = toggleQuestionCompleted;
-    });
+      // Make function available globally for the onclick handler
+      (window as Window & typeof globalThis & { toggleQuestionCompleted: typeof toggleQuestionCompleted }).toggleQuestionCompleted = toggleQuestionCompleted;
+    }
+
+    // Event listeners - support both DOMContentLoaded and Astro navigation
+    document.addEventListener('DOMContentLoaded', initializePage);
+    
+    // Support Astro View Transitions - this fires on client-side navigation
+    document.addEventListener('astro:page-load', initializePage);
   </script>
 
   <style>

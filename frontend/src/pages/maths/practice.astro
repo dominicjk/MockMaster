@@ -1,7 +1,6 @@
 ---
 import Layout from '~/layouts/PageLayout.astro';
 import PracticeTopicCard from '~/components/maths/PracticeTopicCard.astro';
-import PracticeLevelCard from '~/components/maths/PracticeLevelCard.astro';
 import NumberSystemsIconUrl from '~/assets/images/subject-icons/math-icons/NumberSystems.svg?url';
 import AlgebraIconUrl from '~/assets/images/subject-icons/math-icons/Algebra.svg?url';
 import SequencesAndSeriesIconUrl from '~/assets/images/subject-icons/math-icons/SequencesAndSeries.svg?url';
@@ -61,10 +60,10 @@ const paper2Topics: Topic[] = [
         <div class="sticky top-0 z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 dark:supports-[backdrop-filter]:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 mb-4">
           <div class="flex items-center justify-between gap-4">
             <div class="grow min-w-0">
-              <p id="selectionHint" class="text-sm text-gray-700 dark:text-gray-300">Select multiple subjects to practice together.</p>
+              <p id="selectionHint" class="text-sm text-gray-700 dark:text-gray-300">Select specific subjects to practice, or start with no selection to practice all questions.</p>
               <div id="selectedHeaderTags" class="hidden flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden h-9 items-center"></div>
             </div>
-            <button id="globalStart" class="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition" disabled>
+            <button id="globalStart" class="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition">
               Start Practice
             </button>
           </div>
@@ -105,12 +104,18 @@ const paper2Topics: Topic[] = [
                     <option value="2017">2017</option>
                     <option value="2016">2016</option>
                     <option value="2015">2015</option>
+                    <option value="2014">2014</option>
+                    <option value="2013">2013</option>
+                    <option value="2012">2012</option>
+                    <option value="2012 Sample">2012 Sample</option>
                   </select>
                   <span class="text-gray-500 dark:text-gray-400">to</span>
                   <select id="optionsYearTo" class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
                     <option value="2024">2024</option>
+                    <option value="2024 Deferred">2024 Deferred</option>
                     <option value="2023">2023</option>
-                    <option value="2022" selected>2022</option>
+                    <option value="2023 Deferred">2023 Deferred</option>
+                    <option value="2022">2022</option>
                     <option value="2021">2021</option>
                     <option value="2020">2020</option>
                     <option value="2019">2019</option>
@@ -118,6 +123,10 @@ const paper2Topics: Topic[] = [
                     <option value="2017">2017</option>
                     <option value="2016">2016</option>
                     <option value="2015">2015</option>
+                    <option value="2014">2014</option>
+                    <option value="2013">2013</option>
+                    <option value="2012" selected>2012</option>
+                    <option value="2012 Sample">2012 Sample</option>
                   </select>
                 </div>
               </div>
@@ -125,20 +134,7 @@ const paper2Topics: Topic[] = [
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
-          <PracticeLevelCard id="level-1" title="Beginner" description="Gentle introduction with fundamentals and guided steps." >
-            <div slot="icon" class="text-gray-400">L1</div>
-          </PracticeLevelCard>
-          <PracticeLevelCard id="level-2" title="Ordinary Level" description="Standard difficulty aligned to Ordinary Level exams.">
-            <div slot="icon" class="text-gray-400">L2</div>
-          </PracticeLevelCard>
-          <PracticeLevelCard id="level-3" title="Higher Level" description="Challenging questions targeting Higher Level exams.">
-            <div slot="icon" class="text-gray-400">L3</div>
-          </PracticeLevelCard>
-          <PracticeLevelCard id="level-4" title="Hardcore" description="Most challenging problems for Higher Level standard.">
-            <div slot="icon" class="text-gray-400">L4</div>
-          </PracticeLevelCard>
-        </div>
+
       </div>
 
       <div class="mb-6 flex items-center gap-4">
@@ -184,7 +180,6 @@ const paper2Topics: Topic[] = [
 
   <script>
     const checkboxSelector = '.topic-checkbox';
-    const levelCheckboxSelector = '.level-checkbox';
     const globalStartButton = document.getElementById('globalStart');
     const selectionHintEl = document.getElementById('selectionHint');
     const selectedHeaderTagsContainer = document.getElementById('selectedHeaderTags');
@@ -207,12 +202,6 @@ const paper2Topics: Topic[] = [
       return checkedInputs.map((el) => ({ id: el.dataset.topicId || '', title: el.dataset.topicTitle || '' }));
     }
 
-    function getSelectedLevels() {
-      const inputs = Array.from(document.querySelectorAll(levelCheckboxSelector)).filter((el) => isHtmlInputElement(el));
-      const checked = inputs.filter((el) => el.checked);
-      return checked.map((el) => el.dataset.levelId || '');
-    }
-
     function getOptions() {
       const examOnlyEl = document.getElementById('optionsExamOnly');
       const longOnlyEl = document.getElementById('optionsLongOnly');
@@ -224,21 +213,14 @@ const paper2Topics: Topic[] = [
       const longOnly = longOnlyEl && longOnlyEl instanceof HTMLInputElement ? String(longOnlyEl.checked) : 'false';
       const shortOnly = shortOnlyEl && shortOnlyEl instanceof HTMLInputElement ? String(shortOnlyEl.checked) : 'false';
       const yearFrom = yearFromEl && yearFromEl instanceof HTMLSelectElement ? yearFromEl.value : '2024';
-      const yearTo = yearToEl && yearToEl instanceof HTMLSelectElement ? yearToEl.value : '2022';
-      const levels = getSelectedLevels().join(',');
+      const yearTo = yearToEl && yearToEl instanceof HTMLSelectElement ? yearToEl.value : '2012';
       
-      return { examOnly, longOnly, shortOnly, yearFrom, yearTo, levels };
+      return { examOnly, longOnly, shortOnly, yearFrom, yearTo };
     }
 
     function updateGlobalButtonState() {
       const selected = getSelectedTopics();
-      if (globalStartButton) {
-        if (selected.length === 0) {
-          globalStartButton.setAttribute('disabled', '');
-        } else {
-          globalStartButton.removeAttribute('disabled');
-        }
-      }
+      // Button is now always enabled - no need to disable when no topics selected
 
       if (selectionHintEl && selectedHeaderTagsContainer) {
         if (selected.length === 0) {
@@ -356,10 +338,21 @@ const paper2Topics: Topic[] = [
     if (globalStartButton) {
       globalStartButton.addEventListener('click', function () {
         const selected = getSelectedTopics();
-        if (selected.length === 0) return;
         const opts = getOptions();
-        const query = new URLSearchParams({ topics: selected.map((t) => t.id).join(','), ...opts });
-        window.location.href = `/maths/practice/start?${query.toString()}`;
+        
+        if (selected.length === 0) {
+          // No topics selected = all questions (use a general topic like 'all')
+          const query = new URLSearchParams({ topics: 'all', ...opts });
+          window.location.href = `/maths/practice/all?${query.toString()}`;
+        } else if (selected.length === 1) {
+          // Single topic selected = go directly to that topic
+          const query = new URLSearchParams({ ...opts });
+          window.location.href = `/maths/practice/${selected[0].id}?${query.toString()}`;
+        } else {
+          // Multiple topics selected = use comma-separated list
+          const query = new URLSearchParams({ topics: selected.map((t) => t.id).join(','), ...opts });
+          window.location.href = `/maths/practice/mixed?${query.toString()}`;
+        }
       });
     }
 

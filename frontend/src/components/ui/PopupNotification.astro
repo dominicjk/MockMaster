@@ -1,0 +1,222 @@
+---
+export interface Props {
+  id?: string;
+  className?: string;
+}
+
+const { id = 'popup-notification', className } = Astro.props as Props;
+---
+
+<div
+  id={id}
+  class={`popup-notification ${className || ''}`}
+  style="display: none;"
+>
+  <div class="popup-content">
+    <div class="popup-icon">ℹ️</div>
+    <div class="popup-message"></div>
+    <button class="popup-close" aria-label="Close notification">×</button>
+  </div>
+</div>
+
+<style>
+  .popup-notification {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(59, 130, 246, 0.95);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 90vw;
+    width: 500px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .popup-notification.show {
+    bottom: 24px;
+  }
+
+  .popup-notification.hide {
+    bottom: -100px;
+    opacity: 0;
+  }
+
+  .popup-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .popup-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .popup-message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  .popup-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .popup-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .popup-close:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+  }
+
+  /* Responsive design */
+  @media (max-width: 640px) {
+    .popup-notification {
+      left: 12px;
+      right: 12px;
+      width: auto;
+      transform: none;
+      max-width: none;
+    }
+
+    .popup-notification.show {
+      bottom: 12px;
+    }
+  }
+
+  /* Different notification types */
+  .popup-notification.info {
+    background: rgba(59, 130, 246, 0.95);
+  }
+
+  .popup-notification.warning {
+    background: rgba(245, 158, 11, 0.95);
+  }
+
+  .popup-notification.success {
+    background: rgba(34, 197, 94, 0.95);
+  }
+
+  .popup-notification.error {
+    background: rgba(239, 68, 68, 0.95);
+  }
+</style>
+
+<script>
+  class PopupNotification {
+    private element: HTMLElement;
+    private autoHideTimeout?: NodeJS.Timeout;
+
+    constructor(elementId: string = 'popup-notification') {
+      this.element = document.getElementById(elementId) as HTMLElement;
+      if (!this.element) {
+        console.error(`PopupNotification: Element with id '${elementId}' not found`);
+        return;
+      }
+      this.setupEventListeners();
+    }
+
+    private setupEventListeners() {
+      const closeButton = this.element.querySelector('.popup-close') as HTMLElement;
+      if (closeButton) {
+        closeButton.addEventListener('click', () => this.hide());
+      }
+
+      // Close on Escape key
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && this.element.classList.contains('show')) {
+          this.hide();
+        }
+      });
+    }
+
+    show(message: string, type: 'info' | 'warning' | 'success' | 'error' = 'info', autoHide: boolean = true) {
+      const messageElement = this.element.querySelector('.popup-message') as HTMLElement;
+      if (!messageElement) return;
+
+      // Clear any existing timeout
+      if (this.autoHideTimeout) {
+        clearTimeout(this.autoHideTimeout);
+      }
+
+      // Set message and type
+      messageElement.textContent = message;
+      this.element.className = `popup-notification ${type}`;
+      
+      // Show the popup
+      this.element.style.display = 'block';
+      
+      // Force reflow and then add show class for animation
+      void this.element.offsetHeight;
+      this.element.classList.add('show');
+
+      // Auto-hide after 5 seconds if enabled
+      if (autoHide) {
+        this.autoHideTimeout = setTimeout(() => {
+          this.hide();
+        }, 5000);
+      }
+    }
+
+    hide() {
+      if (this.autoHideTimeout) {
+        clearTimeout(this.autoHideTimeout);
+      }
+
+      this.element.classList.remove('show');
+      this.element.classList.add('hide');
+      
+      // Hide the element after animation completes
+      setTimeout(() => {
+        this.element.style.display = 'none';
+        this.element.classList.remove('hide');
+      }, 400);
+    }
+
+    isVisible() {
+      return this.element.classList.contains('show');
+    }
+  }
+
+  // Make PopupNotification available globally
+  declare global {
+    interface Window {
+      PopupNotification: typeof PopupNotification;
+      popupNotification?: PopupNotification;
+    }
+  }
+
+  window.PopupNotification = PopupNotification;
+
+  // Auto-initialize if element exists
+  document.addEventListener('DOMContentLoaded', () => {
+    const element = document.getElementById('popup-notification');
+    if (element) {
+      window.popupNotification = new PopupNotification();
+    }
+  });
+</script>
