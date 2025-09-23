@@ -1,0 +1,122 @@
+---
+// UserMenu.astro - User menu dropdown component
+---
+
+<!-- User Menu (hidden by default, shown when authenticated) -->
+<div id="user-menu" class="hidden relative">
+  <div class="flex items-center space-x-3">
+    <!-- User Avatar and Name -->
+    <button 
+      id="user-menu-button"
+      type="button" 
+      class="flex items-center space-x-2 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      aria-expanded="false" 
+      aria-haspopup="true"
+    >
+      <img 
+        id="user-avatar" 
+        class="h-8 w-8 rounded-full" 
+        src="" 
+        alt="User avatar"
+      />
+      <span id="user-name" class="font-medium text-gray-700"></span>
+      <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Dropdown menu -->
+  <div 
+    id="user-dropdown" 
+    class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+    role="menu" 
+    aria-orientation="vertical" 
+    aria-labelledby="user-menu-button" 
+    tabindex="-1"
+  >
+    <div class="py-1" role="none">
+      <a 
+        href="/dashboard" 
+        class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100"
+        role="menuitem" 
+        tabindex="-1"
+      >
+        Dashboard
+      </a>
+      <a 
+        href="/profile" 
+        class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100"
+        role="menuitem" 
+        tabindex="-1"
+      >
+        Profile Settings
+      </a>
+      <a 
+        href="/practice-history" 
+        class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100"
+        role="menuitem" 
+        tabindex="-1"
+      >
+        Practice History
+      </a>
+      <div class="border-t border-gray-100"></div>
+      <button 
+        id="logout-btn"
+        type="button"
+        class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+        role="menuitem" 
+        tabindex="-1"
+      >
+        Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Login/Signup Buttons (shown by default, hidden when authenticated) -->
+<div class="flex items-center space-x-2">
+  <button 
+    id="login-btn"
+    type="button" 
+    class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
+  >
+    Sign In
+  </button>
+  <button 
+    id="signup-btn"
+    type="button" 
+    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+  >
+    Sign Up
+  </button>
+</div>
+
+<script>
+  // User menu dropdown functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    if (userMenuButton && userDropdown) {
+      userMenuButton.addEventListener('click', () => {
+        const isHidden = userDropdown.classList.contains('hidden');
+        if (isHidden) {
+          userDropdown.classList.remove('hidden');
+          userMenuButton.setAttribute('aria-expanded', 'true');
+        } else {
+          userDropdown.classList.add('hidden');
+          userMenuButton.setAttribute('aria-expanded', 'false');
+        }
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (event) => {
+        if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
+          userDropdown.classList.add('hidden');
+          userMenuButton.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  });
+</script>
