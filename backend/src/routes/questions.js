@@ -1,5 +1,6 @@
 import express from 'express';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -7,43 +8,95 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
-const DATA_PATH = path.resolve(__dirname, '../../data/questions.json');
+// Directory containing per-topic question pair JSON files
+const PAIRS_PATH = path.resolve(__dirname, '../data/question-pairs');
+console.log('[Config] PAIRS_PATH resolved to:', PAIRS_PATH);
 
 // Year ordering for filtering (newest to oldest)
 const YEAR_ORDER = [
-  '2024', '2024 Deferred', '2023', '2023 Deferred', '2022', '2022 Deferred', 
-  '2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', '2014 Sample',
-  '2013', '2012', '2012 Sample', '2011', '2010'
+  '2024', '2023', '2022', '2021', '2020',
+  '2019', '2018', '2017', '2016', '2015',
+  '2014', '2013', '2012', '2011', '2010'
 ];
 
-// Helper functions
+// ...existing code...
 async function readAllQuestions() {
   try {
-    const data = await fs.readFile(DATA_PATH, 'utf-8');
-    return JSON.parse(data);
+    const topicFiles = await fs.readdir(PAIRS_PATH);
+    const allQuestions = [];
+    for (const topicFile of topicFiles) {
+      if (!topicFile.endsWith('.json')) continue;
+      const filePath = path.join(PAIRS_PATH, topicFile);
+      try {
+        const data = await fs.readFile(filePath, 'utf-8');
+        const questions = JSON.parse(data);
+        console.log(`[Data Loading] Loaded ${questions.length} questions from ${topicFile}`);
+        allQuestions.push(...questions);
+      } catch (fileErr) {
+        console.warn(`[Data Loading] Failed to load ${topicFile}:`, fileErr.message);
+      }
+    }
+    console.log(`[Data Loading] Total questions loaded: ${allQuestions.length}`);
+    return allQuestions;
   } catch (error) {
-    console.error('Error reading questions:', error);
+    console.error('[Data Loading] Error reading question-pairs directory:', error.message);
     return [];
   }
 }
 
 async function writeAllQuestions(questions) {
-  try {
-    await fs.writeFile(DATA_PATH, JSON.stringify(questions, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error writing questions:', error);
-    return false;
-  }
+  // This function may need to be re-evaluated. For now, it's a no-op.
+  console.warn('[Data Writing] writeAllQuestions is not implemented for multi-file structure and has been disabled.');
+  return false;
+  // try {
+  //   await fs.writeFile(DATA_PATH, JSON.stringify(questions, null, 2));
+  //   return true;
+  // } catch (error) {
+  //   console.error('Error writing questions:', error);
+  //   return false;
+  // }
 }
 
 function serializeQuestion(question) {
+  // Respect existing URLs in JSON; only normalize their base prefix.
+  const primaryTopic = Array.isArray(question.topic) ? (question.topic[0] || 'unknown') : (question.topic || 'unknown');
+
+  const normalizeAssetPath = (p) => {
+    if (!p) return null;
+    if (p.startsWith('src/assets/questions/')) {
+      return '/questions/' + p.substring('src/assets/questions/'.length);
+    }
+    // Already normalized or absolute
+    if (p.startsWith('/questions/') || p.startsWith('http://') || p.startsWith('https://')) return p;
+    return p; // leave any other relative path unchanged (frontend can decide)
+  };
+
+  const questionRaw = question.questionTifUrl || question.questionPngUrl || null;
+  const solutionRaw = question.solutionTifUrl || question.solutionPngUrl || null;
+  const questionUrl = normalizeAssetPath(questionRaw);
+  const solutionUrl = normalizeAssetPath(solutionRaw);
+
+  // Optional existence check (only if normalized points into /questions/)
+  let existsQ = null, existsA = null;
+  if (questionUrl && questionUrl.startsWith('/questions/')) {
+    const rel = questionUrl.substring('/questions/'.length); // e.g. algebra/questions/alg-1001.png
+    const fsPath = path.resolve(__dirname, '../data/questions', rel);
+    existsQ = fsSync.existsSync(fsPath);
+  }
+  if (solutionUrl && solutionUrl.startsWith('/questions/')) {
+    const rel = solutionUrl.substring('/questions/'.length);
+    const fsPath = path.resolve(__dirname, '../data/questions', rel);
+    existsA = fsSync.existsSync(fsPath);
+  }
+  console.log(`[Serialize] ${question.id} topic=${primaryTopic} qUrl=${questionUrl} sUrl=${solutionUrl} existsQ=${existsQ} existsA=${existsA}`);
+
   return {
     ...question,
-    questionTifUrl: question.questionTifUrl || question.questionPngUrl,
-    solutionTifUrl: question.solutionTifUrl || question.solutionPngUrl,
-    questionPngUrl: question.questionPngUrl || question.questionTifUrl,
-    solutionPngUrl: question.solutionPngUrl || question.solutionTifUrl,
+    topic: question.topic, // preserve original (array or string)
+    questionTifUrl: questionUrl || question.questionTifUrl || null,
+    solutionTifUrl: solutionUrl || question.solutionTifUrl || null,
+    questionPngUrl: questionUrl || question.questionPngUrl || null,
+    solutionPngUrl: solutionUrl || question.solutionPngUrl || null,
     timeLimitSeconds: Math.max(0, Math.floor((question.timeLimitMinute || 0) * 60))
   };
 }
@@ -51,6 +104,7 @@ function serializeQuestion(question) {
 // GET /api/questions - Get random question(s) or by filters
 // Query params: id, topic, level, difficulty, onlyIncomplete, examOnly, longOnly, shortOnly, yearFrom, yearTo, topics, count
 router.get('/', async (req, res) => {
+  console.log(`[API Request] Received request for /api/questions with query:`, req.query);
   try {
     const questions = await readAllQuestions();
     const { id, topic, level, difficulty, onlyIncomplete, examOnly, longOnly, shortOnly, yearFrom, yearTo, topics, count } = req.query;
@@ -59,6 +113,7 @@ router.get('/', async (req, res) => {
     if (id) {
       const question = questions.find(q => q.id === id);
       if (!question) {
+        console.log(`[API Response] Question with ID ${id} not found.`);
         return res.status(404).json({ error: 'Question not found' });
       }
       
@@ -69,7 +124,9 @@ router.get('/', async (req, res) => {
         'Last-Modified': new Date().toUTCString()
       });
       
-      return res.json(serializeQuestion(question));
+      const serialized = serializeQuestion(question);
+      console.log(`[API Response] Found and serving question ${id}:`, serialized);
+      return res.json(serialized);
     }
 
     // Filter questions

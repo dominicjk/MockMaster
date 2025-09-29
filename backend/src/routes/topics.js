@@ -68,8 +68,8 @@ function formatQuestionResponse(question) {
   // Convert the JSON paths to actual accessible URLs
   const baseUrl = '/questions'; // This matches our static file serving
   
-  let questionImageUrl = question.questionTifUrl || question.questionPngUrl;
-  let solutionImageUrl = question.solutionTifUrl || question.solutionPngUrl;
+  let questionImageUrl = question.questionTifUrl;
+  let solutionImageUrl = question.solutionTifUrl;
   
   // Convert src/assets/questions/ paths to /questions/ URLs
   if (questionImageUrl) {

@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3001;
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs
+  max: 5000, // limit each IP to 5000 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
 });
 
@@ -55,8 +55,19 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Middleware to log requests for question images
+app.use('/questions', (req, res, next) => {
+  console.log(`[Static Asset Request] Attempting to serve: ${req.originalUrl}`);
+  next();
+});
+
 // Serve static files (question images)
-app.use('/questions', express.static(path.join(__dirname, 'data/questions')));
+app.use('/questions', express.static(path.join(__dirname, 'data/questions'), {
+  // Optional: Add more logging for static file serving
+  setHeaders: (res, filePath) => {
+    console.log(`[Static Asset Served] Found and serving: ${filePath}`);
+  }
+}));
 
 // Routes
 app.use('/api/questions', questionsRouter);
