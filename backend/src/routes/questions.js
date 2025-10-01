@@ -3,6 +3,8 @@ import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { optionalAuth } from '../middleware/auth.js';
+import UserModel from '../database/users.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,6 +103,9 @@ function serializeQuestion(question) {
   };
 }
 
+// Attach optional auth to enrich completion status
+router.use(optionalAuth);
+
 // GET /api/questions - Get random question(s) or by filters
 // Query params: id, topic, level, difficulty, onlyIncomplete, examOnly, longOnly, shortOnly, yearFrom, yearTo, topics, count
 router.get('/', async (req, res) => {
@@ -125,6 +130,9 @@ router.get('/', async (req, res) => {
       });
       
       const serialized = serializeQuestion(question);
+      if (req.userId) {
+        serialized.completedForUser = await UserModel.hasCompleted(req.userId, question.id);
+      }
       console.log(`[API Response] Found and serving question ${id}:`, serialized);
       return res.json(serialized);
     }
@@ -253,11 +261,18 @@ router.get('/', async (req, res) => {
       // Return multiple random questions (shuffled)
       const shuffled = [...filtered].sort(() => Math.random() - 0.5);
       const selectedQuestions = shuffled.slice(0, Math.min(requestedCount, shuffled.length));
-      res.json(selectedQuestions.map(serializeQuestion));
+      const result = await Promise.all(selectedQuestions.map(async q => {
+        const s = serializeQuestion(q);
+        if (req.userId) s.completedForUser = await UserModel.hasCompleted(req.userId, q.id);
+        return s;
+      }));
+      res.json(result);
     } else {
       // Return single random question (original behavior)
       const randomQuestion = filtered[Math.floor(Math.random() * filtered.length)];
-      res.json(serializeQuestion(randomQuestion));
+      const s = serializeQuestion(randomQuestion);
+      if (req.userId) s.completedForUser = await UserModel.hasCompleted(req.userId, randomQuestion.id);
+      res.json(s);
     }
 
   } catch (error) {
@@ -284,6 +299,28 @@ router.get('/all', async (req, res) => {
   }
 });
 
+// GET /api/questions/stats - lightweight counts per topic for progress bars
+router.get('/stats', async (req, res) => {
+  try {
+    const questions = await readAllQuestions();
+    const counts = {};
+    for (const q of questions) {
+      // Topic may be array or string
+      const topics = Array.isArray(q.topic) ? q.topic : [q.topic];
+      topics.filter(Boolean).forEach(t => {
+        counts[t] = (counts[t] || 0) + 1;
+      });
+    }
+    res.set({
+      'Cache-Control': 'public, max-age=300, s-maxage=600'
+    });
+    res.json({ total: questions.length, topics: counts });
+  } catch (error) {
+    console.error('Error in GET /questions/stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/questions/:id - Get specific question
 router.get('/:id', async (req, res) => {
   try {
@@ -294,7 +331,9 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Question not found' });
     }
     
-    res.json(serializeQuestion(question));
+    const s = serializeQuestion(question);
+    if (req.userId) s.completedForUser = await UserModel.hasCompleted(req.userId, question.id);
+    res.json(s);
   } catch (error) {
     console.error('Error in GET /questions/:id:', error);
     res.status(500).json({ error: 'Internal server error' });

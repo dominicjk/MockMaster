@@ -57,7 +57,22 @@ class UserModel {
 
   async readDatabase() {
     const data = await fs.readFile(DATABASE_PATH, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    // Ensure progress structure exists (migration)
+    if (Array.isArray(parsed.users)) {
+      let migrated = false;
+      parsed.users = parsed.users.map(u => {
+        if (!u.progress || !Array.isArray(u.progress.attempts)) {
+          migrated = true;
+          return { ...u, progress: { attempts: [] } };
+        }
+        return u;
+      });
+      if (migrated) {
+        await this.writeDatabase(parsed);
+      }
+    }
+    return parsed;
   }
 
   async writeDatabase(data) {
@@ -100,7 +115,8 @@ class UserModel {
         correctAnswers: 0,
         topicsStudied: [],
         lastPracticeDate: null
-      }
+      },
+      progress: { attempts: [] }
     };
 
     db.users.push(user);
@@ -264,6 +280,50 @@ class UserModel {
       const lastActivity = user.lastLoginAt || user.createdAt;
       return new Date(lastActivity) < cutoffDate;
     });
+  }
+
+  // Progress APIs
+  async addOrUpdateAttempt(userId, { questionId, timeTakenSeconds = null, notes = '' }) {
+    const db = await this.readDatabase();
+    const idx = db.users.findIndex(u => u.id === userId);
+    if (idx === -1) throw new Error('User not found');
+    const user = db.users[idx];
+    if (!user.progress || !Array.isArray(user.progress.attempts)) {
+      user.progress = { attempts: [] };
+    }
+    const attempts = user.progress.attempts;
+    const existing = attempts.find(a => a.questionId === questionId);
+    const nowIso = new Date().toISOString();
+    if (existing) {
+      existing.lastUpdatedAt = nowIso;
+      if (timeTakenSeconds != null) existing.timeTakenSeconds = timeTakenSeconds;
+      if (notes) existing.notes = notes;
+    } else {
+      attempts.push({ questionId, completedAt: nowIso, lastUpdatedAt: nowIso, timeTakenSeconds, notes });
+      user.stats.questionsAnswered = (user.stats.questionsAnswered || 0) + 1;
+      user.stats.lastPracticeDate = nowIso;
+    }
+    user.updatedAt = nowIso;
+    db.users[idx] = user;
+    await this.writeDatabase(db);
+    return attempts.find(a => a.questionId === questionId);
+  }
+
+  async getAttempts(userId) {
+    const db = await this.readDatabase();
+    const user = db.users.find(u => u.id === userId);
+    if (!user) throw new Error('User not found');
+    if (!user.progress || !Array.isArray(user.progress.attempts)) return [];
+    return user.progress.attempts;
+  }
+
+  async hasCompleted(userId, questionId) {
+    try {
+      const attempts = await this.getAttempts(userId);
+      return attempts.some(a => a.questionId === questionId);
+    } catch {
+      return false;
+    }
   }
 }
 

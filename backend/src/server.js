@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import questionsRouter from './routes/questions.js';
 import topicsRouter from './routes/topics.js';
 import authRouter from './routes/auth.js';
+import progressRouter from './routes/progress.js';
 import passport from './middleware/auth.js';
 import UserModel from './database/users.js';
 import EmailService from './services/emailService.js';
@@ -73,6 +74,7 @@ app.use('/questions', express.static(path.join(__dirname, 'data/questions'), {
 app.use('/api/questions', questionsRouter);
 app.use('/api/topics', topicsRouter);
 app.use('/auth', authRouter);
+app.use('/api/progress', progressRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

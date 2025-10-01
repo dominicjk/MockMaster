@@ -2,11 +2,15 @@ import express from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { optionalAuth } from '../middleware/auth.js';
+import UserModel from '../database/users.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+// Attach optional auth to know which questions are completed by the user
+router.use(optionalAuth);
 const QUESTION_PAIRS_PATH = path.resolve(__dirname, '../data/question-pairs');
 
 // Helper function to read all question-pairs JSON files
@@ -130,6 +134,17 @@ router.post('/questions', async (req, res) => {
     
     // Format and return the matching questions
     const formattedQuestions = matchingQuestions.map(formatQuestionResponse);
+
+    // Annotate completion for authenticated user
+    if (req.userId) {
+      try {
+        const attempts = await UserModel.getAttempts(req.userId);
+        const completedSet = new Set(attempts.map(a => a.questionId));
+        formattedQuestions.forEach(q => { if (completedSet.has(q.id)) { q.completed = true; } });
+      } catch (e) {
+        console.warn('Unable to annotate completed questions:', e.message);
+      }
+    }
     
     res.json({
       message: 'Questions found successfully',
@@ -186,6 +201,15 @@ router.get('/questions', async (req, res) => {
     }
     
     const formattedQuestions = matchingQuestions.map(formatQuestionResponse);
+    if (req.userId) {
+      try {
+        const attempts = await UserModel.getAttempts(req.userId);
+        const completedSet = new Set(attempts.map(a => a.questionId));
+        formattedQuestions.forEach(q => { if (completedSet.has(q.id)) { q.completed = true; } });
+      } catch (e) {
+        console.warn('Unable to annotate completed questions:', e.message);
+      }
+    }
     
     res.json({
       message: 'Questions found successfully',

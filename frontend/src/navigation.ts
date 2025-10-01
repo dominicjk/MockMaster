@@ -7,6 +7,10 @@ export const headerData = {
       href: getPermalink('/maths/practice'),
     },
     {
+      text: 'Progress',
+      href: getPermalink('/progress'),
+    },
+    {
       text: 'Questions',
       href: getPermalink('/questions'),
     },

@@ -56,13 +56,13 @@ const metadata = {
               <option value="incomplete">Incomplete</option>
               <option value="state-exams">State Exams</option>
               <option value="custom-questions">Custom Questions</option>
-              <option value="paper-1">Paper 1</option>
-              <option value="paper-2">Paper 2</option>
             </select>
             
             <!-- Filters -->
             <select id="topic-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="">All Topics</option>
+              <option value="__paper1">Paper 1</option>
+              <option value="__paper2">Paper 2</option>
             </select>
             <select id="difficulty-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="">All Difficulties</option>
@@ -224,6 +224,48 @@ const metadata = {
       let warningTimeout: number | null = null;
       let isLoaded = false;
 
+      // Persisted filter state (initialized from URL params or sessionStorage)
+      interface FilterState { topic: string; difficulty: string; sort: string; }
+      let initialFilterState: FilterState | null = null;
+
+      function getInitialFilterState(): FilterState {
+        if (initialFilterState) return initialFilterState;
+        const params = new URLSearchParams(window.location.search);
+        let topic = params.get('topic') || '';
+        let difficulty = params.get('difficulty') || '';
+        let sort = params.get('sort') || 'year-desc';
+        // Fallback to sessionStorage if URL lacks values
+        try {
+          const stored = sessionStorage.getItem('questionsFilters');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (!topic && parsed.topic) topic = parsed.topic;
+            if (!difficulty && parsed.difficulty) difficulty = parsed.difficulty;
+            if ((!sort || sort === 'year-desc') && parsed.sort) sort = parsed.sort;
+          }
+        } catch {
+          console.warn('Failed to parse stored filters');
+        }
+        initialFilterState = { topic, difficulty, sort };
+        return initialFilterState;
+      }
+
+      function persistFilters(topic: string, difficulty: string, sort: string) {
+        // Update URL (replaceState to avoid history spam)
+        const params = new URLSearchParams(window.location.search);
+        if (topic) params.set('topic', topic); else params.delete('topic');
+        if (difficulty) params.set('difficulty', difficulty); else params.delete('difficulty');
+        if (sort && sort !== 'year-desc') params.set('sort', sort); else params.delete('sort');
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '');
+        window.history.replaceState(null, '', newUrl);
+        try {
+          sessionStorage.setItem('questionsFilters', JSON.stringify({ topic, difficulty, sort }));
+        } catch {
+          /* ignore storage issues */
+        }
+      }
+
     // Caching variables
     let questionsCache: Question[] | null = null;
     let cacheTimestamp: number | null = null;
@@ -308,16 +350,32 @@ const metadata = {
             completed: q.completed || false
           }));
 
+          // Overlay local attempts for immediate completion feedback
+          try {
+            const localAttemptsRaw = localStorage.getItem('questionAttempts');
+            if (localAttemptsRaw) {
+              const localAttempts = JSON.parse(localAttemptsRaw);
+              const completedSet = new Set((localAttempts as Array<{questionId?: string}>).map(a => a.questionId).filter(Boolean));
+              allQuestions.forEach(q => { if (completedSet.has(q.id)) q.completed = true; });
+            }
+          } catch { /* ignore local overlay errors */ }
+
           console.log(`✅ Loaded ${allQuestions.length} questions from cache`);
           
-          // Populate topic filter
+          // Populate topic filter (then attempt filtered display)
           populateTopicFilter();
-          
-          // Display questions
-          displayQuestions();
+          const initFilters = getInitialFilterState();
+          if (initFilters.topic || initFilters.difficulty || initFilters.sort !== 'year-desc') {
+            // Apply persisted filters immediately
+            displayQuestions(initFilters.topic, initFilters.difficulty, initFilters.sort, true);
+          } else {
+            displayQuestions();
+          }
           updateTotalCount();
           
           hideLoadingScreen();
+          // Notify listeners data is ready
+          document.dispatchEvent(new CustomEvent('questions-data-ready'));
           return; // Exit early with cached data
         }
 
@@ -362,14 +420,28 @@ const metadata = {
           completed: q.completed || false
         }));
 
+        // Overlay local attempts (fresh fetch scenario)
+        try {
+          const localAttemptsRaw = localStorage.getItem('questionAttempts');
+          if (localAttemptsRaw) {
+            const localAttempts = JSON.parse(localAttemptsRaw);
+            const completedSet = new Set((localAttempts as Array<{questionId?: string}>).map(a => a.questionId).filter(Boolean));
+            allQuestions.forEach(q => { if (completedSet.has(q.id)) q.completed = true; });
+          }
+        } catch { /* ignore */ }
+
         console.log(`Loaded ${allQuestions.length} questions`);
         
         // Populate topic filter
         populateTopicFilter();
-        
-        // Display questions
-        displayQuestions();
+        const initFilters2 = getInitialFilterState();
+        if (initFilters2.topic || initFilters2.difficulty || initFilters2.sort !== 'year-desc') {
+          displayQuestions(initFilters2.topic, initFilters2.difficulty, initFilters2.sort, true);
+        } else {
+          displayQuestions();
+        }
         updateTotalCount();
+        document.dispatchEvent(new CustomEvent('questions-data-ready'));
         
       } catch (error) {
         console.error('Error loading questions:', error);
@@ -399,18 +471,40 @@ const metadata = {
         }
       });
 
-      // Clear existing options (except "All Topics")
-      while (topicFilter.children.length > 1) {
-        topicFilter.removeChild(topicFilter.lastChild!);
+      // Clear existing options entirely; will rebuild static + dynamic
+      while (topicFilter.firstChild) {
+        topicFilter.removeChild(topicFilter.firstChild);
       }
 
-      // Add topic options
+      const init = getInitialFilterState();
+
+      // Static options (bold styled via CSS at bottom)
+      const allOpt = document.createElement('option'); allOpt.value=''; allOpt.textContent='All Topics'; topicFilter.appendChild(allOpt);
+      const p1Opt = document.createElement('option'); p1Opt.value='__paper1'; p1Opt.textContent='Paper 1'; topicFilter.appendChild(p1Opt);
+      const p2Opt = document.createElement('option'); p2Opt.value='__paper2'; p2Opt.textContent='Paper 2'; topicFilter.appendChild(p2Opt);
+
+      // Dynamic topic options
       Array.from(topics).sort().forEach(topic => {
         const option = document.createElement('option');
         option.value = topic;
-        option.textContent = topic.charAt(0).toUpperCase() + topic.slice(1).replace('-', ' ');
+        option.textContent = topic.charAt(0).toUpperCase() + topic.slice(1).replace(/-/g, ' ');
         topicFilter.appendChild(option);
       });
+
+      // Pre-select if persisted
+      if (init.topic) {
+        topicFilter.value = init.topic;
+      }
+
+      // Explicitly apply bold styling (some browsers ignore CSS selector on option)
+      try {
+        const specialValues = ['', '__paper1', '__paper2'];
+        Array.from(topicFilter.options).forEach(opt => {
+          if (specialValues.includes(opt.value)) {
+            opt.style.fontWeight = '600';
+          }
+        });
+      } catch { /* ignore styling issues */ }
     }
 
     // Paper 1 topics: algebra, complex numbers, differentiation, integration, sequences, financial maths, induction
@@ -587,12 +681,6 @@ const metadata = {
         case 'custom-questions':
           return sorted.filter(q => isCustomQuestion(q));
           
-        case 'paper-1':
-          return sorted.filter(q => isPaper1Question(q));
-          
-        case 'paper-2':
-          return sorted.filter(q => !isPaper1Question(q));
-          
         default:
           return sorted; // Keep original order
       }
@@ -645,7 +733,11 @@ const metadata = {
       // Filter questions
       filteredQuestions = allQuestions;
       
-      if (filterTopic) {
+      if (filterTopic === '__paper1') {
+        filteredQuestions = filteredQuestions.filter(q => isPaper1Question(q));
+      } else if (filterTopic === '__paper2') {
+        filteredQuestions = filteredQuestions.filter(q => !isPaper1Question(q));
+      } else if (filterTopic) {
         filteredQuestions = filteredQuestions.filter(q => {
           const topicData = q.topic || q.subject;
           if (Array.isArray(topicData)) {
@@ -1003,24 +1095,31 @@ const metadata = {
       const sortFilter = document.getElementById('sort-filter') as HTMLSelectElement;
       const loadMoreBtn = document.getElementById('load-more-btn');
 
+      // Apply initial filter values to UI (in case of bfcache or early existing selects)
+      const init = getInitialFilterState();
+      if (topicFilter && init.topic) topicFilter.value = init.topic;
+      if (difficultyFilter && init.difficulty) difficultyFilter.value = init.difficulty;
+      if (sortFilter && init.sort) sortFilter.value = init.sort;
+
       if (topicFilter) {
         topicFilter.addEventListener('change', () => {
-          displayQuestions(topicFilter.value, difficultyFilter?.value || '', sortFilter?.value || '', true);
+          persistFilters(topicFilter.value, difficultyFilter?.value || '', sortFilter?.value || 'year-desc');
+          displayQuestions(topicFilter.value, difficultyFilter?.value || '', sortFilter?.value || 'year-desc', true);
         });
       }
 
       if (difficultyFilter) {
         difficultyFilter.addEventListener('change', () => {
-          displayQuestions(topicFilter?.value || '', difficultyFilter.value, sortFilter?.value || '', true);
+          persistFilters(topicFilter?.value || '', difficultyFilter.value, sortFilter?.value || 'year-desc');
+          displayQuestions(topicFilter?.value || '', difficultyFilter.value, sortFilter?.value || 'year-desc', true);
         });
       }
 
       if (sortFilter) {
-        // Set default sort to year-desc (Newest First)
-        sortFilter.value = 'year-desc';
-        
+        if (!init.sort) sortFilter.value = 'year-desc';
         sortFilter.addEventListener('change', () => {
-          displayQuestions(topicFilter?.value || '', difficultyFilter?.value || '', sortFilter.value, true);
+          persistFilters(topicFilter?.value || '', difficultyFilter?.value || '', sortFilter.value || 'year-desc');
+          displayQuestions(topicFilter?.value || '', difficultyFilter?.value || '', sortFilter.value || 'year-desc', true);
         });
       }
 
@@ -1071,6 +1170,20 @@ const metadata = {
 
       // Make function available globally for the onclick handler
       (window as Window & typeof globalThis & { toggleQuestionCompleted: typeof toggleQuestionCompleted }).toggleQuestionCompleted = toggleQuestionCompleted;
+
+      // When data ready & filters persisted, reapply filtered view (avoids race where initial display shows all)
+      document.addEventListener('questions-data-ready', () => {
+        const f = getInitialFilterState();
+        if (f.topic || f.difficulty || f.sort !== 'year-desc') {
+          const topicFilterEl = document.getElementById('topic-filter') as HTMLSelectElement | null;
+            const difficultyFilterEl = document.getElementById('difficulty-filter') as HTMLSelectElement | null;
+            const sortFilterEl = document.getElementById('sort-filter') as HTMLSelectElement | null;
+            if (topicFilterEl && f.topic) topicFilterEl.value = f.topic;
+            if (difficultyFilterEl && f.difficulty) difficultyFilterEl.value = f.difficulty;
+            if (sortFilterEl && f.sort) sortFilterEl.value = f.sort;
+            displayQuestions(f.topic, f.difficulty, f.sort, true);
+        }
+      }, { once: true });
     }
 
     // Event listeners - support both DOMContentLoaded and Astro navigation
@@ -1192,5 +1305,10 @@ const metadata = {
     .title-column {
       min-width: 0; /* Allows flex shrinking */
     }
+
+    /* Bold special options in topic filter */
+    #topic-filter option:first-child,
+    #topic-filter option[value='__paper1'],
+    #topic-filter option[value='__paper2'] { font-weight:600; }
   </style>
 </Layout>
