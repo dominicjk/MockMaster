@@ -20,12 +20,6 @@ const metadata = { title: `Practice - ${id}` };
 ---
 
 <Layout metadata={metadata}>
-  <script is:inline>
-    // Apply subtle pink background just for practice page by adding a body class that overrides the CSS variable
-    document.addEventListener('DOMContentLoaded', () => {
-      document.body.classList.add('practice-bg');
-    });
-  </script>
   <!-- Loading Screen Overlay -->
   <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center">
     <div class="text-center">
@@ -156,9 +150,13 @@ const metadata = { title: `Practice - ${id}` };
             </div>
           </div>
           <div class="p-6 h-full">
-        <!-- Question Name Display -->
-        <div class="mb-3">
-          <div id="question-year" class="text-lg font-semibold text-gray-800 dark:text-gray-200 text-left">--</div>
+        <!-- Question Heading (moved here from question panel) -->
+        <div id="question-heading" class="mb-3">
+          <div class="flex items-center gap-2 leading-tight">
+            <span id="qh-year" class="text-sm font-semibold text-gray-600 dark:text-gray-300"></span>
+            <span id="qh-paper" class="text-xs tracking-wide uppercase text-gray-500 dark:text-gray-400"></span>
+          </div>
+          <div id="qh-title" class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-1"></div>
         </div>
         
         <!-- Favorite Star -->
@@ -676,7 +674,8 @@ const metadata = { title: `Practice - ${id}` };
         shortOnly: urlParams.get('shortOnly') || 'false',
         yearFrom: urlParams.get('yearFrom') || '',
         yearTo: urlParams.get('yearTo') || '',
-        topics: urlParams.get('topics') || ''
+        topics: urlParams.get('topics') || '',
+        customOnly: urlParams.get('customOnly') || 'false'
       };
     }
 
@@ -735,11 +734,12 @@ const metadata = { title: `Practice - ${id}` };
         if (topicsToQuery.length > 0) {
           queryParams.set('topics', topicsToQuery.join(','));
         }
-        if (filterParams.examOnly === 'true') queryParams.set('examOnly', 'true');
+  if (filterParams.examOnly === 'true') queryParams.set('examOnly', 'true');
         if (filterParams.longOnly === 'true') queryParams.set('longOnly', 'true');
         if (filterParams.shortOnly === 'true') queryParams.set('shortOnly', 'true');
         if (filterParams.yearFrom) queryParams.set('yearFrom', filterParams.yearFrom);
         if (filterParams.yearTo) queryParams.set('yearTo', filterParams.yearTo);
+  if (filterParams.customOnly === 'true') queryParams.set('customOnly', 'true');
         queryParams.set('count', '10'); // Request 10 questions to have more to validate
         
   const response = await fetchWithFallback(`/api/questions?${queryParams.toString()}`);
@@ -1112,21 +1112,48 @@ const metadata = { title: `Practice - ${id}` };
     // Build a custom title for non-exam (custom) questions like alg-0001 -> Custom Algebra 1
     function computeCustomTitle(q) {
       if (!q || !q.id) return null;
-      // Expect pattern prefix-numeric, numeric with leading zeros means custom (exam questions filtered by numeric starting with 1 earlier)
-  const m = String(q.id).match(/^([a-z-]+)-(\d{4,})$/i);
-      if (!m) return null;
-      const numeric = m[2];
-      if (!numeric.startsWith('0')) return null; // treat only leading-zero ids as custom
-      // Derive topic name from question.topic (may be array) or id prefix
-      let rawTopic = Array.isArray(q.topic) ? (q.topic[0] || m[1]) : (q.topic || m[1]);
+      // Accept ids with final numeric segment (>=3 digits); custom if leading zero
+      const parts = String(q.id).split('-');
+      const last = parts[parts.length - 1];
+      if (!/^\d{3,}$/.test(last)) return null;
+      if (!last.startsWith('0')) return null; // not custom
+      const numeric = last;
+      // Derive topic(s) portion by removing last segment
+      const topicPart = parts.slice(0, -1).join('-') || 'custom';
+      let rawTopic = Array.isArray(q.topic) ? (q.topic[0] || topicPart) : (q.topic || topicPart);
       rawTopic = String(rawTopic).replace(/_/g, '-');
       const topicPretty = rawTopic
         .split(/[-\s]/)
         .filter(Boolean)
         .map(w => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
-      const number = parseInt(numeric, 10); // strip leading zeros
+      const number = parseInt(numeric, 10); // numeric without leading zeros
       return `Custom ${topicPretty} ${number}`;
+    }
+
+    function parseQuestionName(rawName) {
+      if (!rawName) return { yearLine: '', paperLine: '', titleLine: rawName || '' };
+      const tokens = String(rawName).trim().split(/\s+/);
+      if (tokens.length < 2) return { yearLine: '', paperLine: '', titleLine: rawName };
+      const yearToken = tokens[0];
+      if (!/^\d{4}$/.test(yearToken)) return { yearLine: '', paperLine: '', titleLine: rawName };
+      // Find paper token (P1 / P2)
+      let paperIndex = -1;
+      for (let i = 1; i < tokens.length; i++) {
+        if (/^P[12]$/i.test(tokens[i])) { paperIndex = i; break; }
+      }
+      if (paperIndex === -1) return { yearLine: yearToken, paperLine: '', titleLine: rawName.replace(/^\d{4}\s*/, '') };
+      const descriptorTokens = tokens.slice(1, paperIndex); // may be [] or ['Deferred'] etc.
+      const yearLine = [yearToken, descriptorTokens.join(' ')].filter(Boolean).join(' ');
+      const paperNum = tokens[paperIndex].replace(/^[Pp]/,'');
+      const paperLine = `Paper ${paperNum}`;
+      // Remaining tokens after paper may start with 'Question'
+      let remaining = tokens.slice(paperIndex + 1).join(' ');
+      // Normalize 'Question' label capitalization
+      remaining = remaining.replace(/^question/i, match => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase());
+      // If empty, just use original
+      const titleLine = remaining || rawName;
+      return { yearLine, paperLine, titleLine };
     }
 
     function updateMetadata(question) {
@@ -1135,13 +1162,23 @@ const metadata = { title: `Practice - ${id}` };
       console.log('Available fields:', Object.keys(question));
       
       // Update year display
-      const yearEl = document.getElementById('question-year');
-      if (yearEl) {
-        const baseName = question.name || question.Name || question.title || question.Title || '--';
-        const customTitle = computeCustomTitle(question);
-        const finalName = customTitle || baseName;
-        console.log('Name field value (computed):', finalName);
-        yearEl.textContent = finalName;
+      const baseName = question.name || question.Name || question.title || question.Title || '';
+      const customTitle = computeCustomTitle(question);
+      const finalName = customTitle || baseName;
+      const parsed = parseQuestionName(baseName); // use original exam-style name for parsing
+      // Populate new heading area above question image
+      const qhYear = document.getElementById('qh-year');
+      const qhPaper = document.getElementById('qh-paper');
+      const qhTitle = document.getElementById('qh-title');
+      if (customTitle) {
+        // Custom questions have no exam year/paper; keep those blank
+        if (qhYear) qhYear.textContent = '';
+        if (qhPaper) qhPaper.textContent = '';
+        if (qhTitle) qhTitle.textContent = finalName;
+      } else {
+        if (qhYear) qhYear.textContent = parsed.yearLine;
+        if (qhPaper) qhPaper.textContent = parsed.paperLine;
+        if (qhTitle) qhTitle.textContent = parsed.titleLine || finalName;
       }
       
       // Only update elements that actually exist in the markup
@@ -1542,9 +1579,7 @@ const metadata = { title: `Practice - ${id}` };
   </script>
 
   <style>
-    /* Practice page custom background (subtle pink) */
-    .practice-bg { --aw-color-bg-page: #fff5f7; }
-    .dark.practice-bg { --aw-color-bg-page: #271d21; }
+  /* Removed pink practice background override */
     /* Shared pill border color variable for quick theme experimentation */
     :root { --pill-border-color: #9ca3af; }
     .dark :root { --pill-border-color: #9ca3af; }
@@ -1600,7 +1635,7 @@ const metadata = { title: `Practice - ${id}` };
       outline: none;
     }
   #zoom-controls .zoom-btn-left:hover,
-  #zoom-controls .zoom-btn-right:hover { background:#000; color:#fff; }
+  #zoom-controls .zoom-btn-right:hover { background:#e5e5e5; color:#000; }
   #zoom-controls .zoom-btn-left:active,
   #zoom-controls .zoom-btn-right:active { transform: scale(0.9); }
   #zoom-controls .zoom-btn-left:focus,
@@ -1608,8 +1643,8 @@ const metadata = { title: `Practice - ${id}` };
   .dark #zoom-controls .zoom-btn-left,
   .dark #zoom-controls .zoom-btn-right,
   .dark #zoom-controls .zoom-level { background:#ffffff; color:#000000; }
-    .dark #zoom-controls .zoom-btn-left:hover,
-    .dark #zoom-controls .zoom-btn-right:hover { background:#000; color:#ffffff; }
+  .dark #zoom-controls .zoom-btn-left:hover,
+  .dark #zoom-controls .zoom-btn-right:hover { background:#d4d4d4; color:#000; }
 
     /* Timer controls - match zoom control styling */
   #timer-controls { height: 2rem; width: 6.5rem; /* match zoom controls total width */ }
@@ -1629,8 +1664,8 @@ const metadata = { title: `Practice - ${id}` };
       padding:0 0.45rem; background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
       border-top:1px solid var(--pill-border-color); border-bottom:1px solid var(--pill-border-color); font-size:0.78rem; flex:1 1 auto; min-width:0; line-height:1; outline:none; font-family:inherit;
     }
-    #timer-controls .timer-btn-left:hover,
-    #timer-controls .timer-btn-right:hover { background:#000; color:#fff; }
+  #timer-controls .timer-btn-left:hover,
+  #timer-controls .timer-btn-right:hover { background:#e5e5e5; color:#000; }
     #timer-controls .timer-btn-left:active,
     #timer-controls .timer-btn-right:active { transform:scale(0.9); }
   #timer-controls .timer-btn-left:focus,
@@ -1638,8 +1673,8 @@ const metadata = { title: `Practice - ${id}` };
     .dark #timer-controls .timer-btn-left,
     .dark #timer-controls .timer-btn-right,
     .dark #timer-controls .timer-display { background:#ffffff; color:#000000; }
-    .dark #timer-controls .timer-btn-left:hover,
-    .dark #timer-controls .timer-btn-right:hover { background:#000; color:#ffffff; }
+  .dark #timer-controls .timer-btn-left:hover,
+  .dark #timer-controls .timer-btn-right:hover { background:#d4d4d4; color:#000; }
 
   /* Merge zoom + timer into one visual pill: flatten touching inner corners */
   .merged-group { gap:0.25rem; }

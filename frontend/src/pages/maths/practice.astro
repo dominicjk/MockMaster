@@ -90,6 +90,10 @@ const paper2Topics: Topic[] = [
                 <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input id="optionsShortOnly" type="checkbox" class="h-4 w-4 accent-red-600" /> Short Questions Only
                 </label>
+                <div class="pt-1 border-t border-gray-200 dark:border-slate-700"></div>
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300" title="Show only custom (non-exam) questions">
+                  <input id="optionsCustomOnly" type="checkbox" class="h-4 w-4 accent-red-600" /> Custom Questions Only
+                </label>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year Range</label>
@@ -211,14 +215,19 @@ const paper2Topics: Topic[] = [
       const shortOnlyEl = document.getElementById('optionsShortOnly');
       const yearFromEl = document.getElementById('optionsYearFrom');
       const yearToEl = document.getElementById('optionsYearTo');
+      const customOnlyEl = document.getElementById('optionsCustomOnly');
       
       const examOnly = examOnlyEl && examOnlyEl instanceof HTMLInputElement ? String(examOnlyEl.checked) : 'false';
       const longOnly = longOnlyEl && longOnlyEl instanceof HTMLInputElement ? String(longOnlyEl.checked) : 'false';
       const shortOnly = shortOnlyEl && shortOnlyEl instanceof HTMLInputElement ? String(shortOnlyEl.checked) : 'false';
       const yearFrom = yearFromEl && yearFromEl instanceof HTMLSelectElement ? yearFromEl.value : '2024';
       const yearTo = yearToEl && yearToEl instanceof HTMLSelectElement ? yearToEl.value : '2012';
-      
-      return { examOnly, longOnly, shortOnly, yearFrom, yearTo };
+      const customOnly = customOnlyEl && customOnlyEl instanceof HTMLInputElement ? String(customOnlyEl.checked) : 'false';
+      // If custom only, omit year and exam filtering at source to avoid sending unnecessary params
+      if (customOnly === 'true') {
+        return { customOnly, examOnly: 'false', longOnly, shortOnly, yearFrom: '', yearTo: '' };
+      }
+      return { examOnly, longOnly, shortOnly, yearFrom, yearTo, customOnly };
     }
 
     function updateGlobalButtonState() {
@@ -345,18 +354,38 @@ const paper2Topics: Topic[] = [
         
         if (selected.length === 0) {
           // No topics selected = all questions (use a general topic like 'all')
-          const query = new URLSearchParams({ topics: 'all', ...opts });
+          const safeOpts = Object.fromEntries(Object.entries(opts).filter(([,v]) => v !== '' && v !== undefined));
+          const query = new URLSearchParams({ topics: 'all', ...safeOpts });
           window.location.href = `/maths/practice/all?${query.toString()}`;
         } else if (selected.length === 1) {
           // Single topic selected = go directly to that topic
-          const query = new URLSearchParams({ ...opts });
+          const safeOpts2 = Object.fromEntries(Object.entries(opts).filter(([,v]) => v !== '' && v !== undefined));
+          const query = new URLSearchParams({ ...safeOpts2 });
           window.location.href = `/maths/practice/${selected[0].id}?${query.toString()}`;
         } else {
           // Multiple topics selected = use comma-separated list
-          const query = new URLSearchParams({ topics: selected.map((t) => t.id).join(','), ...opts });
+          const safeOpts3 = Object.fromEntries(Object.entries(opts).filter(([,v]) => v !== '' && v !== undefined));
+          const query = new URLSearchParams({ topics: selected.map((t) => t.id).join(','), ...safeOpts3 });
           window.location.href = `/maths/practice/mixed?${query.toString()}`;
         }
       });
+    }
+
+    // When custom only is toggled, disable incompatible options (exam/year range) for clarity
+    const customOnlyCheckbox = document.getElementById('optionsCustomOnly');
+    function syncCustomOnlyDependencies() {
+      const c = customOnlyCheckbox instanceof HTMLInputElement && customOnlyCheckbox.checked;
+      const examOnlyEl = document.getElementById('optionsExamOnly');
+      const yearFromEl = document.getElementById('optionsYearFrom');
+      const yearToEl = document.getElementById('optionsYearTo');
+      if (examOnlyEl instanceof HTMLInputElement) {
+        examOnlyEl.disabled = c; if (c) examOnlyEl.checked = false;
+      }
+      [yearFromEl, yearToEl].forEach(sel => { if (sel instanceof HTMLSelectElement) sel.disabled = c; });
+    }
+    if (customOnlyCheckbox) {
+      customOnlyCheckbox.addEventListener('change', () => { syncCustomOnlyDependencies(); });
+      syncCustomOnlyDependencies();
     }
 
     updateGlobalButtonState();

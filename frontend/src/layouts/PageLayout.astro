@@ -10,12 +10,13 @@ import type { MetaData } from '~/types';
 
 export interface Props {
   metadata?: MetaData;
+  bodyClass?: string;
 }
 
-const { metadata } = Astro.props;
+const { metadata, bodyClass = '' } = Astro.props;
 ---
 
-<Layout metadata={metadata}>
+<Layout metadata={metadata} bodyClass={bodyClass}>
   <slot name="header">
     <Header {...headerData} isSticky />
   </slot>

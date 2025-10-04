@@ -132,7 +132,7 @@ router.get('/', async (req, res) => {
   console.log(`[API Request] Received request for /api/questions with query:`, req.query);
   try {
     const questions = await readAllQuestions();
-  const { id, topic, level, difficulty, onlyIncomplete, examOnly, longOnly, shortOnly, yearFrom, yearTo, topics, count, match } = req.query;
+  const { id, topic, level, difficulty, onlyIncomplete, examOnly, longOnly, shortOnly, yearFrom, yearTo, topics, count, match, customOnly } = req.query;
 
     // Direct ID lookup
     if (id) {
@@ -165,6 +165,22 @@ router.get('/', async (req, res) => {
     if (requestedTopics.length) {
       filtered = filtered.filter(q => matchesQuestion(q, requestedTopics, topicMatchMode));
     }
+
+    // Custom question handling: IDs with numeric segment starting with 0 (e.g. algebra-0001)
+    const isCustomQuestion = (q) => {
+      if (!q?.id) return false;
+      // Strategy: take final hyphen-delimited segment consisting only of digits
+      const parts = String(q.id).split('-');
+      const last = parts[parts.length - 1];
+      if (!/^\d{3,}$/.test(last)) return false; // require at least 3 digits to avoid tiny accidental ids
+      return last.startsWith('0');
+    };
+    const customFlag = customOnly === 'true';
+    if (customFlag) {
+      filtered = filtered.filter(isCustomQuestion);
+    } else {
+      filtered = filtered.filter(q => !isCustomQuestion(q));
+    }
     
     if (level) {
       filtered = filtered.filter(q => q.level === level);
@@ -181,7 +197,7 @@ router.get('/', async (req, res) => {
     // (Legacy multi-topics handling replaced by unified block above)
 
     // Filter by exam questions only (ID starts with 1, e.g., stat-1001)
-    if (examOnly === 'true') {
+  if (examOnly === 'true' && customOnly !== 'true') {
       filtered = filtered.filter(q => {
         const numericPart = q.id.split('-')[1];
         return numericPart && numericPart.startsWith('1');
@@ -198,71 +214,55 @@ router.get('/', async (req, res) => {
       filtered = filtered.filter(q => (q.timeLimitMinute || 0) <= 15);
     }
 
-    // Filter by year range
+    // Filter by year range: apply only to state questions; custom questions bypass year filtering entirely.
     if (yearFrom || yearTo) {
       filtered = filtered.filter(q => {
+        if (isCustomQuestion(q)) return true; // always retain customs regardless of year params
+
         // Extract year from question name (e.g., "2010 P2 Question 19" -> "2010")
         const nameMatch = q.name?.match(/^(\d{4}(?:\s+\w+)?)/);
         if (!nameMatch) return false;
-        
+
         const questionYear = nameMatch[1];
         const questionYearIndex = YEAR_ORDER.indexOf(questionYear);
-        
-        // If year not found in our order, try just the numeric part for basic validation
+
+        // If year not found in our order, try numeric part basic validation
         if (questionYearIndex === -1) {
           const numericYear = questionYear.match(/^\d{4}/)?.[0];
-          if (!numericYear || parseInt(numericYear) < 2010) {
-            return false; // Too old or invalid, not in our supported range
-          }
+            if (!numericYear || parseInt(numericYear) < 2010) return false;
         }
-        
+
         let withinRange = true;
-        
-        // Year range filtering: yearFrom (newer bound) to yearTo (older bound)
-        // In YEAR_ORDER array: index 0 = newest (2024), higher index = older
         let yearFromIndex = -1, yearToIndex = -1;
-        
-        if (yearFrom) {
-          yearFromIndex = YEAR_ORDER.indexOf(yearFrom);
-        }
-        if (yearTo) {
-          yearToIndex = YEAR_ORDER.indexOf(yearTo);
-        }
-        
-        // If both years are provided, ensure question is within the range
+        if (yearFrom) yearFromIndex = YEAR_ORDER.indexOf(yearFrom);
+        if (yearTo) yearToIndex = YEAR_ORDER.indexOf(yearTo);
+
         if (yearFromIndex !== -1 && yearToIndex !== -1) {
-          // Question must be between yearFrom and yearTo (inclusive)
-          // questionYearIndex >= yearFromIndex (question is same year or older than yearFrom)
-          // questionYearIndex <= yearToIndex (question is same year or newer than yearTo)
           if (questionYearIndex !== -1) {
-            withinRange = withinRange && questionYearIndex >= yearFromIndex && questionYearIndex <= yearToIndex;
+            withinRange = questionYearIndex >= yearFromIndex && questionYearIndex <= yearToIndex;
           } else {
-            // Fallback to numeric comparison
             const numericQuestionYear = parseInt(questionYear.match(/^\d{4}/)?.[0] || '0');
             const numericYearFrom = parseInt(yearFrom.match(/^\d{4}/)?.[0] || '0');
             const numericYearTo = parseInt(yearTo.match(/^\d{4}/)?.[0] || '0');
-            withinRange = withinRange && numericQuestionYear <= numericYearFrom && numericQuestionYear >= numericYearTo;
+            withinRange = numericQuestionYear <= numericYearFrom && numericQuestionYear >= numericYearTo;
           }
         } else if (yearFromIndex !== -1) {
-          // Only yearFrom provided - question must be same year or older
           if (questionYearIndex !== -1) {
-            withinRange = withinRange && questionYearIndex >= yearFromIndex;
+            withinRange = questionYearIndex >= yearFromIndex;
           } else {
             const numericQuestionYear = parseInt(questionYear.match(/^\d{4}/)?.[0] || '0');
             const numericYearFrom = parseInt(yearFrom.match(/^\d{4}/)?.[0] || '0');
-            withinRange = withinRange && numericQuestionYear <= numericYearFrom;
+            withinRange = numericQuestionYear <= numericYearFrom;
           }
         } else if (yearToIndex !== -1) {
-          // Only yearTo provided - question must be same year or newer
           if (questionYearIndex !== -1) {
-            withinRange = withinRange && questionYearIndex <= yearToIndex;
+            withinRange = questionYearIndex <= yearToIndex;
           } else {
             const numericQuestionYear = parseInt(questionYear.match(/^\d{4}/)?.[0] || '0');
             const numericYearTo = parseInt(yearTo.match(/^\d{4}/)?.[0] || '0');
-            withinRange = withinRange && numericQuestionYear >= numericYearTo;
+            withinRange = numericQuestionYear >= numericYearTo;
           }
         }
-        
         return withinRange;
       });
     }
@@ -271,12 +271,56 @@ router.get('/', async (req, res) => {
       return res.status(404).json({ error: 'No questions found matching the criteria' });
     }
 
+    // Prioritization: prefer questions whose topic set is entirely within the requested topics (no extra topics)
+    // Applies only when user specified topics.
+    let prioritized = filtered;
+    if (requestedTopics.length) {
+      const selectionSet = new Set(requestedTopics);
+      const subsetGroup = [];
+      const supersetGroup = [];
+      for (const q of filtered) {
+        const qTopics = questionTopics(q);
+        // A question qualifies for subsetGroup if all its topics are inside the selection set
+        if (qTopics.length && qTopics.every(t => selectionSet.has(t))) {
+          subsetGroup.push(q);
+        } else {
+          supersetGroup.push(q);
+        }
+      }
+      // Further bias inside subsetGroup: single-topic first, then by ascending topic count
+      subsetGroup.sort((a, b) => {
+        const aLen = questionTopics(a).length;
+        const bLen = questionTopics(b).length;
+        return aLen - bLen;
+      });
+      prioritized = [...subsetGroup, ...supersetGroup];
+    }
+
     // Handle count parameter for multiple questions
     const requestedCount = count ? parseInt(count) : 1;
     if (requestedCount > 1) {
-      // Return multiple random questions (shuffled)
-      const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-      const selectedQuestions = shuffled.slice(0, Math.min(requestedCount, shuffled.length));
+      // Multi-select honoring prioritization while introducing randomness within tiers
+      const selection = [];
+      const subsetSlice = [];
+      const supersetSlice = [];
+      // Separate again (small duplication for clarity)
+      if (requestedTopics.length) {
+        const selectionSet = new Set(requestedTopics);
+        for (const q of prioritized) {
+          const qTopics = questionTopics(q);
+            if (qTopics.length && qTopics.every(t => selectionSet.has(t))) subsetSlice.push(q); else supersetSlice.push(q);
+        }
+      } else {
+        supersetSlice.push(...prioritized); // no prioritization context
+      }
+      const shuffleInPlace = (arr) => arr.sort(() => Math.random() - 0.5);
+      shuffleInPlace(subsetSlice);
+      shuffleInPlace(supersetSlice);
+      for (const q of [...subsetSlice, ...supersetSlice]) {
+        if (selection.length >= requestedCount) break;
+        selection.push(q);
+      }
+      const selectedQuestions = selection;
       const result = await Promise.all(selectedQuestions.map(async q => {
         const s = serializeQuestion(q);
         if (req.userId) s.completedForUser = await UserModel.hasCompleted(req.userId, q.id);
@@ -284,8 +328,17 @@ router.get('/', async (req, res) => {
       }));
       res.json(result);
     } else {
-      // Return single random question (original behavior)
-      const randomQuestion = filtered[Math.floor(Math.random() * filtered.length)];
+      // Single selection: pick from highest-priority tier if available
+      let pool = prioritized;
+      if (requestedTopics.length) {
+        const selectionSet = new Set(requestedTopics);
+        const subsetPool = prioritized.filter(q => {
+          const qTopics = questionTopics(q);
+          return qTopics.length && qTopics.every(t => selectionSet.has(t));
+        });
+        if (subsetPool.length) pool = subsetPool;
+      }
+      const randomQuestion = pool[Math.floor(Math.random() * pool.length)];
       const s = serializeQuestion(randomQuestion);
       if (req.userId) s.completedForUser = await UserModel.hasCompleted(req.userId, randomQuestion.id);
       res.json(s);

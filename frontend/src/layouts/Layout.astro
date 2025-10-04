@@ -19,9 +19,10 @@ import type { MetaData as MetaDataType } from '~/types';
 
 export interface Props {
   metadata?: MetaDataType;
+  bodyClass?: string;
 }
 
-const { metadata = {} } = Astro.props;
+const { metadata = {}, bodyClass = '' } = Astro.props;
 const { language, textDirection } = I18N;
 ---
 
@@ -40,7 +41,7 @@ const { language, textDirection } = I18N;
     <ClientRouter fallback="swap" />
   </head>
 
-  <body class="antialiased text-default bg-page tracking-tight">
+  <body class={`antialiased text-default bg-page tracking-tight ${bodyClass}`.trim()}>
     <slot />
 
     <BasicScripts />
