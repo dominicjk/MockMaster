@@ -7,13 +7,16 @@ class EmailService {
   }
 
   initTransporter() {
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_APP_PASSWORD;
+    if (!user || !pass) {
+      // Quietly skip; app can run without email
+      return;
+    }
     try {
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         service: process.env.EMAIL_SERVICE || 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_APP_PASSWORD
-        }
+        auth: { user, pass }
       });
     } catch (error) {
       console.error('Failed to initialize email transporter:', error);

@@ -28,26 +28,38 @@ async function loadAllQuestionsIndex() {
   return index;
 }
 
-// Save / update attempt
-router.post('/:questionId/attempt', verifyToken, async (req, res) => {
-  try {
-    const { questionId } = req.params;
-    const { timeTakenSeconds, notes } = req.body || {};
-    const attempt = await UserModel.addOrUpdateAttempt(req.userId, { questionId, timeTakenSeconds, notes });
-    res.json({ success: true, attempt });
-  } catch (e) {
-    console.error('Error saving attempt', e);
-    res.status(500).json({ error: 'Failed to save attempt' });
-  }
-});
-
-// List attempts (raw)
-router.get('/attempts', verifyToken, async (req, res) => {
+// List attempts (raw / legacy) - keep for backward compatibility
+router.get(['/attempts', '/'], verifyToken, async (req, res) => {
   try {
     const attempts = await UserModel.getAttempts(req.userId);
     res.json({ attempts });
   } catch (e) {
     res.status(500).json({ error: 'Failed to load attempts' });
+  }
+});
+
+// Progress tree endpoint
+router.get('/tree', verifyToken, async (req, res) => {
+  try {
+    const tree = await UserModel.getProgressTree(req.userId);
+    const json = tree.toJSON();
+    res.json({ tree: json, totals: json.totals });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Save / update attempt; returns updated tree snapshot
+router.post('/attempt', verifyToken, async (req, res) => {
+  try {
+    const { questionId, timeTakenSeconds, notes } = req.body || {};
+    if (!questionId) return res.status(400).json({ error: 'questionId required' });
+    const attempt = await UserModel.addOrUpdateAttempt(req.userId, { questionId, timeTakenSeconds, notes });
+    const tree = await UserModel.getProgressTree(req.userId);
+    res.json({ success: true, attempt, tree: tree.toJSON() });
+  } catch (e) {
+    console.error('Error saving attempt', e);
+    res.status(500).json({ error: 'Failed to save attempt' });
   }
 });
 

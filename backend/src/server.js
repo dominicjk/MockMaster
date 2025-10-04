@@ -5,13 +5,9 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import session from 'express-session';
-import cookieParser from 'cookie-parser';
 import questionsRouter from './routes/questions.js';
 import topicsRouter from './routes/topics.js';
-import authRouter from './routes/auth.js';
 import progressRouter from './routes/progress.js';
-import passport from './middleware/auth.js';
 import UserModel from './database/users.js';
 import EmailService from './services/emailService.js';
 
@@ -31,7 +27,10 @@ const limiter = rateLimit({
 });
 
 // Middleware
-app.use(helmet());
+// Helmet security headers (allow cross-origin image loading from frontend dev server on different port)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' } // needed so images (served from :3001) load in frontend (:4321)
+}));
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:4321',
   credentials: true
@@ -39,22 +38,7 @@ app.use(cors({
 app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// Session configuration for Passport
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-session-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
-
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
+// Authentication removed: session, cookies & passport stripped out for a fully open API.
 
 // Middleware to log requests for question images
 app.use('/questions', (req, res, next) => {
@@ -73,7 +57,7 @@ app.use('/questions', express.static(path.join(__dirname, 'data/questions'), {
 // Routes
 app.use('/api/questions', questionsRouter);
 app.use('/api/topics', topicsRouter);
-app.use('/auth', authRouter);
+// Authentication routes removed.
 app.use('/api/progress', progressRouter);
 
 // Health check endpoint
@@ -122,11 +106,7 @@ async function startServer() {
       console.log(`📝 API endpoints available:`);
       console.log(`   - http://localhost:${PORT}/api/questions`);
       console.log(`   - http://localhost:${PORT}/api/topics`);
-      console.log(`🔐 Authentication endpoints:`);
-      console.log(`   - http://localhost:${PORT}/auth/google`);
-      console.log(`   - http://localhost:${PORT}/auth/signup`);
-      console.log(`   - http://localhost:${PORT}/auth/login`);
-      console.log(`   - http://localhost:${PORT}/auth/me`);
+  console.log(`🔐 Authentication disabled (all /auth routes removed)`);
       console.log(`🖼️  Static files served from http://localhost:${PORT}/questions`);
     });
 

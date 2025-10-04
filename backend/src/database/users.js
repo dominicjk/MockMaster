@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import CryptoJS from 'crypto-js';
 import { fileURLToPath } from 'url';
+import { ProgressTree, restoreProgressTree } from '../progress/progressTree.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,11 +63,19 @@ class UserModel {
     if (Array.isArray(parsed.users)) {
       let migrated = false;
       parsed.users = parsed.users.map(u => {
+        let changed = false;
+        // Ensure attempts array exists
         if (!u.progress || !Array.isArray(u.progress.attempts)) {
-          migrated = true;
-          return { ...u, progress: { attempts: [] } };
+          u = { ...u, progress: { ...(u.progress||{}), attempts: [] } }; changed = true; migrated = true;
         }
-        return u;
+        // Ensure progressTree exists (migrate from attempts if needed)
+        if (!u.progress.progressTree) {
+          const tree = ProgressTree.fromAttempts(u.progress.attempts || []);
+            u.progress.progressTree = tree.toJSON();
+            // Optionally keep attempts for backward compatibility
+            changed = true; migrated = true;
+        }
+        return changed ? u : u;
       });
       if (migrated) {
         await this.writeDatabase(parsed);
@@ -291,6 +300,12 @@ class UserModel {
     if (!user.progress || !Array.isArray(user.progress.attempts)) {
       user.progress = { attempts: [] };
     }
+    // Ensure tree present
+    if (!user.progress.progressTree) {
+      const treeBuilt = ProgressTree.fromAttempts(user.progress.attempts || []);
+      user.progress.progressTree = treeBuilt.toJSON();
+    }
+    let tree = restoreProgressTree(user.progress.progressTree);
     const attempts = user.progress.attempts;
     const existing = attempts.find(a => a.questionId === questionId);
     const nowIso = new Date().toISOString();
@@ -298,12 +313,15 @@ class UserModel {
       existing.lastUpdatedAt = nowIso;
       if (timeTakenSeconds != null) existing.timeTakenSeconds = timeTakenSeconds;
       if (notes) existing.notes = notes;
+      tree.addAttempt(questionId, { timeTakenSeconds, notes, completedAt: existing.completedAt || existing.lastUpdatedAt });
     } else {
       attempts.push({ questionId, completedAt: nowIso, lastUpdatedAt: nowIso, timeTakenSeconds, notes });
       user.stats.questionsAnswered = (user.stats.questionsAnswered || 0) + 1;
       user.stats.lastPracticeDate = nowIso;
+      tree.addAttempt(questionId, { timeTakenSeconds, notes, completedAt: nowIso });
     }
     user.updatedAt = nowIso;
+    user.progress.progressTree = tree.toJSON();
     db.users[idx] = user;
     await this.writeDatabase(db);
     return attempts.find(a => a.questionId === questionId);
@@ -319,11 +337,32 @@ class UserModel {
 
   async hasCompleted(userId, questionId) {
     try {
-      const attempts = await this.getAttempts(userId);
-      return attempts.some(a => a.questionId === questionId);
+      const db = await this.readDatabase();
+      const user = db.users.find(u => u.id === userId);
+      if (!user) return false;
+      if (user.progress && user.progress.progressTree) {
+        const tree = restoreProgressTree(user.progress.progressTree);
+        if (tree.has(questionId)) return true;
+      }
+      const attempts = (user.progress && user.progress.attempts) ? user.progress.attempts : [];
+      return attempts.some(a => a.questionId === questionId); // fallback
     } catch {
       return false;
     }
+  }
+
+  async getProgressTree(userId) {
+    const db = await this.readDatabase();
+    const user = db.users.find(u => u.id === userId);
+    if (!user) throw new Error('User not found');
+    if (!user.progress) user.progress = { attempts: [] };
+    if (!user.progress.progressTree) {
+      const tree = ProgressTree.fromAttempts(user.progress.attempts || []);
+      user.progress.progressTree = tree.toJSON();
+      await this.writeDatabase(db);
+      return tree;
+    }
+    return restoreProgressTree(user.progress.progressTree);
   }
 }
 

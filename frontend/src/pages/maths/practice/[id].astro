@@ -1,10 +1,13 @@
 ---
 // src/pages/maths/practice/[id].astro
 import Layout from '~/layouts/PageLayout.astro';
-import { formatTopicName, formatDifficulty } from '~/utils/question-formatting';
+// Removed unused utils imports (local script defines formatting)
 
 export function getStaticPaths() {
   const ids = [
+    'all', // All topics practice
+    'mixed', // Multiple selected topics practice
+    'start', // Handle multi-topic practice sessions (legacy)
     'number','algebra','complex-numbers','sequences-and-series','financial-maths','induction',
     'functions','differentiation','integration','the-line','the-circle','geometry','trigonometry',
     'probability','statistics',
@@ -161,10 +164,12 @@ const metadata = { title: `Practice - ${id}` };
             </svg>
           </button>
           <!-- Zoom controls on the right -->
-          <div class="flex items-center gap-1 bg-gray-200 dark:bg-slate-600 rounded-tr-xl px-1 py-1 shadow text-xs ml-auto">
-            <button id="zoom-out" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom Out" style="min-width:1.5em;">-</button>
-            <span id="zoom-level" class="w-8 text-center">100%</span>
-            <button id="zoom-in" class="px-0.5 py-0.5 text-base font-bold rounded hover:bg-gray-200 dark:hover:bg-slate-600" title="Zoom In" style="min-width:1.5em;">+</button>
+          <div id="zoom-controls" class="flex items-stretch ml-auto select-none" role="group" aria-label="Zoom controls">
+            <button id="zoom-out" title="Zoom Out" aria-label="Zoom Out"
+              class="zoom-btn-left font-bold text-xl leading-none" type="button">−</button>
+            <div id="zoom-level" class="zoom-level font-semibold" aria-live="polite">100%</div>
+            <button id="zoom-in" title="Zoom In" aria-label="Zoom In"
+              class="zoom-btn-right font-bold text-xl leading-none" type="button">+</button>
           </div>
         </div>
       <!-- LeetCode-style Options Panel with Top Toggle Slice -->
@@ -172,7 +177,7 @@ const metadata = { title: `Practice - ${id}` };
         <div class="bg-gray-200 dark:bg-slate-600 rounded-b-xl p-4 flex flex-col gap-4">
           <!-- Timer Section -->
           <div class="flex flex-row items-center gap-3">
-            <div class="text-xl font-mono font-bold bg-gray-300 dark:bg-gray-700 px-3 py-2 rounded-xl" id="sidebar-timer">00:00</div>
+            <div class="text-2xl md:text-3xl font-mono font-bold bg-gray-300 dark:bg-gray-700 px-4 py-3 rounded-2xl leading-none" id="sidebar-timer">00:00</div>
             <button id="timer-start" class="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors" title="Start Timer">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
@@ -271,8 +276,9 @@ const metadata = { title: `Practice - ${id}` };
       solutionImagePath?: string;
       image?: string;
       name?: string;
+      displayName?: string; // derived custom-friendly name
       // Accept any extra fields (for solutionTifUrl, etc)
-      [key: string]: any;
+      [key: string]: unknown;
     }
 
     // Rectangle type for highlights
@@ -362,7 +368,7 @@ const metadata = { title: `Practice - ${id}` };
     }
 
     // Question caching system
-    let questionBuffer: PracticeQuestion[] = []; // Cache of 5 validated questions
+  const questionBuffer: PracticeQuestion[] = []; // Cache of 5 validated questions
     let bufferIndex = 0; // Current position in the buffer
     let isLoadingBuffer = false; // Prevent concurrent buffer loads
 
@@ -412,7 +418,8 @@ const metadata = { title: `Practice - ${id}` };
       const modalTimeTaken = document.getElementById('modal-time-taken');
       
       if (modalQuestionTitle && currentQuestion) {
-        modalQuestionTitle.textContent = currentQuestion.name || currentQuestion.id || 'Unknown Question';
+        const customTitle = computeCustomTitle(currentQuestion);
+        modalQuestionTitle.textContent = customTitle || currentQuestion.name || currentQuestion.id || 'Unknown Question';
       }
       
       if (modalTimeTaken) {
@@ -452,33 +459,60 @@ const metadata = { title: `Practice - ${id}` };
     function saveAttempt() {
       const notesInput = document.getElementById('attempt-notes') as HTMLTextAreaElement;
       const notes = notesInput ? notesInput.value : '';
-      
-      // Create attempt data
+      if (!currentQuestion) {
+        console.warn('No current question to save');
+        return;
+      }
+
       const attemptData = {
-        questionId: currentQuestion?.id || '',
-        questionName: currentQuestion?.name || currentQuestion?.id || '',
+        questionId: String(currentQuestion.id || ''),
+        questionName: currentQuestion.name || currentQuestion.id || '',
         timeTaken: timerSeconds,
-        notes: notes,
+        notes,
         timestamp: new Date().toISOString(),
-        topic: currentQuestion?.topic || '',
-        difficulty: currentQuestion?.difficulty || ''
+        topic: (Array.isArray(currentQuestion.topic) ? currentQuestion.topic.join(',') : (currentQuestion.topic || '')),
+        difficulty: currentQuestion.difficulty || ''
       };
-      
-      // Store in localStorage (you could also send to backend API)
-      const existingAttempts = JSON.parse(localStorage.getItem('questionAttempts') || '[]');
-      existingAttempts.push(attemptData);
-      localStorage.setItem('questionAttempts', JSON.stringify(existingAttempts));
-      
-      console.log('Attempt saved:', attemptData);
-      
-      // Hide modal
+
+      // Always persist locally for offline / unauthenticated fallback
+      try {
+        interface StoredAttempt { questionId: string; [key: string]: unknown }
+        const existingAttempts: StoredAttempt[] = JSON.parse(localStorage.getItem('questionAttempts') || '[]');
+        const replacedIndex = existingAttempts.findIndex(a => a.questionId === attemptData.questionId);
+        if (replacedIndex !== -1) {
+          existingAttempts[replacedIndex] = attemptData as unknown as StoredAttempt;
+        } else {
+          existingAttempts.push(attemptData as unknown as StoredAttempt);
+        }
+        localStorage.setItem('questionAttempts', JSON.stringify(existingAttempts));
+      } catch (e) {
+        console.warn('Failed to write attempt to localStorage', e);
+      }
+
+      // Try backend persistence (requires auth cookie / token). Detect backend port (3001 or 3008 fallback used above).
+      // Hard-coded earlier fetch used 3008; assume backend for progress is 3001 unless configured
+      const backendPort = 3001; 
+      const backendBase = `http://localhost:${backendPort}`;
+  const qid = String(currentQuestion.id || '');
+  const progressUrl = `${backendBase}/api/progress/${encodeURIComponent(qid)}/attempt`;
+      fetch(progressUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ timeTakenSeconds: timerSeconds, notes })
+      }).then(async r => {
+        if (!r.ok) {
+          console.warn('Backend attempt save failed', r.status);
+          return;
+        }
+        const json = await r.json();
+        console.log('Attempt synced to backend', json);
+      }).catch(err => {
+        console.warn('Backend attempt save network error (will rely on local only)', err);
+      });
+
       hideSaveAttemptModal();
-      
-      // Show success message (optional)
-      // You can add a status message element if needed
-      console.log('Attempt saved successfully!');
-      
-      // Optionally move to next question
+      console.log('Attempt saved (local + backend sync attempted):', attemptData);
       nextQuestion();
     }
 
@@ -630,35 +664,68 @@ const metadata = { title: `Practice - ${id}` };
     }
 
     // Question validation function
-    async function validateQuestion(question: PracticeQuestion): Promise<boolean> {
-      const questionUrl = question.questionTifUrl || question.questionImageUrl || question.questionImagePath || question.tifUrl || question.image || '';
-      const solutionUrl = question.solutionTifUrl || question.solutionImageUrl || question.solutionImagePath || '';
-      
-      if (!questionUrl || !solutionUrl) {
-        console.log('Question validation failed: Missing image URLs', { questionUrl, solutionUrl });
-        return false;
-      }
+  async function validateQuestion(question: PracticeQuestion): Promise<boolean> {
+      // Accept all questions unless fundamental data missing; avoid network HEAD that caused 404 due to wrong origin
+      const rawQuestionUrl = question.questionTifUrl || question.questionImageUrl || question.questionImagePath || question.tifUrl || question.image || '';
+      const rawSolutionUrl = question.solutionTifUrl || question.solutionImageUrl || question.solutionImagePath || '';
+      if (!rawQuestionUrl) return false; // require at least question image
+      // Normalize & ensure they point to BACKEND_BASE when relative (images served by backend, not Astro dev server)
+      const normalize = (rel: string) => {
+        if (!rel) return rel;
+        if (rel.startsWith('http')) return rel;
+        if (!rel.startsWith('/')) rel = '/' + rel.replace(/^\.\//, '');
+        return BACKEND_BASE + rel; // force backend origin
+      };
+  const qUrl = normalize(String(rawQuestionUrl));
+  const sUrl = rawSolutionUrl ? normalize(String(rawSolutionUrl)) : '';
+      // Optionally we could do a fetch with {method:'HEAD', mode:'no-cors'} but it provides no reliability; skip.
+      // Provide minimal debug
+      console.debug('[validateQuestion] accepted', { qUrl, hasSolution: !!sUrl });
+      return true;
+    }
 
+    // Function to get filter parameters from URL
+    function getFilterParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return {
+        examOnly: urlParams.get('examOnly') || 'false',
+        longOnly: urlParams.get('longOnly') || 'false', 
+        shortOnly: urlParams.get('shortOnly') || 'false',
+        yearFrom: urlParams.get('yearFrom') || '',
+        yearTo: urlParams.get('yearTo') || '',
+        topics: urlParams.get('topics') || ''
+      };
+    }
+
+    // Determine backend base URL with fallback (prefers 3001, legacy 3008)
+    const BACKEND_BASE = (() => {
+      // Allow global override without strict typing; fallback to env then default port 3001
+      const win = window as unknown as { __BACKEND_URL__?: string };
+      const explicit = win.__BACKEND_URL__ || (import.meta as unknown as { env?: { PUBLIC_BACKEND_URL?: string } }).env?.PUBLIC_BACKEND_URL;
+      if (explicit) return explicit.replace(/\/$/, '');
+      // Try common local ports; 3001 is current, 3008 was legacy
+      return 'http://localhost:3001';
+    })();
+
+    async function fetchWithFallback(path: string, init?: RequestInit) {
+      const primary = BACKEND_BASE + path;
       try {
-        // Validate question image
-        const questionImageUrl = questionUrl.startsWith('http') ? questionUrl : `http://localhost:3001${questionUrl}`;
-        const questionResponse = await fetch(questionImageUrl, { method: 'HEAD' });
-        
-        // Validate solution image
-        const solutionImageUrl = solutionUrl.startsWith('http') ? solutionUrl : `http://localhost:3001${solutionUrl}`;
-        const solutionResponse = await fetch(solutionImageUrl, { method: 'HEAD' });
-        
-        const isValid = questionResponse.ok && solutionResponse.ok;
-        if (!isValid) {
-          console.log('Question validation failed: Images not accessible', {
-            question: questionResponse.status,
-            solution: solutionResponse.status
-          });
+        const res = await fetch(primary, init);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res;
+      } catch (err) {
+        // If already on legacy port or explicit, just rethrow
+        if (BACKEND_BASE.includes('3008') || BACKEND_BASE !== 'http://localhost:3001') throw err;
+        // Attempt legacy port 3008 once
+        const legacy = 'http://localhost:3008' + path;
+        try {
+          const lr = await fetch(legacy, init);
+          if (!lr.ok) throw new Error('HTTP ' + lr.status + ' (legacy)');
+          console.warn('[practice] Using legacy backend port 3008 (primary 3001 failed)');
+          return lr;
+        } catch {
+          throw err; // propagate original
         }
-        return isValid;
-      } catch (error) {
-        console.log('Question validation failed: Network error', error);
-        return false;
       }
     }
 
@@ -670,25 +737,46 @@ const metadata = { title: `Practice - ${id}` };
       try {
         updateLoadingMessage("Loading question set...");
         const topic = window.location.pathname.split('/').pop();
-        const response = await fetch('http://localhost:3001/api/topics/questions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topics: [topic] })
-        });
+        const filterParams = getFilterParams();
+        
+        // Determine which topics to query
+        let topicsToQuery = [topic];
+        if (topic === 'all') {
+          topicsToQuery = []; // Empty array means all topics
+        } else if (topic === 'mixed' && filterParams.topics) {
+          topicsToQuery = filterParams.topics.split(',').map(t => t.trim()).filter(t => t);
+        }
+        
+        // Build query parameters for the API call
+        const queryParams = new URLSearchParams();
+        if (topicsToQuery.length > 0) {
+          queryParams.set('topics', topicsToQuery.join(','));
+        }
+        if (filterParams.examOnly === 'true') queryParams.set('examOnly', 'true');
+        if (filterParams.longOnly === 'true') queryParams.set('longOnly', 'true');
+        if (filterParams.shortOnly === 'true') queryParams.set('shortOnly', 'true');
+        if (filterParams.yearFrom) queryParams.set('yearFrom', filterParams.yearFrom);
+        if (filterParams.yearTo) queryParams.set('yearTo', filterParams.yearTo);
+        queryParams.set('count', '10'); // Request 10 questions to have more to validate
+        
+  const response = await fetchWithFallback(`/api/questions?${queryParams.toString()}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
-        if (!result.matchingQuestions || result.matchingQuestions.length === 0) {
-          throw new Error('No questions available for this topic');
+        // Handle both single question and array responses
+        const questionsArray = Array.isArray(result) ? result : [result];
+        
+        if (questionsArray.length === 0) {
+          throw new Error('No questions available for the selected filters');
         }
 
         updateLoadingMessage("Validating questions...");
         
         // Shuffle and validate questions until we have 5 valid ones
-        const shuffledQuestions = [...result.matchingQuestions].sort(() => Math.random() - 0.5);
+        const shuffledQuestions = [...questionsArray].sort(() => Math.random() - 0.5);
         const validQuestions: PracticeQuestion[] = [];
         
         for (const question of shuffledQuestions) {
@@ -740,7 +828,7 @@ const metadata = { title: `Practice - ${id}` };
         console.log(`Loading specific question: ${questionId}`);
         
         // Use direct question lookup API - this bypasses topic filtering
-        const response = await fetch(`http://localhost:3001/api/questions?id=${encodeURIComponent(questionId)}`);
+  const response = await fetchWithFallback(`/api/questions?id=${encodeURIComponent(questionId)}`);
         
         if (response.ok) {
           const specificQuestion = await response.json();
@@ -762,11 +850,20 @@ const metadata = { title: `Practice - ${id}` };
 
           // Set this as the current question
           currentQuestion = specificQuestion;
+          if (!currentQuestion) return false; // safety
+          // Override visible name for custom questions
+          try {
+            const ct = computeCustomTitle(currentQuestion);
+            if (ct) {
+              currentQuestion.displayName = ct;
+              currentQuestion.name = ct;
+            }
+          } catch (e) { console.warn('Custom title compute failed', e); }
           showingSolution = false;
           
           // Initialize history with this question
           questionHistory = [{
-            question: currentQuestion,
+            question: currentQuestion as PracticeQuestion,
             timerSeconds: 0,
             zoomLevel: 1.0,
             highlightRects: [],
@@ -782,7 +879,7 @@ const metadata = { title: `Practice - ${id}` };
             hideLoadingScreen();
           }, 300);
           
-          console.log(`✓ Question loaded successfully: ${currentQuestion.name || currentQuestion.id} (ID: ${currentQuestion.id})`);
+          console.log(`✓ Question loaded successfully: ${(currentQuestion as PracticeQuestion).name || (currentQuestion as PracticeQuestion).id} (ID: ${(currentQuestion as PracticeQuestion).id})`);
           return true;
           
         } else if (response.status === 404) {
@@ -836,9 +933,9 @@ const metadata = { title: `Practice - ${id}` };
       if (messageEl) messageEl.textContent = message;
     }
 
-    // Question loading and display
+  // Question loading and display
 
-    async function loadQuestion({fromHistory = false, historyIndex = null} = {}) {
+  async function loadQuestion({fromHistory = false, historyIndex = null} = {}) {
       if (fromHistory && historyIndex !== null && questionHistory[historyIndex]) {
         // Restore from history
         const state = questionHistory[historyIndex];
@@ -867,13 +964,32 @@ const metadata = { title: `Practice - ${id}` };
           await loadQuestionBuffer();
         }
         
-        // Get next question from buffer
-        const data = getNextQuestionFromBuffer();
+        // Get next question from buffer (with retry if race emptied buffer)
+        let data = getNextQuestionFromBuffer();
         if (!data) {
-          throw new Error('No valid questions available in buffer');
+          console.warn('[practice] Buffer empty on first attempt, reloading...');
+          if (!isLoadingBuffer) {
+            await loadQuestionBuffer().catch(e => console.error('Reload buffer failed', e));
+            data = getNextQuestionFromBuffer();
+          }
+        }
+        if (!data) {
+          console.error('[practice] No valid questions available after reload attempt');
+          const qc = document.getElementById('question-container');
+          if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">No questions available. Refresh or adjust filters.</div>';
+          hideLoadingScreen();
+          return;
         }
         
         currentQuestion = data;
+        // Override visible name for custom questions
+        try {
+          const ct = computeCustomTitle(currentQuestion);
+          if (ct) {
+            currentQuestion.displayName = ct;
+            currentQuestion.name = ct;
+          }
+        } catch (e) { console.warn('Custom title compute failed', e); }
 
         // Reset solution state
         showingSolution = false;
@@ -953,18 +1069,44 @@ const metadata = { title: `Practice - ${id}` };
       // Support legacy and new API fields for image path
       const rawUrl = question.questionTifUrl || question.questionImageUrl || question.questionImagePath || question.tifUrl || question.image || '';
       if (rawUrl) {
-        const imageUrl = rawUrl.startsWith('http') ? rawUrl : `http://localhost:3001${rawUrl}`;
+        const imageUrl = rawUrl.startsWith('http') ? rawUrl : `${BACKEND_BASE}${rawUrl}`;
+        // Treat first displayed question (or any custom forced) as a high-priority image to avoid Chrome's automatic lazy placeholder
+        const isFirstQuestion = questionCounter <= 1; // questionCounter starts at 1 before increment elsewhere
+        // We add width/height placeholders to give the browser layout stability; real natural size will adjust automatically
+        const imgAttrs = {
+          loading: isFirstQuestion ? 'eager' : 'lazy',
+          fetchpriority: isFirstQuestion ? 'high' : 'auto',
+          decoding: 'async'
+        };
+        const preloadId = 'question-image-preload-link';
+        if (isFirstQuestion && !document.getElementById(preloadId)) {
+          try {
+            const l = document.createElement('link');
+            l.id = preloadId;
+            l.rel = 'preload';
+            l.as = 'image';
+            l.href = imageUrl;
+            l.crossOrigin = 'anonymous';
+            document.head.appendChild(l);
+          } catch { /* noop */ }
+        }
         container.innerHTML = `
-      <div class="flex justify-center items-start h-full">
-        <img id="question-img" src="${imageUrl}" 
-          alt="Question Image" 
-          class="w-full max-w-[700px] h-auto"
-          style="width: 100%; max-width: 1000px; height: auto; transform: scale(${zoomLevel}); transform-origin: top center; transition: transform 0.2s; display: block; margin-top: 0;"
-          loading="lazy"
-          crossorigin="anonymous"
-          onerror="this.closest('div').innerHTML='Failed to load question image';">
-      </div>
-    `;
+          <div class="flex justify-center items-start h-full">
+            <img id="question-img"
+              src="${imageUrl}"
+              alt="Question Image"
+              class="w-full max-w-[700px] h-auto"
+              width="700" height="1000"
+              style="width:100%;max-width:1000px;height:auto;transform:scale(${zoomLevel});transform-origin:top center;transition:transform .2s;display:block;margin-top:0;"
+              loading="${imgAttrs.loading}"
+              fetchpriority="${imgAttrs.fetchpriority}"
+              decoding="${imgAttrs.decoding}"
+              crossorigin="anonymous"
+              onload="this.dataset.loaded='1';"
+              onerror="this.closest('div').innerHTML='Failed to load question image';"
+            >
+          </div>
+        `;
     updateZoomDisplay();
     // Scroll 10% down by default
     setTimeout(() => {
@@ -984,6 +1126,26 @@ const metadata = { title: `Practice - ${id}` };
 
 
 
+    // Build a custom title for non-exam (custom) questions like alg-0001 -> Custom Algebra 1
+    function computeCustomTitle(q) {
+      if (!q || !q.id) return null;
+      // Expect pattern prefix-numeric, numeric with leading zeros means custom (exam questions filtered by numeric starting with 1 earlier)
+  const m = String(q.id).match(/^([a-z-]+)-(\d{4,})$/i);
+      if (!m) return null;
+      const numeric = m[2];
+      if (!numeric.startsWith('0')) return null; // treat only leading-zero ids as custom
+      // Derive topic name from question.topic (may be array) or id prefix
+      let rawTopic = Array.isArray(q.topic) ? (q.topic[0] || m[1]) : (q.topic || m[1]);
+      rawTopic = String(rawTopic).replace(/_/g, '-');
+      const topicPretty = rawTopic
+        .split(/[-\s]/)
+        .filter(Boolean)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+      const number = parseInt(numeric, 10); // strip leading zeros
+      return `Custom ${topicPretty} ${number}`;
+    }
+
     function updateMetadata(question) {
       // Debug: log the question object to see available fields
       console.log('Question data:', question);
@@ -992,9 +1154,11 @@ const metadata = { title: `Practice - ${id}` };
       // Update year display
       const yearEl = document.getElementById('question-year');
       if (yearEl) {
-        const name = question.name || question.Name || question.title || question.Title || '--';
-        console.log('Name field value:', name);
-        yearEl.textContent = name;
+        const baseName = question.name || question.Name || question.title || question.Title || '--';
+        const customTitle = computeCustomTitle(question);
+        const finalName = customTitle || baseName;
+        console.log('Name field value (computed):', finalName);
+        yearEl.textContent = finalName;
       }
       
       // Only update elements that actually exist in the markup
@@ -1161,7 +1325,8 @@ const metadata = { title: `Practice - ${id}` };
     // Accept solutionImageUrl, solutionImagePath, or solutionTifUrl (if present)
     const rawSolutionUrl = currentQuestion.solutionTifUrl || currentQuestion.solutionImageUrl || currentQuestion.solutionImagePath;
     if (rawSolutionUrl) {
-      const imageUrl = rawSolutionUrl.startsWith('http') ? rawSolutionUrl : `http://localhost:3001${rawSolutionUrl}`;
+      const rawSolutionUrlStr = String(rawSolutionUrl);
+      const imageUrl = rawSolutionUrlStr.startsWith('http') ? rawSolutionUrlStr : `${BACKEND_BASE}${rawSolutionUrlStr}`;
       container.innerHTML = `
         <div class="flex justify-center" style="position: relative;">
           <img id="solution-img" src="${imageUrl}" 
@@ -1248,8 +1413,17 @@ const metadata = { title: `Practice - ${id}` };
     }
   }
 
-    // Event listeners
-  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize page function (guard against double init from DOMContentLoaded + astro:page-load)
+  interface PracticeInitFlag { started: boolean }
+  const w = window as unknown as { __practiceInit?: PracticeInitFlag };
+  w.__practiceInit = w.__practiceInit || { started: false };
+    async function initializePage() {
+  if (w.__practiceInit && w.__practiceInit.started) { console.debug('[practice] initializePage skipped (already started)'); return; }
+  if (w.__practiceInit) w.__practiceInit.started = true;
+      // Authentication logic removed. Proceed without user gating.
+      // If future auth reintroduced, restore checks here.
+  // (user variable removed; no auth-dependent logic below)
+
       // Zoom controls
       const zoomInBtn = document.getElementById('zoom-in');
       const zoomOutBtn = document.getElementById('zoom-out');
@@ -1416,7 +1590,13 @@ const metadata = { title: `Practice - ${id}` };
           }
         });
       }
-    });
+    }
+
+    // Event listeners - support both DOMContentLoaded and Astro navigation
+    document.addEventListener('DOMContentLoaded', initializePage);
+    
+    // Support Astro View Transitions - this fires on client-side navigation
+    document.addEventListener('astro:page-load', initializePage);
   </script>
 
   <style>
@@ -1431,6 +1611,55 @@ const metadata = { title: `Practice - ${id}` };
     #loading-overlay {
       transition: opacity 0.3s ease;
     }
+
+    /* Composite zoom control */
+  /* Ultra-compact size */
+  #zoom-controls { height: 2rem; }
+    #zoom-controls .zoom-btn-left,
+    #zoom-controls .zoom-btn-right,
+    #zoom-controls .zoom-level { height: 100%; }
+    #zoom-controls .zoom-btn-left,
+    #zoom-controls .zoom-btn-right {
+      width: 1.75rem; /* narrowed */
+      background: #ffffff;
+      color: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #000;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s, color .15s, transform .1s;
+      font-family: inherit;
+      font-size: 0.8rem;
+      line-height: 1;
+    }
+    #zoom-controls .zoom-btn-left { border-right: none; border-radius: 9999px 0 0 9999px; }
+    #zoom-controls .zoom-btn-right { border-left: none; border-radius: 0 9999px 9999px 0; }
+    #zoom-controls .zoom-level {
+      padding: 0 0.45rem; /* slightly narrower */
+      background: #ffffff;
+      color: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
+      font-family: inherit;
+      font-size: 0.7rem;
+      min-width: 2.6rem; /* narrower center */
+    }
+  #zoom-controls .zoom-btn-left:hover,
+  #zoom-controls .zoom-btn-right:hover { background:#000; color:#fff; }
+  #zoom-controls .zoom-btn-left:active,
+  #zoom-controls .zoom-btn-right:active { transform: scale(0.9); }
+    #zoom-controls .zoom-btn-left:focus,
+    #zoom-controls .zoom-btn-right:focus { outline:2px solid #000; outline-offset:2px; }
+  .dark #zoom-controls .zoom-btn-left,
+  .dark #zoom-controls .zoom-btn-right,
+  .dark #zoom-controls .zoom-level { background:#ffffff; color:#000000; }
+    .dark #zoom-controls .zoom-btn-left:hover,
+    .dark #zoom-controls .zoom-btn-right:hover { background:#000; color:#ffffff; }
 
     /* Responsive behavior for smaller screens */
     @media (max-width: 1280px) {
