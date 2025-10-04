@@ -202,7 +202,7 @@ const metadata = { title: `Practice - ${id}` };
 
       <!-- Navigation -->
       <div class="mb-6 sidebar-content">
-        <div id="nav-controls" class="flex items-center gap-2 mb-4 select-none w-full" role="group" aria-label="Question navigation">
+  <div id="nav-controls" class="flex items-center gap-1 mb-4 select-none w-full" role="group" aria-label="Question navigation">
           <button id="prev-question" class="nav-btn flex-1" title="Previous Question" aria-label="Previous Question" type="button">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
           </button>
@@ -1536,6 +1536,9 @@ const metadata = { title: `Practice - ${id}` };
   </script>
 
   <style>
+    /* Shared pill border color variable for quick theme experimentation */
+    :root { --pill-border-color: #9ca3af; }
+    .dark :root { --pill-border-color: #9ca3af; }
     #sidebar {
       width: 20rem; /* w-80 */
     }
@@ -1562,7 +1565,7 @@ const metadata = { title: `Practice - ${id}` };
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid #000;
+      border: 1px solid var(--pill-border-color);
       cursor: pointer;
       user-select: none;
       transition: background .15s, color .15s, transform .1s;
@@ -1580,8 +1583,8 @@ const metadata = { title: `Practice - ${id}` };
       display: flex;
       align-items: center;
       justify-content: center;
-      border-top: 1px solid #000;
-      border-bottom: 1px solid #000;
+      border-top: 1px solid var(--pill-border-color);
+      border-bottom: 1px solid var(--pill-border-color);
       font-family: inherit;
       font-size: 0.78rem; /* slightly reduced per request */
       flex: 1 1 auto; min-width: 0; /* allow flexible center to equalize pill width */
@@ -1608,14 +1611,14 @@ const metadata = { title: `Practice - ${id}` };
     #timer-controls .timer-btn-right {
       width: 1.75rem;
       background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
-      border:1px solid #000; cursor:pointer; user-select:none; transition: background .15s, color .15s, transform .1s;
+      border:1px solid var(--pill-border-color); cursor:pointer; user-select:none; transition: background .15s, color .15s, transform .1s;
       font-family: inherit; font-size:0.8rem; line-height:1; outline:none;
     }
     #timer-controls .timer-btn-left { border-right:none; border-radius:9999px 0 0 9999px; }
     #timer-controls .timer-btn-right { border-left:none; border-radius:0 9999px 9999px 0; }
     #timer-controls .timer-display {
       padding:0 0.45rem; background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
-      border-top:1px solid #000; border-bottom:1px solid #000; font-size:0.78rem; flex:1 1 auto; min-width:0; line-height:1; outline:none; font-family:inherit;
+      border-top:1px solid var(--pill-border-color); border-bottom:1px solid var(--pill-border-color); font-size:0.78rem; flex:1 1 auto; min-width:0; line-height:1; outline:none; font-family:inherit;
     }
     #timer-controls .timer-btn-left:hover,
     #timer-controls .timer-btn-right:hover { background:#000; color:#fff; }
@@ -1634,14 +1637,16 @@ const metadata = { title: `Practice - ${id}` };
   .merged-group #zoom-controls .zoom-btn-right { border-radius:0; }
   .merged-group #timer-controls .timer-btn-left { border-radius:0; }
   /* Restore inner borders so each pill retains black edge */
-  .merged-group #zoom-controls .zoom-btn-right { border-right:1px solid #000; }
-  .merged-group #timer-controls .timer-btn-left { border-left:1px solid #000; }
+  .merged-group #zoom-controls .zoom-btn-right { border-right:1px solid var(--pill-border-color); }
+  .merged-group #timer-controls .timer-btn-left { border-left:1px solid var(--pill-border-color); }
   /* Ensure consistent vertical alignment */
   .merged-group #zoom-controls, .merged-group #timer-controls { display:flex; align-items:stretch; height:2rem; }
 
   /* Navigation pill controls */
   #nav-controls { height:2rem; }
-  #nav-controls .nav-btn { height:100%; background:#ffffff; color:#000; display:flex; align-items:center; justify-content:center; border:1px solid #000; cursor:pointer; user-select:none; transition:background .15s, color .15s, transform .1s; font-size:0.8rem; line-height:1; outline:none; border-radius:9999px; min-width:0; }
+  #nav-controls .nav-btn { height:100%; background:#ffffff; color:#000; display:flex; align-items:center; justify-content:center; border:1px solid var(--pill-border-color); cursor:pointer; user-select:none; transition:background .15s, color .15s, transform .1s; font-size:0.8rem; line-height:1; outline:none; min-width:0; }
+  #nav-controls .nav-btn:first-child { border-radius:9999px 0 0 9999px; }
+  #nav-controls .nav-btn:last-child { border-radius:0 9999px 9999px 0; }
   #nav-controls .nav-btn:hover { background:#000; color:#fff; }
   #nav-controls .nav-btn:active { transform:scale(.9); }
   #nav-controls .nav-btn:focus { outline:none; }
@@ -1649,8 +1654,8 @@ const metadata = { title: `Practice - ${id}` };
   .dark #nav-controls .nav-btn:hover { background:#000; color:#ffffff; }
 
   /* Save Attempt pill */
-  #save-attempt.pill-action { height:2rem; background:#e5e5e5; color:#000; border:1px solid #9ca3af; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:600; letter-spacing:.25px; cursor:pointer; user-select:none; transition:background .15s, color .15s, transform .1s, border-color .15s; }
-  #save-attempt.pill-action:hover { background:#f3f3f3; color:#000; border-color:#9ca3af; }
+  #save-attempt.pill-action { height:2rem; background:#e5e5e5; color:#000; border:1px solid var(--pill-border-color); border-radius:9999px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:600; letter-spacing:.25px; cursor:pointer; user-select:none; transition:background .15s, color .15s, transform .1s, border-color .15s; }
+  #save-attempt.pill-action:hover { background:#f3f3f3; color:#000; border-color:var(--pill-border-color); }
   #save-attempt.pill-action:active { transform:scale(.96); }
   #save-attempt.pill-action:focus { outline:none; }
   .dark #save-attempt.pill-action { background:#e5e5e5; color:#000; }
