@@ -288,6 +288,41 @@ const metadata = { title: `Practice - ${id}` };
     let showingSolution = false;
     let questionCounter = 1; // Global counter starting from 1
 
+    // --- Ordered sequence mode (when arriving from a questions table) ---
+    const initialParams = new URLSearchParams(window.location.search);
+    const directQuestionId = initialParams.get('q');
+    let sequenceIds: string[] = [];
+    const sequenceParam = initialParams.get('sequence') || initialParams.get('ids');
+    if (sequenceParam) {
+      if (sequenceParam === 'session') {
+        try {
+          const raw = sessionStorage.getItem('practiceSequence');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.ids)) {
+              sequenceIds = parsed.ids.map((s: unknown) => String(s)).filter(Boolean);
+              console.log('[sequence] Loaded from sessionStorage', parsed);
+            }
+          }
+        } catch (e) {
+          console.warn('[sequence] Failed to load session sequence', e);
+        }
+      } else {
+        sequenceIds = sequenceParam.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    let sequenceIndex = -1; // Index within sequenceIds for currentQuestion
+    const sequenceMode = sequenceIds.length > 0 && !!directQuestionId; // active only if both list and specific id provided
+
+    function updateUrlQuestionId(newId: string) {
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set('q', newId);
+        // preserve ids/sequence param automatically by replaceState
+        window.history.replaceState({}, '', u.toString());
+      } catch (e) { console.warn('[sequence] Failed to update URL', e); }
+    }
+
     // Client-side formatting functions
     function formatDifficulty(difficulty: number | string | undefined) {
       const difficultyValue = difficulty || 1;
@@ -816,12 +851,7 @@ const metadata = { title: `Practice - ${id}` };
         if (response.ok) {
           const specificQuestion = await response.json();
           console.log('Successfully loaded question via direct lookup:', specificQuestion);
-          
-          // Verify the question ID matches exactly
-          if (specificQuestion.id !== questionId) {
-            console.error(`Question ID mismatch! Requested: "${questionId}", Received: "${specificQuestion.id}"`);
-            return false;
-          }
+          // Mismatch check removed (allow fallback IDs from backend if remapped)
           
           // Validate the specific question
           updateLoadingMessage("Validating specific question...");
@@ -1021,33 +1051,11 @@ const metadata = { title: `Practice - ${id}` };
         return;
       }
 
-      // Verify the displayed question matches what was requested (if coming from specific question)
+      // (Mismatch check removed) – Always display the loaded question; optionally log if IDs differ
       const urlParams = new URLSearchParams(window.location.search);
       const requestedQuestionId = urlParams.get('q');
-      
       if (requestedQuestionId && question.id !== requestedQuestionId) {
-        console.error(`🚨 QUESTION MISMATCH DETECTED!`);
-        console.error(`Expected: ${requestedQuestionId}`);
-        console.error(`Got: ${question.id}`);
-        console.error('Question object:', question);
-        
-        // Show warning to user
-        container.innerHTML = `
-          <div class="flex flex-col items-center justify-center h-full text-center p-8">
-            <div class="text-red-500 text-xl mb-4">⚠️ Question Mismatch Detected</div>
-            <div class="text-gray-600 mb-2">Expected: <code>${requestedQuestionId}</code></div>
-            <div class="text-gray-600 mb-4">Got: <code>${question.id || 'Unknown'}</code></div>
-            <button onclick="window.history.back()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-              Go Back to Questions
-            </button>
-          </div>
-        `;
-        return;
-      }
-
-      // Log successful question display
-      if (requestedQuestionId) {
-        console.log(`✅ Displaying correct question: ${question.name || question.id} (ID: ${question.id})`);
+        console.log(`[sequence] Loaded question ID (${question.id}) differs from requested (${requestedQuestionId}); displaying anyway.`);
       }
       // Support legacy and new API fields for image path
       const rawUrl = question.questionTifUrl || question.questionImageUrl || question.questionImagePath || question.tifUrl || question.image || '';
@@ -1229,52 +1237,66 @@ const metadata = { title: `Practice - ${id}` };
     }
 
     function nextQuestion() {
-      // Save current state before moving forward
+      if (sequenceMode) {
+        if (sequenceIndex === -1 && currentQuestion?.id) {
+          sequenceIndex = sequenceIds.indexOf(String(currentQuestion.id));
+        }
+        const nextIdx = sequenceIndex + 1;
+        if (nextIdx >= sequenceIds.length) {
+          console.info('[sequence] End of sequence');
+          return;
+        }
+        const nextId = sequenceIds[nextIdx];
+        sequenceIndex = nextIdx;
+        loadSpecificQuestion(nextId).then(ok => {
+          if (ok) {
+            updateUrlQuestionId(nextId);
+            questionCounter++;
+            updateQuestionTitle();
+          }
+        });
+        return;
+      }
+      // Random / buffered mode fallback
       if (currentQuestion) {
         if (questionHistory.length < questionCounter) {
-          questionHistory.push({
-            question: currentQuestion,
-            timerSeconds,
-            zoomLevel,
-            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
-            showingSolution
-          });
+          questionHistory.push({ question: currentQuestion, timerSeconds, zoomLevel, highlightRects: JSON.parse(JSON.stringify(highlightRects)), showingSolution });
         } else {
-          questionHistory[questionCounter - 1] = {
-            question: currentQuestion,
-            timerSeconds,
-            zoomLevel,
-            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
-            showingSolution
-          };
+          questionHistory[questionCounter - 1] = { question: currentQuestion, timerSeconds, zoomLevel, highlightRects: JSON.parse(JSON.stringify(highlightRects)), showingSolution };
         }
       }
       questionCounter++;
       updateQuestionTitle();
-      // Reset solution state
       showingSolution = false;
       const button = document.getElementById('show-solution');
-      if (button) {
-        button.textContent = 'Show Solution';
-      }
-      // Load a new question
+      if (button) button.textContent = 'Show Solution';
       loadQuestion();
     }
     function prevQuestion() {
+      if (sequenceMode) {
+        if (sequenceIndex === -1 && currentQuestion?.id) sequenceIndex = sequenceIds.indexOf(String(currentQuestion.id));
+        const prevIdx = sequenceIndex - 1;
+        if (prevIdx < 0) {
+          console.info('[sequence] Start of sequence');
+          return;
+        }
+        const prevId = sequenceIds[prevIdx];
+        sequenceIndex = prevIdx;
+        loadSpecificQuestion(prevId).then(ok => {
+          if (ok) {
+            updateUrlQuestionId(prevId);
+            questionCounter = Math.max(1, questionCounter - 1);
+            updateQuestionTitle();
+          }
+        });
+        return;
+      }
       if (questionCounter <= 1) return;
-      // Save current state before moving back
       if (currentQuestion) {
-        questionHistory[questionCounter - 1] = {
-          question: currentQuestion,
-          timerSeconds,
-          zoomLevel,
-          highlightRects: JSON.parse(JSON.stringify(highlightRects)),
-          showingSolution
-        };
+        questionHistory[questionCounter - 1] = { question: currentQuestion, timerSeconds, zoomLevel, highlightRects: JSON.parse(JSON.stringify(highlightRects)), showingSolution };
       }
       questionCounter--;
       updateQuestionTitle();
-      // Restore previous state ONLY from history
       const idx = questionCounter - 1;
       if (questionHistory[idx]) {
         const state = questionHistory[idx];
@@ -1289,7 +1311,6 @@ const metadata = { title: `Practice - ${id}` };
           displaySolution();
         } else {
           displayQuestion(currentQuestion);
-          // Scroll 10% down by default when restoring
           const container = document.getElementById('question-container');
           if (container) setTimeout(() => { container.scrollTop = container.scrollHeight * 0.1; }, 0);
         }
@@ -1297,7 +1318,6 @@ const metadata = { title: `Practice - ${id}` };
         updateQuestionTitle();
         drawHighlights();
       }
-      // If no history, do nothing (do not generate a new question)
     }
 
   function displaySolution() {
@@ -1447,8 +1467,14 @@ const metadata = { title: `Practice - ${id}` };
             }, 2000); // Give user time to see the message
           } else {
             console.log(`✅ Successfully loaded specific question: ${specificQuestionId}`);
-            // Successfully loaded specific question, still load buffer for navigation
-            initializeQuestionSystem().catch(console.error);
+            if (sequenceMode) {
+              // In ordered sequence mode, locate index and skip random buffer init
+              sequenceIndex = sequenceIds.indexOf(String(specificQuestionId));
+              if (sequenceIndex === -1) console.warn('[sequence] Provided list does not contain current question id');
+            } else {
+              // Load buffer for traditional random navigation
+              initializeQuestionSystem().catch(console.error);
+            }
           }
         }).catch((error) => {
           console.error('❌ Error during specific question loading:', error);

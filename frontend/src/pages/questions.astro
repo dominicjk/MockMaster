@@ -953,10 +953,56 @@ const metadata = {
           topic: topicForUrl,
           url: `/maths/practice/${topicForUrl}?q=${encodeURIComponent(question.id)}`
         });
+
+        // --- Build ordered sequence (year group or topic group) and stash in sessionStorage ---
+        try {
+          const extractYear = (nm: unknown) => {
+            const m = /^([0-9]{4})/.exec(String(nm || ''));
+            return m ? m[1] : '';
+          };
+          const primaryTopic = (q: Question) => {
+            const t = (q.topic as unknown) || (q.subject as unknown) || '';
+            if (Array.isArray(t)) return (t as string[])[0] || '';
+            return t as string;
+          };
+          const sortSelect = document.getElementById('sort-filter') as HTMLSelectElement | null;
+            const sortValue = sortSelect?.value || currentSort || '';
+          let sequenceIds: string[] = [];
+          let mode = '';
+          let groupValue = '';
+          if (sortValue.startsWith('year')) {
+            mode = 'year';
+            groupValue = extractYear(question.name || question.title || '');
+            if (groupValue) {
+              sequenceIds = displayedQuestions
+                .filter(q => extractYear((q.name || q.title || '')) === groupValue)
+                .map(q => q.id)
+                .filter(Boolean) as string[];
+            }
+          } else {
+            mode = 'topic';
+            groupValue = primaryTopic(question);
+            if (groupValue) {
+              sequenceIds = displayedQuestions
+                .filter(q => primaryTopic(q) === groupValue)
+                .map(q => q.id)
+                .filter(Boolean) as string[];
+            }
+          }
+          // Persist only if we have at least 2 items (else navigation is trivial)
+          if (sequenceIds.length > 1) {
+            sessionStorage.setItem('practiceSequence', JSON.stringify({ ids: sequenceIds, mode, group: groupValue, ts: Date.now() }));
+          } else {
+            sessionStorage.removeItem('practiceSequence');
+          }
+        } catch (err) {
+          console.warn('Failed to build/store practice sequence', err);
+        }
         
         if (topicForUrl && question.id) {
-          // Navigate to practice page with specific question ID
-          const navigationUrl = `/maths/practice/${topicForUrl}?q=${encodeURIComponent(question.id)}`;
+          // Navigate to practice page with specific question ID; include sequence=session if we stored one
+          const hasSequence = !!sessionStorage.getItem('practiceSequence');
+          const navigationUrl = `/maths/practice/${topicForUrl}?q=${encodeURIComponent(question.id)}${hasSequence ? '&sequence=session' : ''}`;
           console.log(`🚀 Navigating to: ${navigationUrl}`);
           window.location.href = navigationUrl;
         } else if (topicForUrl) {
