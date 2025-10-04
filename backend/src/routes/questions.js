@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { optionalAuth } from '../middleware/auth.js';
 import UserModel from '../database/users.js';
+import { parseRequestedTopics, matchesQuestion, questionTopics } from '../services/topics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,22 +74,41 @@ function serializeQuestion(question) {
     return p; // leave any other relative path unchanged (frontend can decide)
   };
 
+  // Attempt fallback filename pattern substitution (long composite prefix -> short bundle prefix)
+  const applyFilenameFallback = (urlPath) => {
+    if (!urlPath || !urlPath.startsWith('/questions/')) return urlPath;
+    // Extract last component
+    const parts = urlPath.split('/');
+    const fileName = parts[parts.length - 1];
+    if (!fileName.startsWith('algebra-functions-differentiation-integration-')) return urlPath;
+    const altFileName = fileName.replace('algebra-functions-differentiation-integration-', 'fun-dif-int-');
+    const altUrl = [...parts.slice(0, -1), altFileName].join('/');
+    // Check filesystem existence for alt
+    const rel = altUrl.substring('/questions/'.length);
+    const fsPath = path.resolve(__dirname, '../data/questions', rel);
+    if (fsSync.existsSync(fsPath)) return altUrl;
+    return urlPath;
+  };
+
   const questionRaw = question.questionTifUrl || question.questionPngUrl || null;
   const solutionRaw = question.solutionTifUrl || question.solutionPngUrl || null;
-  const questionUrl = normalizeAssetPath(questionRaw);
-  const solutionUrl = normalizeAssetPath(solutionRaw);
+  let questionUrl = normalizeAssetPath(questionRaw);
+  let solutionUrl = normalizeAssetPath(solutionRaw);
+  // Fallback if long composite filename doesn't exist but short bundle one does
+  questionUrl = applyFilenameFallback(questionUrl);
+  solutionUrl = applyFilenameFallback(solutionUrl);
 
   // Optional existence check (only if normalized points into /questions/)
   let existsQ = null, existsA = null;
   if (questionUrl && questionUrl.startsWith('/questions/')) {
-    const rel = questionUrl.substring('/questions/'.length); // e.g. algebra/questions/alg-1001.png
-    const fsPath = path.resolve(__dirname, '../data/questions', rel);
-    existsQ = fsSync.existsSync(fsPath);
+    const relQ = questionUrl.substring('/questions/'.length);
+    const fsPathQ = path.resolve(__dirname, '../data/questions', relQ);
+    existsQ = fsSync.existsSync(fsPathQ);
   }
   if (solutionUrl && solutionUrl.startsWith('/questions/')) {
-    const rel = solutionUrl.substring('/questions/'.length);
-    const fsPath = path.resolve(__dirname, '../data/questions', rel);
-    existsA = fsSync.existsSync(fsPath);
+    const relS = solutionUrl.substring('/questions/'.length);
+    const fsPathS = path.resolve(__dirname, '../data/questions', relS);
+    existsA = fsSync.existsSync(fsPathS);
   }
   console.log(`[Serialize] ${question.id} topic=${primaryTopic} qUrl=${questionUrl} sUrl=${solutionUrl} existsQ=${existsQ} existsA=${existsA}`);
 
@@ -112,7 +132,7 @@ router.get('/', async (req, res) => {
   console.log(`[API Request] Received request for /api/questions with query:`, req.query);
   try {
     const questions = await readAllQuestions();
-    const { id, topic, level, difficulty, onlyIncomplete, examOnly, longOnly, shortOnly, yearFrom, yearTo, topics, count } = req.query;
+  const { id, topic, level, difficulty, onlyIncomplete, examOnly, longOnly, shortOnly, yearFrom, yearTo, topics, count, match } = req.query;
 
     // Direct ID lookup
     if (id) {
@@ -140,8 +160,10 @@ router.get('/', async (req, res) => {
     // Filter questions
     let filtered = [...questions];
     
-    if (topic) {
-      filtered = filtered.filter(q => q.topic === topic);
+    // Unified topic parsing (supports topic + topics + aliasing + bundle expansion)
+    const { topics: requestedTopics, mode: topicMatchMode } = parseRequestedTopics({ topic, topics, match });
+    if (requestedTopics.length) {
+      filtered = filtered.filter(q => matchesQuestion(q, requestedTopics, topicMatchMode));
     }
     
     if (level) {
@@ -156,13 +178,7 @@ router.get('/', async (req, res) => {
       filtered = filtered.filter(q => !q.complete);
     }
 
-    // Handle multiple topics (comma-separated)
-    if (topics) {
-      const topicList = topics.split(',').map(t => t.trim()).filter(t => t);
-      if (topicList.length > 0) {
-        filtered = filtered.filter(q => topicList.includes(q.topic));
-      }
-    }
+    // (Legacy multi-topics handling replaced by unified block above)
 
     // Filter by exam questions only (ID starts with 1, e.g., stat-1001)
     if (examOnly === 'true') {
@@ -305,9 +321,8 @@ router.get('/stats', async (req, res) => {
     const questions = await readAllQuestions();
     const counts = {};
     for (const q of questions) {
-      // Topic may be array or string
-      const topics = Array.isArray(q.topic) ? q.topic : [q.topic];
-      topics.filter(Boolean).forEach(t => {
+      const qTopics = questionTopics(q); // canonical, expanded, deduped
+      qTopics.forEach(t => {
         counts[t] = (counts[t] || 0) + 1;
       });
     }

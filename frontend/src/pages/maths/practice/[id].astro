@@ -20,6 +20,12 @@ const metadata = { title: `Practice - ${id}` };
 ---
 
 <Layout metadata={metadata}>
+  <script is:inline>
+    // Apply subtle pink background just for practice page by adding a body class that overrides the CSS variable
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('practice-bg');
+    });
+  </script>
   <!-- Loading Screen Overlay -->
   <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center">
     <div class="text-center">
@@ -1536,6 +1542,9 @@ const metadata = { title: `Practice - ${id}` };
   </script>
 
   <style>
+    /* Practice page custom background (subtle pink) */
+    .practice-bg { --aw-color-bg-page: #fff5f7; }
+    .dark.practice-bg { --aw-color-bg-page: #271d21; }
     /* Shared pill border color variable for quick theme experimentation */
     :root { --pill-border-color: #9ca3af; }
     .dark :root { --pill-border-color: #9ca3af; }
