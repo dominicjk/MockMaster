@@ -176,7 +176,7 @@ const metadata = { title: `Practice - ${id}` };
               <button id="timer-start" title="Start Timer" aria-label="Start Timer" class="timer-btn-left" type="button">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               </button>
-              <div id="sidebar-timer" class="timer-display font-mono font-semibold" aria-live="polite">00:00</div>
+              <div id="sidebar-timer" class="timer-display font-semibold" aria-live="polite">00:00</div>
               <button id="timer-reset" title="Reset Timer" aria-label="Reset Timer" class="timer-btn-right" type="button">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
               </button>
@@ -202,24 +202,15 @@ const metadata = { title: `Practice - ${id}` };
 
       <!-- Navigation -->
       <div class="mb-6 sidebar-content">
-        <div class="flex gap-2 mb-4">
-          <button id="prev-question" class="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 flex items-center justify-center" title="Previous Question">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
+        <div id="nav-controls" class="flex items-center gap-2 mb-4 select-none w-full" role="group" aria-label="Question navigation">
+          <button id="prev-question" class="nav-btn flex-1" title="Previous Question" aria-label="Previous Question" type="button">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <button id="next-question" class="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 flex items-center justify-center" title="Next Question">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
+          <button id="next-question" class="nav-btn flex-1" title="Next Question" aria-label="Next Question" type="button">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
-        <button id="skip-question" class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">
-          Skip Question
-        </button>
-        <button id="save-attempt" class="w-full px-4 py-2 mt-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700">
-          Save Attempt
-        </button>
+        <button id="save-attempt" class="w-full pill-action" type="button">Save Attempt</button>
       </div>
 
       <!-- Report Section -->
@@ -1226,45 +1217,6 @@ const metadata = { title: `Practice - ${id}` };
       // Load a new question
       loadQuestion();
     }
-
-
-    function skipQuestion() {
-      // Save current state before skipping
-      if (currentQuestion) {
-        if (questionHistory.length < questionCounter) {
-          questionHistory.push({
-            question: currentQuestion,
-            timerSeconds,
-            zoomLevel,
-            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
-            showingSolution
-          });
-        } else {
-          questionHistory[questionCounter - 1] = {
-            question: currentQuestion,
-            timerSeconds,
-            zoomLevel,
-            highlightRects: JSON.parse(JSON.stringify(highlightRects)),
-            showingSolution
-          };
-        }
-      }
-      questionCounter++;
-      updateQuestionTitle();
-      // Reset solution state
-      showingSolution = false;
-      const button = document.getElementById('show-solution');
-      if (button) {
-        button.textContent = 'Show Solution';
-      }
-      const statusMsg = document.getElementById('status-message');
-      if (statusMsg) {
-        statusMsg.innerHTML = '<span class="text-yellow-600 font-medium">Question skipped</span>';
-      }
-      // Load a new question
-      loadQuestion();
-    }
-
     function prevQuestion() {
       if (questionCounter <= 1) return;
       // Save current state before moving back
@@ -1535,10 +1487,8 @@ const metadata = { title: `Practice - ${id}` };
       if (solutionBtn) solutionBtn.addEventListener('click', toggleSolution);
 
       // Navigation buttons
-      const nextBtn = document.getElementById('next-question');
-      if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
-      const skipBtn = document.getElementById('skip-question');
-      if (skipBtn) skipBtn.addEventListener('click', skipQuestion);
+  const nextBtn = document.getElementById('next-question');
+  if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
       const saveAttemptBtn = document.getElementById('save-attempt');
       if (saveAttemptBtn) saveAttemptBtn.addEventListener('click', showSaveAttemptModal);
       const prevBtn = document.getElementById('prev-question');
@@ -1600,7 +1550,7 @@ const metadata = { title: `Practice - ${id}` };
 
     /* Composite zoom control */
   /* Ultra-compact size */
-  #zoom-controls { height: 2rem; }
+  #zoom-controls { height: 2rem; width: 6.5rem; }
     #zoom-controls .zoom-btn-left,
     #zoom-controls .zoom-btn-right,
     #zoom-controls .zoom-level { height: 100%; }
@@ -1619,6 +1569,7 @@ const metadata = { title: `Practice - ${id}` };
       font-family: inherit;
       font-size: 0.8rem;
       line-height: 1;
+      outline: none;
     }
     #zoom-controls .zoom-btn-left { border-right: none; border-radius: 9999px 0 0 9999px; }
     #zoom-controls .zoom-btn-right { border-left: none; border-radius: 0 9999px 9999px 0; }
@@ -1632,15 +1583,16 @@ const metadata = { title: `Practice - ${id}` };
       border-top: 1px solid #000;
       border-bottom: 1px solid #000;
       font-family: inherit;
-      font-size: 0.7rem;
-      min-width: 2.6rem; /* narrower center */
+      font-size: 0.78rem; /* slightly reduced per request */
+      flex: 1 1 auto; min-width: 0; /* allow flexible center to equalize pill width */
+      outline: none;
     }
   #zoom-controls .zoom-btn-left:hover,
   #zoom-controls .zoom-btn-right:hover { background:#000; color:#fff; }
   #zoom-controls .zoom-btn-left:active,
   #zoom-controls .zoom-btn-right:active { transform: scale(0.9); }
-    #zoom-controls .zoom-btn-left:focus,
-    #zoom-controls .zoom-btn-right:focus { outline:2px solid #000; outline-offset:2px; }
+  #zoom-controls .zoom-btn-left:focus,
+  #zoom-controls .zoom-btn-right:focus { outline:none; }
   .dark #zoom-controls .zoom-btn-left,
   .dark #zoom-controls .zoom-btn-right,
   .dark #zoom-controls .zoom-level { background:#ffffff; color:#000000; }
@@ -1648,7 +1600,7 @@ const metadata = { title: `Practice - ${id}` };
     .dark #zoom-controls .zoom-btn-right:hover { background:#000; color:#ffffff; }
 
     /* Timer controls - match zoom control styling */
-    #timer-controls { height: 2rem; margin-top: 0.25rem; }
+  #timer-controls { height: 2rem; width: 6.5rem; /* match zoom controls total width */ }
     #timer-controls .timer-btn-left,
     #timer-controls .timer-btn-right,
     #timer-controls .timer-display { height: 100%; }
@@ -1657,20 +1609,20 @@ const metadata = { title: `Practice - ${id}` };
       width: 1.75rem;
       background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
       border:1px solid #000; cursor:pointer; user-select:none; transition: background .15s, color .15s, transform .1s;
-      font-family: inherit; font-size:0.75rem; line-height:1;
+      font-family: inherit; font-size:0.8rem; line-height:1; outline:none;
     }
     #timer-controls .timer-btn-left { border-right:none; border-radius:9999px 0 0 9999px; }
     #timer-controls .timer-btn-right { border-left:none; border-radius:0 9999px 9999px 0; }
     #timer-controls .timer-display {
-      padding:0 0.5rem; background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
-      border-top:1px solid #000; border-bottom:1px solid #000; font-size:0.75rem; min-width:3.2rem; letter-spacing:0.5px;
+      padding:0 0.45rem; background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
+      border-top:1px solid #000; border-bottom:1px solid #000; font-size:0.78rem; flex:1 1 auto; min-width:0; line-height:1; outline:none; font-family:inherit;
     }
     #timer-controls .timer-btn-left:hover,
     #timer-controls .timer-btn-right:hover { background:#000; color:#fff; }
     #timer-controls .timer-btn-left:active,
     #timer-controls .timer-btn-right:active { transform:scale(0.9); }
-    #timer-controls .timer-btn-left:focus,
-    #timer-controls .timer-btn-right:focus { outline:2px solid #000; outline-offset:2px; }
+  #timer-controls .timer-btn-left:focus,
+  #timer-controls .timer-btn-right:focus { outline:none; }
     .dark #timer-controls .timer-btn-left,
     .dark #timer-controls .timer-btn-right,
     .dark #timer-controls .timer-display { background:#ffffff; color:#000000; }
@@ -1686,6 +1638,23 @@ const metadata = { title: `Practice - ${id}` };
   .merged-group #timer-controls .timer-btn-left { border-left:1px solid #000; }
   /* Ensure consistent vertical alignment */
   .merged-group #zoom-controls, .merged-group #timer-controls { display:flex; align-items:stretch; height:2rem; }
+
+  /* Navigation pill controls */
+  #nav-controls { height:2rem; }
+  #nav-controls .nav-btn { height:100%; background:#ffffff; color:#000; display:flex; align-items:center; justify-content:center; border:1px solid #000; cursor:pointer; user-select:none; transition:background .15s, color .15s, transform .1s; font-size:0.8rem; line-height:1; outline:none; border-radius:9999px; min-width:0; }
+  #nav-controls .nav-btn:hover { background:#000; color:#fff; }
+  #nav-controls .nav-btn:active { transform:scale(.9); }
+  #nav-controls .nav-btn:focus { outline:none; }
+  .dark #nav-controls .nav-btn { background:#ffffff; color:#000; }
+  .dark #nav-controls .nav-btn:hover { background:#000; color:#ffffff; }
+
+  /* Save Attempt pill */
+  #save-attempt.pill-action { height:2rem; background:#e5e5e5; color:#000; border:1px solid #9ca3af; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:600; letter-spacing:.25px; cursor:pointer; user-select:none; transition:background .15s, color .15s, transform .1s, border-color .15s; }
+  #save-attempt.pill-action:hover { background:#f3f3f3; color:#000; border-color:#9ca3af; }
+  #save-attempt.pill-action:active { transform:scale(.96); }
+  #save-attempt.pill-action:focus { outline:none; }
+  .dark #save-attempt.pill-action { background:#e5e5e5; color:#000; }
+  .dark #save-attempt.pill-action:hover { background:#000; color:#fff; }
 
     /* Responsive behavior for smaller screens */
     @media (max-width: 1280px) {
