@@ -156,41 +156,35 @@ const metadata = { title: `Practice - ${id}` };
         </div>
         
         <!-- Favorite Star -->
-        <div class="flex items-center justify-between mb-3">
-          <!-- Star (favourite) icon on the left -->
-          <button id="sidebar-favourite" class="p-2 rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-900 mr-2" title="Add to Favourites" style="display: block;" >
+        <div class="flex items-center mb-3 gap-3">
+          <!-- Star (favourite) icon -->
+          <button id="sidebar-favourite" class="p-2 rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-900" title="Add to Favourites" style="display: block;" >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
           </button>
-          <!-- Zoom controls on the right -->
-          <div id="zoom-controls" class="flex items-stretch ml-auto select-none" role="group" aria-label="Zoom controls">
-            <button id="zoom-out" title="Zoom Out" aria-label="Zoom Out"
-              class="zoom-btn-left font-bold text-xl leading-none" type="button">−</button>
-            <div id="zoom-level" class="zoom-level font-semibold" aria-live="polite">100%</div>
-            <button id="zoom-in" title="Zoom In" aria-label="Zoom In"
-              class="zoom-btn-right font-bold text-xl leading-none" type="button">+</button>
+          <!-- Group zoom + timer -->
+          <div class="flex items-center gap-1 ml-auto merged-group">
+            <div id="zoom-controls" class="flex items-stretch select-none" role="group" aria-label="Zoom controls">
+              <button id="zoom-out" title="Zoom Out" aria-label="Zoom Out"
+                class="zoom-btn-left font-bold text-xl leading-none" type="button">−</button>
+              <div id="zoom-level" class="zoom-level font-semibold" aria-live="polite">100%</div>
+              <button id="zoom-in" title="Zoom In" aria-label="Zoom In"
+                class="zoom-btn-right font-bold text-xl leading-none" type="button">+</button>
+            </div>
+            <div id="timer-controls" class="flex items-stretch select-none" role="group" aria-label="Timer controls">
+              <button id="timer-start" title="Start Timer" aria-label="Start Timer" class="timer-btn-left" type="button">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <div id="sidebar-timer" class="timer-display font-mono font-semibold" aria-live="polite">00:00</div>
+              <button id="timer-reset" title="Reset Timer" aria-label="Reset Timer" class="timer-btn-right" type="button">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+              </button>
+            </div>
           </div>
         </div>
-      <!-- LeetCode-style Options Panel with Top Toggle Slice -->
-      <div class="mb-8 sidebar-content">
-        <div class="bg-gray-200 dark:bg-slate-600 rounded-b-xl p-4 flex flex-col gap-4">
-          <!-- Timer Section -->
-          <div class="flex flex-row items-center gap-3">
-            <div class="text-2xl md:text-3xl font-mono font-bold bg-gray-300 dark:bg-gray-700 px-4 py-3 rounded-2xl leading-none" id="sidebar-timer">00:00</div>
-            <button id="timer-start" class="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors" title="Start Timer">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </button>
-            <button id="timer-reset" class="p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors" title="Reset Timer">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- Former timer section removed; spacing preserved intentionally -->
+      <div class="mb-4 sidebar-content"></div>
 
       <!-- Question Metadata -->
       <div class="mb-8 sidebar-content">
@@ -644,21 +638,13 @@ const metadata = { title: `Practice - ${id}` };
       const startButton = document.getElementById('timer-start');
       if (startButton) {
         if (isRunning) {
-          startButton.innerHTML = `
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-            </svg>
-          `;
+          startButton.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>';
           startButton.title = 'Pause Timer';
-          startButton.className = 'p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors';
+          startButton.setAttribute('data-state', 'running');
         } else {
-          startButton.innerHTML = `
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          `;
+          startButton.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
           startButton.title = 'Start Timer';
-          startButton.className = 'p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors';
+          startButton.removeAttribute('data-state');
         }
       }
     }
@@ -1660,6 +1646,46 @@ const metadata = { title: `Practice - ${id}` };
   .dark #zoom-controls .zoom-level { background:#ffffff; color:#000000; }
     .dark #zoom-controls .zoom-btn-left:hover,
     .dark #zoom-controls .zoom-btn-right:hover { background:#000; color:#ffffff; }
+
+    /* Timer controls - match zoom control styling */
+    #timer-controls { height: 2rem; margin-top: 0.25rem; }
+    #timer-controls .timer-btn-left,
+    #timer-controls .timer-btn-right,
+    #timer-controls .timer-display { height: 100%; }
+    #timer-controls .timer-btn-left,
+    #timer-controls .timer-btn-right {
+      width: 1.75rem;
+      background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
+      border:1px solid #000; cursor:pointer; user-select:none; transition: background .15s, color .15s, transform .1s;
+      font-family: inherit; font-size:0.75rem; line-height:1;
+    }
+    #timer-controls .timer-btn-left { border-right:none; border-radius:9999px 0 0 9999px; }
+    #timer-controls .timer-btn-right { border-left:none; border-radius:0 9999px 9999px 0; }
+    #timer-controls .timer-display {
+      padding:0 0.5rem; background:#ffffff; color:#000000; display:flex; align-items:center; justify-content:center;
+      border-top:1px solid #000; border-bottom:1px solid #000; font-size:0.75rem; min-width:3.2rem; letter-spacing:0.5px;
+    }
+    #timer-controls .timer-btn-left:hover,
+    #timer-controls .timer-btn-right:hover { background:#000; color:#fff; }
+    #timer-controls .timer-btn-left:active,
+    #timer-controls .timer-btn-right:active { transform:scale(0.9); }
+    #timer-controls .timer-btn-left:focus,
+    #timer-controls .timer-btn-right:focus { outline:2px solid #000; outline-offset:2px; }
+    .dark #timer-controls .timer-btn-left,
+    .dark #timer-controls .timer-btn-right,
+    .dark #timer-controls .timer-display { background:#ffffff; color:#000000; }
+    .dark #timer-controls .timer-btn-left:hover,
+    .dark #timer-controls .timer-btn-right:hover { background:#000; color:#ffffff; }
+
+  /* Merge zoom + timer into one visual pill: flatten touching inner corners */
+  .merged-group { gap:0.25rem; }
+  .merged-group #zoom-controls .zoom-btn-right { border-radius:0; }
+  .merged-group #timer-controls .timer-btn-left { border-radius:0; }
+  /* Restore inner borders so each pill retains black edge */
+  .merged-group #zoom-controls .zoom-btn-right { border-right:1px solid #000; }
+  .merged-group #timer-controls .timer-btn-left { border-left:1px solid #000; }
+  /* Ensure consistent vertical alignment */
+  .merged-group #zoom-controls, .merged-group #timer-controls { display:flex; align-items:stretch; height:2rem; }
 
     /* Responsive behavior for smaller screens */
     @media (max-width: 1280px) {
