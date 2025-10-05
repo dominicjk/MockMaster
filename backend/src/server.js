@@ -4,17 +4,34 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import questionsRouter from './routes/questions.js';
 import topicsRouter from './routes/topics.js';
 import progressRouter from './routes/progress.js';
+import contactRouter from './routes/contact.js';
 import UserModel from './database/users.js';
 import EmailService from './services/emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables. Primary attempt: process CWD (.env in project root if running from root)
 dotenv.config();
+// Fallback: if critical vars missing and a backend-local .env exists, load that too.
+if (!process.env.EMAIL_USER || !process.env.PORT) {
+  const backendEnvPath = path.join(__dirname, '..', '.env');
+  try {
+    if (fs.existsSync(backendEnvPath)) {
+      dotenv.config({ path: backendEnvPath });
+      if (!process.env.EMAIL_USER) {
+        console.warn('⚠️  EMAIL_USER still undefined after loading backend/.env');
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️  Failed loading backend/.env fallback:', e.message);
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -59,6 +76,7 @@ app.use('/api/questions', questionsRouter);
 app.use('/api/topics', topicsRouter);
 // Authentication routes removed.
 app.use('/api/progress', progressRouter);
+app.use('/api/contact', contactRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

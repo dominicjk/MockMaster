@@ -58,8 +58,35 @@ try {
     stats = await sr.json();
   }
   if (stats && stats.topics) {
+    const topicsObj = stats.topics; // local alias for non-null assertion clarity
+    // Merge Financial Maths variants into a single canonical key 'financial-maths'
+    const financialVariants = ['financial-mathematics', 'financial mathematics'];
+    let financialMerged = 0;
+    financialVariants.forEach(v => {
+      if (topicsObj[v]) { financialMerged += topicsObj[v]; delete topicsObj[v]; }
+    });
+    if (financialMerged) topicsObj['financial-maths'] = (topicsObj['financial-maths'] || 0) + financialMerged;
+
+    // Remove combined Probability-Statistics synthetic grouping (prob-stat variants)
+    const probCombined = ['prob-stat','prob stat','probability-statistics','probability statistics'];
+  probCombined.forEach(v => { if (topicsObj[v]) delete topicsObj[v]; });
+
+    // Build labels with special mappings, excluding combined group completely
     const toTitle = (slug: string) => slug.split(/[-_ ]+/).map(w => w ? w[0].toUpperCase() + w.slice(1) : '').join(' ');
-    TOPIC_LABELS = Object.fromEntries(Object.keys(stats.topics).map(k => [k, toTitle(k)]));
+    const specialLabelMap: Record<string,string> = {
+      'financial-maths': 'Financial Maths'
+    };
+    TOPIC_LABELS = Object.fromEntries(
+  Object.keys(topicsObj)
+        .filter(k => !probCombined.includes(k.toLowerCase()))
+        .map(k => {
+          const lower = k.toLowerCase();
+          if (specialLabelMap[lower]) return [k, specialLabelMap[lower]];
+          if (lower === 'financial-mathematics' || lower === 'financial mathematics') return [k, 'Financial Maths'];
+          if (probCombined.includes(lower)) return [k, '']; // shouldn't reach due to filter
+          return [k, toTitle(k)];
+        })
+    );
   }
 } catch { /* ignore stats fetch failure */ }
 
@@ -93,7 +120,22 @@ const attemptViews: AttemptView[] = attempts.map(a => {
     }
   }
   const topicSlugs: string[] = a.question ? (Array.isArray(a.question.topic) ? a.question.topic : [a.question.topic]).filter(Boolean) as string[] : [];
-  const topics: DisplayTopic[] = topicSlugs.map(slug => ({ slug, label: TOPIC_LABELS[slug] || slug.split(/[-_ ]+/).map(w=>w? w[0].toUpperCase()+w.slice(1):'').join(' ') }));
+  const canonical = (slug: string) => {
+    const lower = slug.toLowerCase();
+    if (lower === 'financial-mathematics' || lower === 'financial mathematics') return 'financial-maths';
+    if (lower === 'prob-stat' || lower === 'prob stat' || lower === 'probability-statistics' || lower === 'probability statistics') return ''; // drop combined
+    return slug;
+  };
+  const seenLabels = new Set<string>();
+  const topics: DisplayTopic[] = [];
+  topicSlugs.forEach(raw => {
+    const slug = canonical(raw);
+    if (!slug) return; // dropped combined group
+    const label = TOPIC_LABELS[slug] || slug.split(/[-_ ]+/).map(w=>w? w[0].toUpperCase()+w.slice(1):'').join(' ');
+    if (seenLabels.has(label)) return;
+    seenLabels.add(label);
+    topics.push({ slug, label });
+  });
   const timeLimitSeconds = a.question?.timeLimitSeconds ?? null;
   const overLimit = timeLimitSeconds != null && a.timeTakenSeconds != null && a.timeTakenSeconds > timeLimitSeconds;
   return { a, diffLabel, diffText, diffClasses, topics, timeLimitSeconds, overLimit };

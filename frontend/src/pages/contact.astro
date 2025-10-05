@@ -102,9 +102,9 @@ const metadata = {
     <!-- Contact Info -->
     <div class="mt-12 text-center">
       <p class="text-gray-600 dark:text-gray-300">
-        You can also reach us directly at 
-        <a href="mailto:contact@example.com" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-          contact@example.com
+        You can also email us directly at 
+        <a href="mailto:h1hivequeries@gmail.com" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+          h1hivequeries@gmail.com
         </a>
       </p>
     </div>
@@ -112,25 +112,63 @@ const metadata = {
 
   <!-- Form Handling Script -->
   <script>
-    document.getElementById('contact-form')?.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
+    (function(){
+      const form = document.getElementById('contact-form') as HTMLFormElement | null;
+      if(!form) return;
       const statusDiv = document.getElementById('form-status');
       const statusMessage = document.getElementById('status-message');
-      
-      if (statusDiv && statusMessage) {
-        statusDiv.classList.remove('hidden');
-        statusMessage.textContent = 'Thank you for your message! We\'ll get back to you soon.';
-        statusMessage.className = 'text-sm text-green-600 dark:text-green-400';
-        
-        // Reset form
-        this.reset();
-        
-        // Hide status after 5 seconds
-        setTimeout(() => {
-          statusDiv.classList.add('hidden');
-        }, 5000);
-      }
-    });
+      let sending = false;
+      // Derive backend base (reuse logic similar to practice page if global override present)
+      const BACKEND_BASE = (() => {
+        const win = window as unknown as { __BACKEND_URL__?: string };
+        const explicit = win.__BACKEND_URL__ || (import.meta as unknown as { env?: { PUBLIC_BACKEND_URL?: string } }).env?.PUBLIC_BACKEND_URL;
+        if (explicit) return explicit.replace(/\/$/, '');
+        return 'http://localhost:3001';
+      })();
+
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        if (sending) return;
+        sending = true;
+        const fd = new FormData(form as HTMLFormElement);
+        const payload = {
+          name: fd.get('name'),
+          email: fd.get('email'),
+          subject: fd.get('subject'),
+          message: fd.get('message')
+        };
+        function setStatus(text, cls){
+          if(!statusDiv || !statusMessage) return;
+            statusDiv.classList.remove('hidden');
+            statusMessage.textContent = text;
+            statusMessage.className = 'text-sm ' + cls;
+        }
+        setStatus('Sending message...','text-blue-600 dark:text-blue-400');
+        try {
+          const endpoint = BACKEND_BASE + '/api/contact';
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json().catch(()=>({}));
+          if (res.ok) {
+            setStatus('Message sent successfully! We will reply soon.' + (json.skipped ? ' (Email service not configured; stored locally.)' : ''),'text-green-600 dark:text-green-400');
+            form.reset();
+          } else {
+            if (res.status === 404) {
+              setStatus('Contact endpoint not found on backend (404). Ensure backend restarted and includes /api/contact route.','text-red-600 dark:text-red-400');
+            } else {
+              setStatus(json.error || 'Failed to send message. Please try again later.','text-red-600 dark:text-red-400');
+            }
+          }
+        } catch {
+          setStatus('Network error sending message. Please retry.','text-red-600 dark:text-red-400');
+        } finally {
+          sending = false;
+          setTimeout(()=>{ statusDiv?.classList.add('hidden'); }, 8000);
+        }
+      });
+    })();
   </script>
 </Layout>

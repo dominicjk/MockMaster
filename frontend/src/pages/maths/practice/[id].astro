@@ -1,6 +1,7 @@
 ---
 // src/pages/maths/practice/[id].astro
 import Layout from '~/layouts/PageLayout.astro';
+// import { PRACTICE_YEAR_FIRST, PRACTICE_YEAR_LAST } from '~/config/practiceDefaults'; // reserved for future dynamic injection
 // Removed unused utils imports (local script defines formatting)
 
 export function getStaticPaths() {
@@ -17,6 +18,7 @@ export function getStaticPaths() {
 
 const { id } = Astro.params;
 const metadata = { title: `Practice - ${id}` };
+// (PRACTICE_YEAR_FIRST / LAST imported for future build-time use if needed)
 ---
 
 <Layout metadata={metadata}>
@@ -250,7 +252,13 @@ const metadata = { title: `Practice - ${id}` };
 
 
 
+  <!-- Expose reset URL & year bounds globally (serialized by Astro frontmatter variables) -->
   <script>
+    // Practice reset configuration injected from frontmatter
+  // NOTE: Hardcoded numeric injection fallback (update alongside config file if year bounds change)
+  const YEAR_FIRST = 2024; // keep in sync with practiceDefaults.ts
+  const YEAR_LAST = 2012;  // keep in sync with practiceDefaults.ts
+  const PRACTICE_RESET_URL = `http://localhost:4321/maths/practice/all?topics=all&examOnly=false&longOnly=false&shortOnly=false&yearFrom=${YEAR_FIRST}&yearTo=${YEAR_LAST}&customOnly=false`;
     interface PracticeQuestion {
       id?: string;
       topic?: string;
@@ -323,6 +331,50 @@ const metadata = { title: `Practice - ${id}` };
       } catch (e) { console.warn('[sequence] Failed to update URL', e); }
     }
 
+    // --- FAVOURITES (session/local persistence) ---
+    function getFavouriteIds(): string[] {
+      try { return JSON.parse(localStorage.getItem('favouriteQuestions') || '[]'); } catch { return []; }
+    }
+    function setFavouriteIds(ids: string[]) {
+      try { localStorage.setItem('favouriteQuestions', JSON.stringify(Array.from(new Set(ids)))); }
+      catch (e) { console.warn('Failed to persist favourites', e); }
+    }
+    function isFavourite(id: string | undefined | null): boolean {
+      if (!id) return false; return getFavouriteIds().includes(String(id));
+    }
+    function toggleFavourite(id: string | undefined | null) {
+      if (!id) return;
+      const list = getFavouriteIds();
+      const idx = list.indexOf(id);
+      if (idx === -1) list.push(id); else list.splice(idx,1);
+      setFavouriteIds(list);
+      updateFavouriteStar();
+    }
+    function updateFavouriteStar() {
+      const btn = document.getElementById('sidebar-favourite');
+      if (!btn) return;
+      const fav = isFavourite(currentQuestion?.id);
+      btn.setAttribute('aria-pressed', fav ? 'true' : 'false');
+      btn.title = fav ? 'Remove from Favourites' : 'Add to Favourites';
+      btn.innerHTML = fav ? `
+        <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>` : `
+        <svg class="w-6 h-6 text-gray-400 hover:text-yellow-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>`;
+    }
+
+    // Attach favourite toggle listener once DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      const favBtn = document.getElementById('sidebar-favourite');
+      if (favBtn) {
+        favBtn.addEventListener('click', () => {
+          toggleFavourite(currentQuestion?.id || null);
+        });
+      }
+    });
+
     // Client-side formatting functions
     function formatDifficulty(difficulty: number | string | undefined) {
       const difficultyValue = difficulty || 1;
@@ -355,6 +407,8 @@ const metadata = { title: `Practice - ${id}` };
         'complex numbers': 'Complex Numbers',
         'financial-maths': 'Financial Maths',
         'financial maths': 'Financial Maths',
+  'financial-mathematics': 'Financial Maths',
+  'financial mathematics': 'Financial Maths',
         'compound-interest': 'Compound Interest',
         'compound interest': 'Compound Interest',
         'mathematical-induction': 'Mathematical Induction',
@@ -946,6 +1000,72 @@ const metadata = { title: `Practice - ${id}` };
       if (messageEl) messageEl.textContent = message;
     }
 
+    // Friendly empty / error state renderer (tumbleweed style)
+    function showFriendlyEmptyState(reason = 'No questions available for the current filters.') {
+      const container = document.getElementById('question-container');
+      if (!container) return;
+      const sidebar = document.getElementById('sidebar');
+      let targetHeight = 0;
+      if (sidebar) {
+        targetHeight = sidebar.clientHeight;
+      } else {
+        targetHeight = Math.max(500, window.innerHeight - 140);
+      }
+  const hStyle = `min-height:${targetHeight}px;`;
+  const resetUrl = PRACTICE_RESET_URL;
+      container.innerHTML = `
+        <div class="flex flex-col gap-6 items-center justify-center text-center px-8 py-12 w-full bg-white dark:bg-slate-900" style="${hStyle}">
+          <div class="relative w-40 h-40 opacity-70 animate-spin-slow select-none" aria-hidden="true">
+            <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" class="w-full h-full text-gray-300 dark:text-slate-600">
+              <circle cx="60" cy="60" r="38" stroke-width="3" stroke-dasharray="6 10" />
+              <path d="M25 70c10 18 32 30 50 26M32 48c6-14 20-24 33-24 14 0 26 10 32 22M44 92c-6-6-12-14-14-22M90 86c4-8 6-18 4-26M54 30c-4 6-6 10-6 16" stroke-width="2" />
+              <path d="M18 96c18 6 40 8 60 6 14-2 28-6 38-12" stroke-width="2" stroke-dasharray="4 12" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">No Questions Found</h2>
+            <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">${reason}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-500 max-w-md mx-auto">Try changing your parameters (topic / year / length / custom toggle) to discover more questions.</p>
+          </div>
+          <div class="flex flex-wrap gap-3 justify-center">
+            <button type="button" id="retry-load" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">Retry</button>
+            <a id="reset-filters-link" data-hard-reset href="${resetUrl}" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-400">Reset Filters</a>
+          </div>
+        </div>`;
+      const retryBtn = document.getElementById('retry-load');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', async () => {
+          showLoadingScreen('Trying again...');
+          try {
+            await loadQuestion({});
+          } finally {
+            hideLoadingScreen();
+          }
+        });
+      }
+      // Force a hard navigation for reset to avoid slow SPA re-init
+      const resetLink = document.getElementById('reset-filters-link');
+      if (resetLink) {
+        resetLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          const url = (resetLink as HTMLAnchorElement).href + `&ts=${Date.now()}`;
+          // Use location.replace to avoid extra history entries
+          window.location.replace(url);
+        }, { once: true });
+      }
+    }
+
+    // Inject slow spin animation once
+    (function ensureSpinStyle(){
+      const spinStyleId = 'spin-slow-style';
+      if (!document.getElementById(spinStyleId)) {
+        const style = document.createElement('style');
+        style.id = spinStyleId;
+        style.textContent = '@keyframes spin-slower { from { transform: rotate(0deg);} to { transform: rotate(360deg);} } .animate-spin-slow { animation: spin-slower 18s linear infinite; }';
+        document.head.appendChild(style);
+      }
+    })();
+
   // Question loading and display
 
   async function loadQuestion({fromHistory = false, historyIndex = null} = {}) {
@@ -988,8 +1108,7 @@ const metadata = { title: `Practice - ${id}` };
         }
         if (!data) {
           console.error('[practice] No valid questions available after reload attempt');
-          const qc = document.getElementById('question-container');
-          if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">No questions available. Refresh or adjust filters.</div>';
+          showFriendlyEmptyState();
           hideLoadingScreen();
           return;
         }
@@ -1003,6 +1122,7 @@ const metadata = { title: `Practice - ${id}` };
             currentQuestion.name = ct;
           }
         } catch (e) { console.warn('Custom title compute failed', e); }
+        updateFavouriteStar();
 
         // Reset solution state
         showingSolution = false;
@@ -1025,6 +1145,7 @@ const metadata = { title: `Practice - ${id}` };
         displayQuestion(data);
         updateMetadata(data);
         updateTabAppearance();
+  updateFavouriteStar();
         
         // Hide loading screen once everything is loaded
         setTimeout(() => {
@@ -1036,8 +1157,7 @@ const metadata = { title: `Practice - ${id}` };
         updateLoadingMessage("Error loading questions");
         setTimeout(() => {
           hideLoadingScreen();
-          const qc = document.getElementById('question-container');
-          if (qc) qc.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">Error loading question. Please try again.</div>';
+          showFriendlyEmptyState('Error loading question. Please retry or adjust parameters.');
         }, 1000);
       }
     }
@@ -1104,7 +1224,7 @@ const metadata = { title: `Practice - ${id}` };
       container.scrollTop = container.scrollHeight * 0.1;
     }, 0);
       } else {
-        container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No question image available</div>';
+        showFriendlyEmptyState('The selected question has no image available.');
       }
     }
 

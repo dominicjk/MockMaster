@@ -78,13 +78,13 @@ const metadata = {
       <div class="overflow-hidden">
         <!-- Table Header -->
         <div class="px-6 py-3 bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
-          <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            <div class="col-span-1 text-center">Status</div>
-            <div class="col-span-5">Title</div>
-            <div class="col-span-4">Topics</div>
-            <div class="col-span-2">Difficulty</div>
+            <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div class="col-span-1 text-center">Status</div>
+              <div class="col-span-5">Title</div>
+              <div class="col-span-4">Topics</div>
+              <div class="col-span-2">Difficulty</div>
+            </div>
           </div>
-        </div>
 
         <!-- Questions List Container -->
         <div id="questions-container" class="divide-y divide-gray-200 dark:divide-slate-600">
@@ -483,13 +483,37 @@ const metadata = {
       const p1Opt = document.createElement('option'); p1Opt.value='__paper1'; p1Opt.textContent='Paper 1'; topicFilter.appendChild(p1Opt);
       const p2Opt = document.createElement('option'); p2Opt.value='__paper2'; p2Opt.textContent='Paper 2'; topicFilter.appendChild(p2Opt);
 
-      // Dynamic topic options
-      Array.from(topics).sort().forEach(topic => {
-        const option = document.createElement('option');
-        option.value = topic;
-        option.textContent = topic.charAt(0).toUpperCase() + topic.slice(1).replace(/-/g, ' ');
-        topicFilter.appendChild(option);
-      });
+      // Helper to decide if topic is the combined Probability-Statistics grouping
+      const isCombinedProbStat = (val: string) => {
+        const v = val.toLowerCase();
+        return v === 'prob-stat' || v === 'probability-statistics' || v === 'probability-stat' || v === 'prob stat' || v === 'probability statistics';
+      };
+      // Normalize label capitalization (each word capitalised) with special mappings
+      const formatLabel = (raw: string) => {
+        const lower = raw.toLowerCase();
+        const special: Record<string,string> = {
+          'complex': 'Complex Numbers',
+          'complex-numbers': 'Complex Numbers',
+          'complex numbers': 'Complex Numbers',
+          'financial-maths': 'Financial Maths',
+          'sequences-and-series': 'Sequences & Series',
+          'sequences': 'Sequences & Series',
+          'probability': 'Probability',
+          'statistics': 'Statistics'
+        };
+        if (special[lower]) return special[lower];
+        return lower.replace(/-/g,' ').split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+      };
+      // Dynamic topic options (exclude combined Prob-Stat group; individual Probability / Statistics will still appear)
+      Array.from(topics)
+        .filter(t => !isCombinedProbStat(t))
+        .sort((a,b) => a.localeCompare(b))
+        .forEach(topic => {
+          const option = document.createElement('option');
+          option.value = topic;
+          option.textContent = formatLabel(topic);
+          topicFilter.appendChild(option);
+        });
 
       // Pre-select if persisted
       if (init.topic) {
@@ -828,85 +852,108 @@ const metadata = {
       }
     }
 
+    function getFavouriteIds(): string[] { try { return JSON.parse(localStorage.getItem('favouriteQuestions') || '[]'); } catch { return []; } }
+    function isFavourite(id: string): boolean { return getFavouriteIds().includes(id); }
     function createQuestionRow(question: Question, index: number): HTMLElement {
       const row = document.createElement('div');
       row.className = 'px-4 py-2 hover:bg-pink-50/50 dark:hover:bg-slate-700/50 cursor-pointer transition-all duration-200 question-row-enter hover:shadow-md hover:scale-[1.01] border-b border-pink-100/30 dark:border-slate-700/30';
       
       const difficultyInfo = formatDifficulty(question.difficulty);
       
-      // Handle topic data (can be string or array)
-      const topicData = question.topic || question.subject;
-      let topicsHtml = '';
-      
-      if (Array.isArray(topicData)) {
-        // If array, display all topics with proper formatting
-        const topics = topicData.map(topic => 
-          `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300 whitespace-nowrap">
-            ${formatTopicName(String(topic))}
-          </span>`
-        ).join('');
-        topicsHtml = topics || '<span class="text-gray-500 text-xs">Unknown</span>';
-      } else if (typeof topicData === 'string') {
-        topicsHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300 whitespace-nowrap">
-          ${formatTopicName(topicData)}
-        </span>`;
-      } else {
-        topicsHtml = '<span class="text-gray-500 text-xs">Unknown</span>';
+      // Handle topic data (can be string or array) and expand combined Probability-Statistics group into two badges
+      const rawTopicData = question.topic || question.subject;
+      const isCombinedProbStat = (val: string) => {
+        const v = val.toLowerCase();
+        return v === 'prob-stat' || v === 'probability-statistics' || v === 'probability-stat' || v === 'probability_statistics' || v === 'prob stat' || v === 'probability statistics';
+      };
+      let displayTopics: string[] = [];
+      if (Array.isArray(rawTopicData)) {
+        rawTopicData.forEach(t => {
+          if (typeof t === 'string' && isCombinedProbStat(t)) {
+            displayTopics.push('probability','statistics');
+          } else if (t) {
+            displayTopics.push(String(t));
+          }
+        });
+      } else if (typeof rawTopicData === 'string') {
+        if (isCombinedProbStat(rawTopicData)) {
+          displayTopics = ['probability','statistics'];
+        } else if (rawTopicData) {
+          displayTopics = [rawTopicData];
+        }
       }
+      if (displayTopics.length === 0) displayTopics = ['--'];
+      // Deduplicate while preserving original order (avoid double 'Statistics' when combined + single appear)
+      const seen = new Set<string>();
+      displayTopics = displayTopics.filter(t => {
+        const key = t.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const topicsHtml = displayTopics.map(topic => `
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300 whitespace-nowrap">
+          ${formatTopicName(topic)}
+        </span>`).join('');
       
-      // Handle custom question naming based on ID
+      // Handle custom question naming based on ID (Custom {Topic} {n})
       let name;
       const id = question.id || '';
-      const match = id.match(/(\w+)-(\d+)/); // Match format like "alg-0001" or "alg-1001"
-      
+      const match = id.match(/([a-zA-Z0-9-]+)-(\d{3,})$/); // final numeric segment (>=3 digits)
       if (match) {
-        const numPart = match[2];
-        
-        if (numPart.startsWith('0')) {
-          // Custom questions (IDs starting with 0 like alg-0001)
-          const customNumber = parseInt(numPart) + 1; // Convert 0001 to 1, 0002 to 2, etc.
-          name = `Custom Question ${customNumber}`;
-        } else if (numPart.startsWith('1')) {
-          // Exam questions (IDs starting with 1 like alg-1001) - use existing name
-          name = question.name || question.title || `Question ${index + 1}`;
+        const numeric = match[2];
+        if (numeric.startsWith('0')) {
+          // Derive topic slug: prefer first explicit topic; fallback to id prefix before numeric segment
+          let topicSlug = '';
+          const topicData = question.topic || question.subject;
+          if (Array.isArray(topicData)) topicSlug = (topicData[0] || '').toString();
+          else if (typeof topicData === 'string') topicSlug = topicData;
+          if (!topicSlug) {
+            // Remove numeric tail
+            topicSlug = match[1].replace(/-$/,'');
+          }
+            const prettyTopic = formatTopicName(topicSlug || 'Custom');
+            const customNumber = parseInt(numeric, 10); // strip leading zeros
+            name = `Custom ${prettyTopic} ${customNumber}`;
         } else {
-          // Other formats
           name = question.name || question.title || `Question ${index + 1}`;
         }
       } else {
-        // No match - use existing name or fallback
         name = question.name || question.title || `Question ${index + 1}`;
       }
       
+      // Favourited star rendered absolutely so status dot remains centered
+      const favIcon = isFavourite(question.id)
+        ? '<svg class="absolute -top-2 -left-2 w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-label="Favourite"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
+        : '';
       row.innerHTML = `
         <div class="grid grid-cols-12 gap-3 items-center question-grid py-1">
-          <!-- Status Column (no checkbox, just status indicator) -->
+          <!-- Status Column (with optional favourite star leading) -->
           <div class="col-span-1 flex justify-center">
-            <div class="w-3 h-3 rounded-full ${question.completed ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'} transition-colors duration-200"></div>
+            <div class="relative flex items-center justify-center w-6 h-6">
+              ${favIcon}
+              <div class="w-3 h-3 rounded-full ${question.completed ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'} transition-colors duration-200"></div>
+            </div>
           </div>
-          
           <!-- Title Column -->
           <div class="col-span-5 title-column">
             <div class="font-medium text-gray-900 dark:text-white transition-colors truncate pr-2" title="${name}">
               ${name}
             </div>
           </div>
-          
           <!-- Topics Column -->
           <div class="col-span-4">
             <div class="flex flex-wrap items-center gap-1 max-h-8 overflow-hidden">
               ${topicsHtml}
             </div>
           </div>
-          
           <!-- Difficulty Column -->
           <div class="col-span-2">
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${difficultyInfo.color} whitespace-nowrap">
               ${difficultyInfo.label}
             </span>
           </div>
-        </div>
-      `;
+        </div>`;
 
       // Add click handler to navigate to practice page with specific question
       row.addEventListener('click', (e) => {

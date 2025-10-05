@@ -280,6 +280,47 @@ This is an automated message. Please do not reply to this email.
       throw error;
     }
   }
+
+  async sendContactEmail({ name, fromEmail, subject, message }) {
+    if (!this.transporter) {
+      // Fail gracefully: log and pretend success so UI can proceed without leaking config state
+      console.warn('[email] Contact email skipped (transporter not configured).');
+      console.info('[email][contact] Fallback log:', { name, fromEmail, subject, message });
+      return { skipped: true };
+    }
+    const to = process.env.CONTACT_EMAIL_TO || process.env.EMAIL_CONTACT_TO || process.env.EMAIL_USER || 'h1hivequeries@gmail.com';
+    const safeSubject = subject && subject.trim() ? subject.trim().slice(0, 200) : 'Website Contact Form Message';
+    const plainText = `New contact form submission\n\nFrom: ${name || 'Unknown'} <${fromEmail}>\nSubject: ${safeSubject}\n\nMessage:\n${message}\n`;
+    const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.5;color:#111;padding:8px;">
+      <h2 style="margin-top:0;">New Contact Form Submission</h2>
+      <p><strong>Name:</strong> ${name ? this.escapeHtml(name) : 'Unknown'}</p>
+      <p><strong>Email:</strong> <a href="mailto:${this.escapeHtml(fromEmail)}">${this.escapeHtml(fromEmail)}</a></p>
+      <p><strong>Subject:</strong> ${this.escapeHtml(safeSubject)}</p>
+      <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;" />
+      <p style="white-space:pre-wrap;">${this.escapeHtml(message)}</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+      <p style="font-size:12px;color:#666;">This message was sent from the public contact form.</p>
+    </body></html>`;
+    try {
+      const info = await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM || `Contact Form <${to}>`,
+        replyTo: fromEmail,
+        to,
+        subject: `[Contact] ${safeSubject}`,
+        text: plainText,
+        html
+      });
+      console.log('[email][contact] Sent:', info.messageId);
+      return { messageId: info.messageId };
+    } catch (err) {
+      console.error('[email][contact] Failed:', err);
+      throw err;
+    }
+  }
+
+  escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+  }
 }
 
 export default new EmailService();
