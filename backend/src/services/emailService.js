@@ -24,8 +24,10 @@ class EmailService {
   }
 
   async sendVerificationEmail(email, code, name = '') {
+    // Graceful dev fallback when email not configured
     if (!this.transporter) {
-      throw new Error('Email service not configured');
+      console.warn('[email] Verification email skipped (transporter not configured). Code:', code, 'Email:', email);
+      return { skipped: true, code };
     }
 
     const mailOptions = {

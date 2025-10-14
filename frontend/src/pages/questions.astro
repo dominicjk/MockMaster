@@ -20,36 +20,112 @@ const metadata = {
 
   <!-- Pink background similar to practice page -->
   <div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <!-- User Profile Section (Top Third - Reserved for later) -->
-      <div class="mb-8 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-pink-100/50 dark:border-slate-700/50" style="min-height: 200px;">
-        <div class="flex items-center justify-center h-full">
-          <div class="text-center">
-            <div class="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 dark:bg-gradient-to-br dark:from-slate-600 dark:to-slate-700 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg class="w-8 h-8 text-pink-600 dark:text-pink-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-              </svg>
+    <div class="mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      
+      <!-- Question Bundles Section (LeetCode style) -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Question Bundles</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Bundle Card 1 -->
+          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Coming Soon</span>
             </div>
-            <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">User Profile Section</h2>
-            <p class="text-gray-500 dark:text-gray-400">This space is reserved for user profile and statistics</p>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Bundle Name</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Bundle description goes here</p>
+            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <span>0 Questions</span>
+              <span>0% Complete</span>
+            </div>
+          </div>
+
+          <!-- Bundle Card 2 -->
+          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Coming Soon</span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Bundle Name</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Bundle description goes here</p>
+            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <span>0 Questions</span>
+              <span>0% Complete</span>
+            </div>
+          </div>
+
+          <!-- Bundle Card 3 -->
+          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Coming Soon</span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Bundle Name</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Bundle description goes here</p>
+            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <span>0 Questions</span>
+              <span>0% Complete</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Questions List Section (Bottom Two Thirds) -->
+      <!-- Quick Filter Pills (LeetCode style) -->
+      <div class="mb-6">
+        <div class="flex flex-wrap gap-2">
+          <button 
+            data-quick-filter="all" 
+            class="quick-filter-pill active px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+          >
+            All Questions
+          </button>
+          <button 
+            data-quick-filter="paper1" 
+            class="quick-filter-pill px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600"
+          >
+            📄 Paper 1
+          </button>
+          <button 
+            data-quick-filter="paper2" 
+            class="quick-filter-pill px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600"
+          >
+            📄 Paper 2
+          </button>
+          <button 
+            data-quick-filter="calculus" 
+            class="quick-filter-pill px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600"
+          >
+            ∫ Calculus
+          </button>
+          <button 
+            data-quick-filter="recent5years" 
+            class="quick-filter-pill px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600"
+          >
+            🕒 &lt; 5 Years
+          </button>
+        </div>
+      </div>
+
+      <!-- Questions List Section -->
       <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-pink-100/50 dark:border-slate-700/50">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-600">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Questions</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">
-              <span id="total-questions">0</span> problems available
-            </p>
-          </div>
+        <div class="flex items-center justify-end">
           <div class="flex items-center gap-4">
             <!-- Sort Dropdown -->
-            <select id="sort-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
+            <select id="sort-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="year-desc" selected>Newest First</option>
               <option value="year-asc">Oldest First</option>
               <option value="completed">Completed</option>
@@ -59,12 +135,12 @@ const metadata = {
             </select>
             
             <!-- Filters -->
-            <select id="topic-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
+            <select id="topic-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="">All Topics</option>
               <option value="__paper1">Paper 1</option>
               <option value="__paper2">Paper 2</option>
             </select>
-            <select id="difficulty-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
+            <select id="difficulty-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="">All Difficulties</option>
               <option value="1">Easy</option>
               <option value="2">Medium</option>
@@ -79,10 +155,31 @@ const metadata = {
         <!-- Table Header -->
         <div class="px-6 py-3 bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
             <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              <div class="col-span-1 text-center">Status</div>
-              <div class="col-span-5">Title</div>
+              <div class="col-span-1 text-center">
+                <button id="sort-status" class="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-600 px-2 py-1 rounded transition-all cursor-pointer font-semibold">
+                  Status
+                  <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="col-span-5">
+                <button id="sort-title" class="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-600 px-2 py-1 rounded transition-all cursor-pointer font-semibold">
+                  Title
+                  <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </button>
+              </div>
               <div class="col-span-4">Topics</div>
-              <div class="col-span-2">Difficulty</div>
+              <div class="col-span-2">
+                <button id="sort-difficulty" class="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-600 px-2 py-1 rounded transition-all cursor-pointer font-semibold">
+                  Difficulty
+                  <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -194,7 +291,9 @@ const metadata = {
         'the-circle': 'The Circle',
         'functions': 'Functions',
         'induction': 'Induction',
-        'number': 'Number'
+        'number': 'Number Systems',
+        'number-systems': 'Number Systems',
+        'number systems': 'Number Systems'
       };
       
       if (specialMappings[topicStr]) {
@@ -499,7 +598,10 @@ const metadata = {
           'sequences-and-series': 'Sequences & Series',
           'sequences': 'Sequences & Series',
           'probability': 'Probability',
-          'statistics': 'Statistics'
+          'statistics': 'Statistics',
+          'number': 'Number Systems',
+          'number-systems': 'Number Systems',
+          'number systems': 'Number Systems'
         };
         if (special[lower]) return special[lower];
         return lower.replace(/-/g,' ').split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
@@ -543,6 +645,20 @@ const metadata = {
     ];
     
     function isPaper1Question(question: Question): boolean {
+      // First check the title for P1 or P2 markers
+      const title = (question.name || question.title || '').toUpperCase();
+      
+      // If title explicitly contains P2, it's Paper 2
+      if (title.includes('P2')) {
+        return false;
+      }
+      
+      // If title explicitly contains P1, it's Paper 1
+      if (title.includes('P1')) {
+        return true;
+      }
+      
+      // Fallback to topic-based detection
       const topics = Array.isArray(question.topic) ? question.topic : [question.topic || question.subject];
       return topics.some(topic => {
         const topicStr = String(topic || '').toLowerCase().replace(/[-_\s]/g, '');
@@ -824,7 +940,21 @@ const metadata = {
         
         // Simulate network delay for better UX
         setTimeout(() => {
-          displayQuestions('', '', '', false); // Don't reset, just add more
+          // Calculate how many more questions to show
+          const endIndex = Math.min(currentlyShown + questionsPerPage, filteredQuestions.length);
+          const questionsToShow = filteredQuestions.slice(currentlyShown, endIndex);
+          
+          // Append the new questions to the container
+          const container = document.getElementById('questions-container');
+          questionsToShow.forEach((question, index) => {
+            const questionRow = createQuestionRow(question, currentlyShown + index);
+            if (container) container.appendChild(questionRow);
+          });
+          
+          // Update the counter
+          currentlyShown = endIndex;
+          updatePaginationControls();
+          
           loadingMore?.classList.add('hidden');
           loadMoreBtn?.removeAttribute('disabled');
         }, 300);
@@ -1216,10 +1346,289 @@ const metadata = {
         });
       }
 
+      // Column header sort functionality
+      let statusSortState = 'none'; // none, completed, incomplete
+      let titleSortState = 'none'; // none, asc, desc
+      let difficultySortState = 'none'; // none, asc, desc
+
+      const sortStatusBtn = document.getElementById('sort-status');
+      const sortTitleBtn = document.getElementById('sort-title');
+      const sortDifficultyBtn = document.getElementById('sort-difficulty');
+
+      if (sortStatusBtn) {
+        sortStatusBtn.addEventListener('click', () => {
+          // Cycle through: none -> completed -> incomplete -> none
+          if (statusSortState === 'none') {
+            statusSortState = 'completed';
+            if (sortFilter) sortFilter.value = 'completed';
+          } else if (statusSortState === 'completed') {
+            statusSortState = 'incomplete';
+            if (sortFilter) sortFilter.value = 'incomplete';
+          } else {
+            statusSortState = 'none';
+            if (sortFilter) sortFilter.value = 'year-desc';
+          }
+          
+          // Reset other column sorts
+          titleSortState = 'none';
+          difficultySortState = 'none';
+          
+          persistFilters(topicFilter?.value || '', difficultyFilter?.value || '', sortFilter?.value || 'year-desc');
+          displayQuestions(topicFilter?.value || '', difficultyFilter?.value || '', sortFilter?.value || 'year-desc', true);
+        });
+      }
+
+      if (sortTitleBtn) {
+        sortTitleBtn.addEventListener('click', () => {
+          // Cycle through: none -> asc -> desc -> none
+          if (titleSortState === 'none') {
+            titleSortState = 'asc';
+            // Sort by title A-Z
+            filteredQuestions = filteredQuestions.sort((a, b) => {
+              const titleA = (a.name || a.title || '').toLowerCase();
+              const titleB = (b.name || b.title || '').toLowerCase();
+              return titleA.localeCompare(titleB);
+            });
+          } else if (titleSortState === 'asc') {
+            titleSortState = 'desc';
+            // Sort by title Z-A
+            filteredQuestions = filteredQuestions.sort((a, b) => {
+              const titleA = (a.name || a.title || '').toLowerCase();
+              const titleB = (b.name || b.title || '').toLowerCase();
+              return titleB.localeCompare(titleA);
+            });
+          } else {
+            titleSortState = 'none';
+            if (sortFilter) sortFilter.value = 'year-desc';
+            displayQuestions(topicFilter?.value || '', difficultyFilter?.value || '', 'year-desc', true);
+            return;
+          }
+          
+          // Reset other column sorts
+          statusSortState = 'none';
+          difficultySortState = 'none';
+          
+          // Re-display with new sort
+          currentlyShown = 0;
+          const container = document.getElementById('questions-container');
+          if (container) container.innerHTML = '';
+          displayedQuestions = filteredQuestions;
+          const endIndex = Math.min(questionsPerPage, filteredQuestions.length);
+          const questionsToShow = filteredQuestions.slice(0, endIndex);
+          questionsToShow.forEach((question, index) => {
+            const questionRow = createQuestionRow(question, index);
+            if (container) container.appendChild(questionRow);
+          });
+          currentlyShown = endIndex;
+          updatePaginationControls();
+        });
+      }
+
+      if (sortDifficultyBtn) {
+        sortDifficultyBtn.addEventListener('click', () => {
+          // Cycle through: none -> easy-hard -> hard-easy -> none
+          if (difficultySortState === 'none') {
+            difficultySortState = 'asc';
+            // Sort by difficulty easy to hard
+            filteredQuestions = filteredQuestions.sort((a, b) => {
+              const diffA = parseInt(a.difficulty) || 0;
+              const diffB = parseInt(b.difficulty) || 0;
+              return diffA - diffB;
+            });
+          } else if (difficultySortState === 'asc') {
+            difficultySortState = 'desc';
+            // Sort by difficulty hard to easy
+            filteredQuestions = filteredQuestions.sort((a, b) => {
+              const diffA = parseInt(a.difficulty) || 0;
+              const diffB = parseInt(b.difficulty) || 0;
+              return diffB - diffA;
+            });
+          } else {
+            difficultySortState = 'none';
+            if (sortFilter) sortFilter.value = 'year-desc';
+            displayQuestions(topicFilter?.value || '', difficultyFilter?.value || '', 'year-desc', true);
+            return;
+          }
+          
+          // Reset other column sorts
+          statusSortState = 'none';
+          titleSortState = 'none';
+          
+          // Re-display with new sort
+          currentlyShown = 0;
+          const container = document.getElementById('questions-container');
+          if (container) container.innerHTML = '';
+          displayedQuestions = filteredQuestions;
+          const endIndex = Math.min(questionsPerPage, filteredQuestions.length);
+          const questionsToShow = filteredQuestions.slice(0, endIndex);
+          questionsToShow.forEach((question, index) => {
+            const questionRow = createQuestionRow(question, index);
+            if (container) container.appendChild(questionRow);
+          });
+          currentlyShown = endIndex;
+          updatePaginationControls();
+        });
+      }
+
       // Load more button event listener
       if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', loadMoreQuestions);
       }
+
+      // Quick Filter Pills functionality
+      const quickFilterPills = document.querySelectorAll('.quick-filter-pill');
+      quickFilterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          // Remove active class from all pills
+          quickFilterPills.forEach(p => {
+            p.classList.remove('active', 'bg-blue-100', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-300');
+            p.classList.add('bg-gray-200', 'text-gray-700', 'dark:bg-slate-700', 'dark:text-gray-300');
+          });
+          
+          // Add active class to clicked pill (subtle blue background)
+          pill.classList.add('active', 'bg-blue-100', 'text-blue-700', 'dark:bg-blue-900/30', 'dark:text-blue-300');
+          pill.classList.remove('bg-gray-200', 'text-gray-700', 'dark:bg-slate-700', 'dark:text-gray-300');
+          
+          // Get filter type
+          const filterType = pill.getAttribute('data-quick-filter');
+          
+          // Apply filter based on type
+          switch (filterType) {
+            case 'all':
+              // Reset all filters
+              if (topicFilter) topicFilter.value = '';
+              if (difficultyFilter) difficultyFilter.value = '';
+              persistFilters('', '', sortFilter?.value || 'year-desc');
+              displayQuestions('', '', sortFilter?.value || 'year-desc', true);
+              break;
+              
+            case 'paper1':
+              // Filter for Paper 1
+              if (topicFilter) topicFilter.value = '__paper1';
+              persistFilters('__paper1', difficultyFilter?.value || '', sortFilter?.value || 'year-desc');
+              displayQuestions('__paper1', difficultyFilter?.value || '', sortFilter?.value || 'year-desc', true);
+              break;
+              
+            case 'paper2':
+              // Filter for Paper 2
+              if (topicFilter) topicFilter.value = '__paper2';
+              persistFilters('__paper2', difficultyFilter?.value || '', sortFilter?.value || 'year-desc');
+              displayQuestions('__paper2', difficultyFilter?.value || '', sortFilter?.value || 'year-desc', true);
+              break;
+              
+            case 'calculus': {
+              // Filter for questions with differentiation OR integration
+              // Use the same filtering logic as the topic dropdown
+              const calculusQuestions = allQuestions.filter(q => {
+                const topicData = q.topic || q.subject;
+                
+                // Check if topics contain differentiation or integration
+                if (Array.isArray(topicData)) {
+                  return topicData.some(topic => {
+                    const topicLower = String(topic || '').toLowerCase();
+                    return topicLower.includes('differentiation') || 
+                           topicLower.includes('integration') ||
+                           topicLower.includes('calculus');
+                  });
+                } else {
+                  const topicLower = String(topicData || '').toLowerCase();
+                  return topicLower.includes('differentiation') || 
+                         topicLower.includes('integration') ||
+                         topicLower.includes('calculus');
+                }
+              });
+              
+              // Reset dropdown filters
+              if (topicFilter) topicFilter.value = '';
+              if (difficultyFilter) difficultyFilter.value = '';
+              
+              // Sort the filtered questions
+              filteredQuestions = sortQuestions(calculusQuestions, currentSort);
+              displayedQuestions = filteredQuestions;
+              
+              // Reset pagination and display
+              currentlyShown = 0;
+              const container = document.getElementById('questions-container');
+              if (container) container.innerHTML = '';
+              
+              // Display all filtered questions with pagination
+              const noResults = document.getElementById('no-results');
+              if (filteredQuestions.length === 0 && noResults) {
+                noResults.classList.remove('hidden');
+              } else {
+                if (noResults) noResults.classList.add('hidden');
+                
+                // Show first page of results
+                const endIndex = Math.min(questionsPerPage, filteredQuestions.length);
+                const questionsToShow = filteredQuestions.slice(0, endIndex);
+                
+                questionsToShow.forEach((question, index) => {
+                  const questionRow = createQuestionRow(question, index);
+                  if (container) container.appendChild(questionRow);
+                });
+                
+                currentlyShown = endIndex;
+                updatePaginationControls();
+              }
+              break;
+            }
+              
+            case 'recent5years': {
+              // Filter for questions from last 5 years (2020-2024)
+              const currentYear = 2025;
+              const last5Years: string[] = [];
+              
+              // Generate year strings: 2024, 2024 Deferred, 2023, 2023 Deferred, ..., 2020, 2020 Deferred
+              for (let year = currentYear - 1; year >= currentYear - 5; year--) {
+                last5Years.push(String(year));
+                last5Years.push(`${year} Deferred`);
+              }
+              
+              // Reset dropdown filters
+              if (topicFilter) topicFilter.value = '';
+              if (difficultyFilter) difficultyFilter.value = '';
+              
+              const recent5YearsQuestions = allQuestions.filter(q => {
+                const year = q.year || '';
+                return last5Years.some(y => 
+                  year.toString().includes(y) || 
+                  year.toString() === y
+                );
+              });
+              
+              // Sort the filtered questions
+              filteredQuestions = sortQuestions(recent5YearsQuestions, currentSort);
+              displayedQuestions = filteredQuestions;
+              
+              // Reset pagination and display
+              currentlyShown = 0;
+              const container = document.getElementById('questions-container');
+              if (container) container.innerHTML = '';
+              
+              // Display all filtered questions with pagination
+              const noResults = document.getElementById('no-results');
+              if (filteredQuestions.length === 0 && noResults) {
+                noResults.classList.remove('hidden');
+              } else {
+                if (noResults) noResults.classList.add('hidden');
+                
+                // Show first page of results
+                const endIndex = Math.min(questionsPerPage, filteredQuestions.length);
+                const questionsToShow = filteredQuestions.slice(0, endIndex);
+                
+                questionsToShow.forEach((question, index) => {
+                  const questionRow = createQuestionRow(question, index);
+                  if (container) container.appendChild(questionRow);
+                });
+                
+                currentlyShown = endIndex;
+                updatePaginationControls();
+              }
+              break;
+            }
+          }
+        });
+      });
 
       // Scroll-to-load functionality (optional enhancement)
       let isLoadingMore = false;
@@ -1403,5 +1812,28 @@ const metadata = {
     #topic-filter option:first-child,
     #topic-filter option[value='__paper1'],
     #topic-filter option[value='__paper2'] { font-weight:600; }
+
+    /* Quick Filter Pills Styling */
+    .quick-filter-pill {
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid transparent;
+    }
+
+    .quick-filter-pill:active {
+      transform: scale(0.98);
+    }
+
+    .quick-filter-pill.active {
+      border-color: rgb(59 130 246 / 0.3);
+      box-shadow: 0 1px 3px 0 rgb(59 130 246 / 0.1), 0 1px 2px -1px rgb(59 130 246 / 0.1);
+    }
+
+    /* Bundle cards hover effect */
+    .bg-white.rounded-lg.shadow-md:hover,
+    .dark .dark\\:bg-slate-800.rounded-lg.shadow-md:hover {
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
   </style>
 </Layout>

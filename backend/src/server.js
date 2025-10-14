@@ -1,4 +1,6 @@
 import express from 'express';
+import session from 'express-session';
+import connectPgSimple from './config/connectPgSimple.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -10,8 +12,15 @@ import questionsRouter from './routes/questions.js';
 import topicsRouter from './routes/topics.js';
 import progressRouter from './routes/progress.js';
 import contactRouter from './routes/contact.js';
+import authRouter from './routes/auth.js';
+import userAuthRouter from './routes/userAuth.js';
+import attemptsRouter from './routes/attempts.js';
+import cookieParser from 'cookie-parser';
 import UserModel from './database/users.js';
 import EmailService from './services/emailService.js';
+import pool, { testConnection } from './config/database.js';
+
+const PgSession = connectPgSimple(session);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,7 +43,6 @@ if (!process.env.EMAIL_USER || !process.env.PORT) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Rate limiting
 const limiter = rateLimit({
@@ -43,10 +51,11 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.'
 });
 
-// Middleware
-// Helmet security headers (allow cross-origin image loading from frontend dev server on different port)
+const PORT = process.env.PORT || 3001;
+
+// Middleware - Security and parsing
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' } // needed so images (served from :3001) load in frontend (:4321)
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:4321',
@@ -55,7 +64,28 @@ app.use(cors({
 app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Authentication removed: session, cookies & passport stripped out for a fully open API.
+app.use(cookieParser());
+
+// Session Configuration with PostgreSQL Store
+app.use(session({
+  store: new PgSession({
+    pool: pool,
+    tableName: 'session', // Will auto-create this table
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET || 'your-super-secret-session-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // true in production (HTTPS only)
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  }
+}));
+app.use(limiter);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // parse cookies for JWT auth
 
 // Middleware to log requests for question images
 app.use('/questions', (req, res, next) => {
@@ -74,7 +104,9 @@ app.use('/questions', express.static(path.join(__dirname, 'data/questions'), {
 // Routes
 app.use('/api/questions', questionsRouter);
 app.use('/api/topics', topicsRouter);
-// Authentication routes removed.
+app.use('/api/auth', authRouter); // JWT-based auth endpoints (email code login + optional Google OAuth)
+app.use('/api/user-auth', userAuthRouter); // Session-based auth endpoints (signup/login with bcrypt)
+app.use('/api/attempts', attemptsRouter); // Database-backed attempts management
 app.use('/api/progress', progressRouter);
 app.use('/api/contact', contactRouter);
 
@@ -97,9 +129,12 @@ app.use((req, res) => {
 // Initialize database and start server
 async function startServer() {
   try {
-    // Initialize user database
+    // Test PostgreSQL connection
+    await testConnection();
+    
+    // Initialize user database (JSON-based - legacy)
     await UserModel.initDatabase();
-    console.log('✅ Database initialized');
+    console.log('✅ User database initialized');
 
     // Test email service (optional)
     try {
@@ -124,7 +159,8 @@ async function startServer() {
       console.log(`📝 API endpoints available:`);
       console.log(`   - http://localhost:${PORT}/api/questions`);
       console.log(`   - http://localhost:${PORT}/api/topics`);
-  console.log(`🔐 Authentication disabled (all /auth routes removed)`);
+      console.log(`🔐 JWT Auth endpoints: /api/auth`);
+      console.log(`🔑 Session Auth endpoints: /api/user-auth (signup/login)`);
       console.log(`🖼️  Static files served from http://localhost:${PORT}/questions`);
     });
 

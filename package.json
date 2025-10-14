@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "two-step-auth": "^1.1.2"
+  },
+  "name": "astro-project",
+  "version": "1.0.0",
+  "description": "A full-stack application for practicing math questions, now refactored into separate frontend and backend projects.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dominicjk/Astro-wind-Project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dominicjk/Astro-wind-Project/issues"
+  },
+  "homepage": "https://github.com/dominicjk/Astro-wind-Project#readme"
+}

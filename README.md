@@ -61,6 +61,20 @@ Frontend runs on http://localhost:4321
 ### Static Files
 - `GET /questions/*` - Serve question images
 
+### Authentication (JWT, passwordless email)
+
+Endpoints under `/api/auth`:
+
+- `POST /api/auth/login` — Send `{ email }` to request a 6‑digit verification code
+- `POST /api/auth/verify-login` — Exchange `{ email, code }` for HttpOnly `accessToken` + `refreshToken` cookies
+- `GET /api/auth/me` — Current user profile (uses `accessToken` cookie)
+- `POST /api/auth/refresh` — Refresh access token (uses `refreshToken` cookie)
+- `POST /api/auth/logout` — Clears cookies
+
+Protected endpoints (e.g. `POST /api/progress/attempt`) require a valid access token and return `401` if missing/expired.
+
+Attempts are always cached to `localStorage` and, when authenticated, also persisted server‑side.
+
 ## Development
 
 ### Adding Questions

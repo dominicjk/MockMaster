@@ -14,6 +14,8 @@ const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'fallback-key-change-this-i
 class UserModel {
   constructor() {
     this.initDatabase();
+    // In-memory failed attempt tracking (persists only for process lifetime)
+    this.failedAttempts = new Map(); // key: codeId -> count
   }
 
   async initDatabase() {
@@ -54,6 +56,11 @@ class UserModel {
   // Generate email verification code
   generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  hashCode(code, type) {
+    // HMAC using ENCRYPTION_KEY; include type namespace for separation
+    return crypto.createHmac('sha256', ENCRYPTION_KEY).update(`${type}:${code}`).digest('hex');
   }
 
   async readDatabase() {
@@ -181,46 +188,68 @@ class UserModel {
   async storeVerificationCode(email, code, type = 'email_verification') {
     const db = await this.readDatabase();
     const encryptedEmail = this.encryptEmail(email);
-    
-    // Remove any existing codes for this email
-    db.verificationCodes = db.verificationCodes.filter(vc => vc.email !== encryptedEmail);
-    
+    const now = Date.now();
+    const expiryMinutes = parseInt(process.env.CODE_EXPIRY_MINUTES || '15');
+    const cooldownSeconds = parseInt(process.env.CODE_COOLDOWN_SECONDS || '90');
+
+    // Remove expired codes first
+    db.verificationCodes = db.verificationCodes.filter(vc => new Date(vc.expiresAt) > new Date());
+
+    // Check for recent existing code (cooldown reuse)
+    const existing = db.verificationCodes.find(vc => vc.email === encryptedEmail && vc.type === type && !vc.used && (now - new Date(vc.createdAt).getTime()) < cooldownSeconds * 1000);
+    let finalCode = code;
+    let hashed;
+    if (existing) {
+      // Reuse original code (existing.code might be hashed or raw depending on legacy state)
+      // We cannot recover original raw code if hashed; in that rare case we just overwrite with new.
+      if (existing.code && existing.code.length === 6) {
+        finalCode = existing.code; // raw legacy code stored
+      }
+    }
+    hashed = this.hashCode(finalCode, type);
+
+    // Remove other codes of same email+type
+    db.verificationCodes = db.verificationCodes.filter(vc => !(vc.email === encryptedEmail && vc.type === type));
+
     const verificationEntry = {
       id: this.generateUserId(),
       email: encryptedEmail,
-      code: code,
-      type: type,
+      // Store hashed value; legacy raw codes will no longer be stored after first new issue
+      code: hashed,
+      type,
       createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes
-      used: false
+      expiresAt: new Date(now + expiryMinutes * 60 * 1000).toISOString(),
+      used: false,
+      attempts: 0,
+      maxAttempts: parseInt(process.env.MAX_CODE_ATTEMPTS || '5')
     };
 
     db.verificationCodes.push(verificationEntry);
     await this.writeDatabase(db);
-    
-    return verificationEntry;
+    return { ...verificationEntry, raw: finalCode }; // return raw code for emailing
   }
 
   async verifyCode(email, code, type = 'email_verification') {
     const db = await this.readDatabase();
     const encryptedEmail = this.encryptEmail(email);
-    
-    const verificationEntry = db.verificationCodes.find(vc => 
-      vc.email === encryptedEmail && 
-      vc.code === code && 
-      vc.type === type &&
-      !vc.used &&
-      new Date(vc.expiresAt) > new Date()
-    );
+    const now = new Date();
+    const hashedAttempt = this.hashCode(code, type);
+    const entry = db.verificationCodes.find(vc => vc.email === encryptedEmail && vc.type === type && !vc.used && new Date(vc.expiresAt) > now);
 
-    if (!verificationEntry) {
+    if (!entry) return false;
+
+    // Backward compatibility: accept legacy plain code OR new hashed
+    const match = (entry.code === hashedAttempt) || (entry.code.length === 6 && entry.code === code);
+    if (!match) {
+      entry.attempts = (entry.attempts || 0) + 1;
+      if (entry.attempts >= (entry.maxAttempts || 5)) {
+        entry.used = true; // lock out
+      }
+      await this.writeDatabase(db);
       return false;
     }
-
-    // Mark code as used
-    verificationEntry.used = true;
+    entry.used = true;
     await this.writeDatabase(db);
-    
     return true;
   }
 

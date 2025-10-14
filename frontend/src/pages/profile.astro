@@ -1,0 +1,289 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+---
+
+<Layout>
+  <main class="container mx-auto px-4 py-8 max-w-2xl">
+    <h1 class="text-3xl font-bold mb-8">User Profile</h1>
+    
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-8">
+      <p class="text-gray-600 dark:text-gray-400">Loading profile...</p>
+    </div>
+
+    <!-- Profile Content -->
+    <div id="profile-content" class="hidden space-y-8">
+      
+      <!-- Update Name Section -->
+      <section class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
+        <form id="update-name-form" class="space-y-4">
+          <div>
+            <label for="firstName" class="block text-sm font-medium mb-1">First Name</label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              required
+              class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600"
+            />
+          </div>
+          
+          <div>
+            <label for="lastName" class="block text-sm font-medium mb-1">Last Name</label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600"
+            />
+          </div>
+          
+          <div>
+            <label for="email" class="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              id="email"
+              disabled
+              class="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-slate-900 dark:border-slate-600 cursor-not-allowed"
+            />
+            <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+          </div>
+          
+          <div id="name-error" class="text-red-500 text-sm hidden"></div>
+          <div id="name-success" class="text-green-500 text-sm hidden"></div>
+          
+          <button
+            type="submit"
+            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Update Information
+          </button>
+        </form>
+      </section>
+
+      <!-- Change Password Section -->
+      <section class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Change Password</h2>
+        <form id="change-password-form" class="space-y-4">
+          <div>
+            <label for="currentPassword" class="block text-sm font-medium mb-1">Current Password</label>
+            <input
+              type="password"
+              id="currentPassword"
+              name="currentPassword"
+              required
+              minlength="8"
+              class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600"
+            />
+          </div>
+          
+          <div>
+            <label for="newPassword" class="block text-sm font-medium mb-1">New Password</label>
+            <input
+              type="password"
+              id="newPassword"
+              name="newPassword"
+              required
+              minlength="8"
+              class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600"
+            />
+            <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+          </div>
+          
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium mb-1">Confirm New Password</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              required
+              minlength="8"
+              class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600"
+            />
+          </div>
+          
+          <div id="password-error" class="text-red-500 text-sm hidden"></div>
+          <div id="password-success" class="text-green-500 text-sm hidden"></div>
+          
+          <button
+            type="submit"
+            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Change Password
+          </button>
+        </form>
+      </section>
+
+      <!-- Account Info -->
+      <section class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Account Information</h2>
+        <div class="space-y-2 text-sm">
+          <p><span class="font-medium">Account ID:</span> <span id="user-id" class="text-gray-600 dark:text-gray-400"></span></p>
+          <p><span class="font-medium">Role:</span> <span id="user-role" class="text-gray-600 dark:text-gray-400"></span></p>
+          <p><span class="font-medium">Member Since:</span> <span id="user-created" class="text-gray-600 dark:text-gray-400"></span></p>
+          <p><span class="font-medium">Last Login:</span> <span id="user-last-login" class="text-gray-600 dark:text-gray-400"></span></p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden text-center py-8">
+      <p class="text-red-500 mb-4">Failed to load profile. Please try again.</p>
+      <a href="/login" class="text-blue-600 hover:underline">Return to Login</a>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  const API_BASE = 'http://localhost:3001/api/user-auth';
+  
+  // Load user profile
+  async function loadProfile() {
+    try {
+      const response = await fetch(`${API_BASE}/me`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login?returnTo=/profile';
+          return;
+        }
+        throw new Error('Failed to load profile');
+      }
+      
+      const data = await response.json();
+      const user = data.user;
+      
+      // Populate form fields
+      document.getElementById('firstName').value = user.firstName || user.first_name || '';
+      document.getElementById('lastName').value = user.lastName || user.last_name || '';
+      document.getElementById('email').value = user.email || '';
+      
+      // Populate account info
+      document.getElementById('user-id').textContent = user.id || 'N/A';
+      document.getElementById('user-role').textContent = user.role || 'user';
+      document.getElementById('user-created').textContent = user.created_at 
+        ? new Date(user.created_at).toLocaleDateString() 
+        : 'N/A';
+      document.getElementById('user-last-login').textContent = user.last_login 
+        ? new Date(user.last_login).toLocaleDateString() 
+        : 'N/A';
+      
+      // Show profile content
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('profile-content').classList.remove('hidden');
+      
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error-state').classList.remove('hidden');
+    }
+  }
+  
+  // Update name form handler
+  document.getElementById('update-name-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const errorEl = document.getElementById('name-error');
+    const successEl = document.getElementById('name-success');
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+    
+    const formData = new FormData(e.target);
+    const firstName = formData.get('firstName');
+    const lastName = formData.get('lastName');
+    
+    try {
+      // TODO: Add endpoint to update user name
+      const response = await fetch(`${API_BASE}/update-profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ firstName, lastName })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        successEl.textContent = 'Profile updated successfully!';
+        successEl.classList.remove('hidden');
+        
+        // Update header name if visible
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        errorEl.textContent = result.error || 'Failed to update profile';
+        errorEl.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      errorEl.textContent = 'An error occurred. Please try again.';
+      errorEl.classList.remove('hidden');
+    }
+  });
+  
+  // Change password form handler
+  document.getElementById('change-password-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const errorEl = document.getElementById('password-error');
+    const successEl = document.getElementById('password-success');
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+    
+    const formData = new FormData(e.target);
+    const currentPassword = formData.get('currentPassword');
+    const newPassword = formData.get('newPassword');
+    const confirmPassword = formData.get('confirmPassword');
+    
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      errorEl.textContent = 'New passwords do not match';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    
+    // Validate password length
+    if (newPassword.length < 8) {
+      errorEl.textContent = 'Password must be at least 8 characters';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        successEl.textContent = 'Password changed successfully!';
+        successEl.classList.remove('hidden');
+        
+        // Clear form
+        e.target.reset();
+      } else {
+        errorEl.textContent = result.error || 'Failed to change password';
+        errorEl.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      errorEl.textContent = 'An error occurred. Please try again.';
+      errorEl.classList.remove('hidden');
+    }
+  });
+  
+  // Load profile on page load
+  loadProfile();
+</script>

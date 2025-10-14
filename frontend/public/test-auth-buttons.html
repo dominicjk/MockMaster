@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth Buttons Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+  <h1 class="text-2xl font-bold mb-4">Auth Buttons Test</h1>
+  
+  <!-- Login/Signup Buttons (copied from UserMenu.astro) -->
+  <div class="flex items-center space-x-2 mb-8">
+    <button 
+      id="login-btn"
+      type="button" 
+      class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors border border-gray-300"
+    >
+      Sign In
+    </button>
+    <button 
+      id="signup-btn"
+      type="button" 
+      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+    >
+      Sign Up
+    </button>
+  </div>
+
+  <div id="output" class="bg-white p-4 rounded-lg shadow"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginBtn = document.getElementById('login-btn');
+      const signupBtn = document.getElementById('signup-btn');
+      const output = document.getElementById('output');
+
+      console.log('Buttons found:', { loginBtn, signupBtn });
+      output.innerHTML += '<p>Buttons found: login=' + !!loginBtn + ', signup=' + !!signupBtn + '</p>';
+
+      if (loginBtn) {
+        console.log('Attaching login listener');
+        loginBtn.addEventListener('click', () => {
+          console.log('Login button clicked!');
+          output.innerHTML += '<p class="text-green-600 font-bold">✓ Login button clicked!</p>';
+        });
+        output.innerHTML += '<p>Login listener attached</p>';
+      }
+
+      if (signupBtn) {
+        console.log('Attaching signup listener');
+        signupBtn.addEventListener('click', () => {
+          console.log('Signup button clicked!');
+          output.innerHTML += '<p class="text-blue-600 font-bold">✓ Signup button clicked!</p>';
+        });
+        output.innerHTML += '<p>Signup listener attached</p>';
+      }
+    });
+  </script>
+</body>
+</html>

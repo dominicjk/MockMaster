@@ -6,6 +6,25 @@ import EmailService from '../services/emailService.js';
 
 const router = express.Router();
 
+// Simple index to help debug if auth routes are mounted
+router.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    endpoints: [
+      'POST /api/auth/signup',
+      'POST /api/auth/verify-email',
+      'POST /api/auth/login',
+      'POST /api/auth/verify-login',
+      'POST /api/auth/refresh',
+      'GET  /api/auth/me',
+      'POST /api/auth/logout',
+      'PUT  /api/auth/profile',
+      'GET  /api/auth/export',
+      'DELETE /api/auth/account'
+    ]
+  });
+});
+
 // Google OAuth routes - only if credentials are configured
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   router.get('/google', passport.authenticate('google', {
@@ -83,15 +102,16 @@ router.post('/signup', async (req, res) => {
     // Store verification code
     await UserModel.storeVerificationCode(email, verificationCode, 'email_verification');
 
-    // Send verification email
-    await EmailService.sendVerificationEmail(email, verificationCode, name);
+  // Send verification email (dev fallback if not configured)
+  const sendResult = await EmailService.sendVerificationEmail(email, verificationCode, name);
 
     // Store temporary user data in verification entry for later use
     // (In a real app, you might use Redis or a separate temp table)
     
     res.status(200).json({ 
       message: 'Verification code sent to your email',
-      email: email
+      email: email,
+      ...(sendResult?.skipped ? { devCode: verificationCode } : {})
     });
 
   } catch (error) {
@@ -182,13 +202,14 @@ router.post('/login', async (req, res) => {
     // Store verification code
     await UserModel.storeVerificationCode(email, verificationCode, 'login_verification');
 
-    // Send verification email
+    // Send verification email (dev fallback)
     const decryptedEmail = UserModel.decryptEmail(user.email);
-    await EmailService.sendVerificationEmail(decryptedEmail, verificationCode, user.name);
+    const sendResult2 = await EmailService.sendVerificationEmail(decryptedEmail, verificationCode, user.name);
 
     res.status(200).json({ 
       message: 'Verification code sent to your email',
-      email: decryptedEmail
+      email: decryptedEmail,
+      ...(sendResult2?.skipped ? { devCode: verificationCode } : {})
     });
 
   } catch (error) {

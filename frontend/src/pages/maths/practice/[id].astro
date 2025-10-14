@@ -534,6 +534,17 @@ const metadata = { title: `Practice - ${id}` };
       }
     }
     
+    async function ensureAuthenticated() {
+      try {
+        const r = await fetch('http://localhost:3001/api/user-auth/me', { credentials: 'include' });
+        if (r.ok) return true;
+  } catch { /* ignore auth probe error */ }
+      // Redirect to login with return path
+      const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?returnTo=${returnTo}`;
+      return false;
+    }
+
     function saveAttempt() {
       const notesInput = document.getElementById('attempt-notes') as HTMLTextAreaElement;
       const notes = notesInput ? notesInput.value : '';
@@ -552,41 +563,112 @@ const metadata = { title: `Practice - ${id}` };
         difficulty: currentQuestion.difficulty || ''
       };
 
-      // Always persist locally for offline / unauthenticated fallback
-      try {
-        interface StoredAttempt { questionId: string; [key: string]: unknown }
-        const existingAttempts: StoredAttempt[] = JSON.parse(localStorage.getItem('questionAttempts') || '[]');
-        const replacedIndex = existingAttempts.findIndex(a => a.questionId === attemptData.questionId);
-        if (replacedIndex !== -1) {
-          existingAttempts[replacedIndex] = attemptData as unknown as StoredAttempt;
-        } else {
-          existingAttempts.push(attemptData as unknown as StoredAttempt);
-        }
-        localStorage.setItem('questionAttempts', JSON.stringify(existingAttempts));
-      } catch (e) {
-        console.warn('Failed to write attempt to localStorage', e);
-      }
-
-      // Try backend persistence (requires auth cookie / token). Detect backend port (3001 or 3008 fallback used above).
-      // Hard-coded earlier fetch used 3008; assume backend for progress is 3001 unless configured
+      // Save to database via new API
       const backendPort = 3001; 
       const backendBase = `http://localhost:${backendPort}`;
-  const qid = String(currentQuestion.id || '');
-  const progressUrl = `${backendBase}/api/progress/${encodeURIComponent(qid)}/attempt`;
-      fetch(progressUrl, {
+      const qid = String(currentQuestion.id || '');
+      
+      // Extract question metadata for database
+      const questionName = currentQuestion.name || currentQuestion.id || '';
+      const topicArray = Array.isArray(currentQuestion.topic) ? currentQuestion.topic : (currentQuestion.topic ? [currentQuestion.topic] : []);
+      const parentTopic = topicArray.length > 0 ? topicArray[0] : null;
+      const relatedTopics = topicArray.length > 0 ? topicArray : null;
+      
+      // Infer paper from question name (P1 or P2)
+      let paper = null;
+      if (questionName) {
+        if (questionName.includes('P1')) paper = 'P1';
+        else if (questionName.includes('P2')) paper = 'P2';
+      }
+      
+      // Infer year from question name (e.g., "2024 P1 Question 1")
+      let year = null;
+      if (questionName) {
+        const yearMatch = questionName.match(/^(\d{4}(?:\s+(?:Deferred|Sample|Preview|[A-Z][a-z]+))?)/);
+        if (yearMatch) {
+          year = yearMatch[1];
+        }
+      }
+      
+      // Infer question type (state if has year, custom if not)
+      const questionType = year ? 'state' : 'custom';
+      
+      fetch(`${backendBase}/api/attempts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ timeTakenSeconds: timerSeconds, notes })
+        body: JSON.stringify({ 
+          questionId: qid, 
+          timeTakenSeconds: timerSeconds || null, 
+          notes: notes || null,
+          questionName: questionName,
+          parentTopic: parentTopic,
+          relatedTopics: relatedTopics,
+          difficulty: currentQuestion.difficulty || null,
+          paper: paper,
+          year: year,
+          questionType: questionType
+        })
       }).then(async r => {
         if (!r.ok) {
           console.warn('Backend attempt save failed', r.status);
+          
+          // If 401 (unauthorized), redirect to login
+          if (r.status === 401) {
+            const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `/login?returnTo=${returnTo}`;
+            return;
+          }
+          
+          // Fallback to localStorage if database save fails (for other errors)
+          try {
+            interface StoredAttempt { questionId: string; [key: string]: unknown }
+            const existingAttempts: StoredAttempt[] = JSON.parse(localStorage.getItem('questionAttempts') || '[]');
+            const replacedIndex = existingAttempts.findIndex(a => a.questionId === attemptData.questionId);
+            if (replacedIndex !== -1) {
+              existingAttempts[replacedIndex] = attemptData as unknown as StoredAttempt;
+            } else {
+              existingAttempts.push(attemptData as unknown as StoredAttempt);
+            }
+            localStorage.setItem('questionAttempts', JSON.stringify(existingAttempts));
+          } catch (e) {
+            console.warn('Failed to write attempt to localStorage', e);
+          }
           return;
         }
         const json = await r.json();
-        console.log('Attempt synced to backend', json);
+        console.log('Attempt saved to database', json);
+        
+        // Also save to localStorage as backup
+        try {
+          interface StoredAttempt { questionId: string; [key: string]: unknown }
+          const existingAttempts: StoredAttempt[] = JSON.parse(localStorage.getItem('questionAttempts') || '[]');
+          const replacedIndex = existingAttempts.findIndex(a => a.questionId === attemptData.questionId);
+          if (replacedIndex !== -1) {
+            existingAttempts[replacedIndex] = attemptData as unknown as StoredAttempt;
+          } else {
+            existingAttempts.push(attemptData as unknown as StoredAttempt);
+          }
+          localStorage.setItem('questionAttempts', JSON.stringify(existingAttempts));
+        } catch (e) {
+          console.warn('Failed to write attempt to localStorage', e);
+        }
       }).catch(err => {
-        console.warn('Backend attempt save network error (will rely on local only)', err);
+        console.warn('Backend attempt save network error, saving to localStorage only', err);
+        // Fallback to localStorage on network error
+        try {
+          interface StoredAttempt { questionId: string; [key: string]: unknown }
+          const existingAttempts: StoredAttempt[] = JSON.parse(localStorage.getItem('questionAttempts') || '[]');
+          const replacedIndex = existingAttempts.findIndex(a => a.questionId === attemptData.questionId);
+          if (replacedIndex !== -1) {
+            existingAttempts[replacedIndex] = attemptData as unknown as StoredAttempt;
+          } else {
+            existingAttempts.push(attemptData as unknown as StoredAttempt);
+          }
+          localStorage.setItem('questionAttempts', JSON.stringify(existingAttempts));
+        } catch (e) {
+          console.warn('Failed to write attempt to localStorage', e);
+        }
       });
 
       hideSaveAttemptModal();
@@ -1679,7 +1761,12 @@ const metadata = { title: `Practice - ${id}` };
   const nextBtn = document.getElementById('next-question');
   if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
       const saveAttemptBtn = document.getElementById('save-attempt');
-      if (saveAttemptBtn) saveAttemptBtn.addEventListener('click', showSaveAttemptModal);
+      if (saveAttemptBtn) saveAttemptBtn.addEventListener('click', async () => {
+        const authed = await ensureAuthenticated();
+        if (authed) {
+          showSaveAttemptModal();
+        }
+      });
       const prevBtn = document.getElementById('prev-question');
       if (prevBtn) prevBtn.addEventListener('click', prevQuestion);
 

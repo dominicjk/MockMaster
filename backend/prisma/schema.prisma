@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  provider      String    // e.g. "google"
+  providerId    String    // OAuth provider's user id
+  email         String?   @unique
+  name          String?
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  progressItems Progress[]
+}
+
+model Progress {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  question   String
+  givenAnswer String
+  correct    Boolean
+  meta       Json?    // optional: store any extra metadata (time taken, difficulty, etc.)
+  createdAt  DateTime @default(now())
+}

@@ -1,0 +1,218 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+const metadata = { title: 'Login / Sign Up' };
+---
+
+<Layout metadata={metadata}>
+  <main class="max-w-md mx-auto mt-16 p-6 bg-white dark:bg-slate-800 rounded-xl shadow">
+    <h1 class="text-2xl font-bold mb-4" id="form-title">Sign Up</h1>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-6" id="form-description">
+      Create your account with email and password
+    </p>
+
+    <!-- Signup/Login Form -->
+    <form id="auth-form" class="space-y-4">
+      <!-- Name field (only for signup) -->
+      <div id="name-fields">
+        <div>
+          <label class="block text-sm font-medium mb-1" for="first-name">First Name</label>
+          <input 
+            id="first-name" 
+            type="text" 
+            required 
+            class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
+            placeholder="John"
+          />
+        </div>
+        <div class="mt-3">
+          <label class="block text-sm font-medium mb-1" for="last-name">Last Name</label>
+          <input 
+            id="last-name" 
+            type="text" 
+            required 
+            class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
+            placeholder="Doe"
+          />
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label class="block text-sm font-medium mb-1" for="email">Email</label>
+        <input 
+          id="email" 
+          type="email" 
+          required 
+          class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
+          placeholder="you@example.com"
+        />
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label class="block text-sm font-medium mb-1" for="password">Password</label>
+        <input 
+          id="password" 
+          type="password" 
+          required 
+          minlength="8"
+          class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
+          placeholder="Minimum 8 characters"
+        />
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        id="submit-btn"
+        class="w-full py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700"
+      >
+        Sign Up
+      </button>
+
+      <!-- Toggle between login/signup -->
+      <button 
+        type="button" 
+        id="toggle-mode"
+        class="w-full py-2 rounded bg-gray-200 dark:bg-slate-600 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-slate-500"
+      >
+        Already have an account? Log in
+      </button>
+    </form>
+
+    <!-- Messages -->
+    <div id="messages" class="mt-4 text-sm"></div>
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:3001/api/user-auth';
+    
+    // Form elements
+    const form = document.getElementById('auth-form') as HTMLFormElement;
+    const formTitle = document.getElementById('form-title') as HTMLHeadingElement;
+    const formDescription = document.getElementById('form-description') as HTMLParagraphElement;
+    const nameFields = document.getElementById('name-fields') as HTMLDivElement;
+    const firstNameInput = document.getElementById('first-name') as HTMLInputElement;
+    const lastNameInput = document.getElementById('last-name') as HTMLInputElement;
+    const emailInput = document.getElementById('email') as HTMLInputElement;
+    const passwordInput = document.getElementById('password') as HTMLInputElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const toggleBtn = document.getElementById('toggle-mode') as HTMLButtonElement;
+    const messages = document.getElementById('messages') as HTMLDivElement;
+    
+    // Get return URL from query params
+    const returnTo = new URLSearchParams(window.location.search).get('returnTo') || '/';
+    
+    // Track current mode
+    let mode: 'signup' | 'login' = 'signup';
+    
+    // Display message helper
+    function showMessage(msg: string, type: 'success' | 'error' | 'info' = 'info') {
+      const bgColor = type === 'error' ? 'bg-red-100 text-red-700' : 
+                      type === 'success' ? 'bg-green-100 text-green-700' : 
+                      'bg-blue-100 text-blue-800';
+      messages.innerHTML = `<div class="p-3 rounded ${bgColor}">${msg}</div>`;
+    }
+    
+    // Toggle between signup and login
+    function updateMode() {
+      if (mode === 'signup') {
+        formTitle.textContent = 'Sign Up';
+        formDescription.textContent = 'Create your account with email and password';
+        submitBtn.textContent = 'Sign Up';
+        toggleBtn.textContent = 'Already have an account? Log in';
+        nameFields.classList.remove('hidden');
+        firstNameInput.required = true;
+        lastNameInput.required = true;
+      } else {
+        formTitle.textContent = 'Log In';
+        formDescription.textContent = 'Welcome back! Enter your credentials';
+        submitBtn.textContent = 'Log In';
+        toggleBtn.textContent = 'Need to create an account? Sign up';
+        nameFields.classList.add('hidden');
+        firstNameInput.required = false;
+        lastNameInput.required = false;
+      }
+      messages.innerHTML = '';
+    }
+    
+    // Toggle mode button
+    toggleBtn.addEventListener('click', () => {
+      mode = mode === 'signup' ? 'login' : 'signup';
+      updateMode();
+    });
+    
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const firstName = firstNameInput.value.trim();
+      const lastName = lastNameInput.value.trim();
+      
+      // Validation
+      if (!email || !password) {
+        showMessage('Please fill in all required fields', 'error');
+        return;
+      }
+      
+      if (password.length < 8) {
+        showMessage('Password must be at least 8 characters', 'error');
+        return;
+      }
+      
+      if (mode === 'signup' && (!firstName || !lastName)) {
+        showMessage('Please enter your first and last name', 'error');
+        return;
+      }
+      
+      // Disable form while processing
+      submitBtn.disabled = true;
+      submitBtn.textContent = mode === 'signup' ? 'Creating account...' : 'Logging in...';
+      
+      try {
+        const endpoint = mode === 'signup' ? '/signup' : '/login';
+        const body = mode === 'signup' 
+          ? { email, password, firstName, lastName }
+          : { email, password };
+        
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Important for session cookies
+          body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          showMessage(data.error || 'Authentication failed', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = mode === 'signup' ? 'Sign Up' : 'Log In';
+          return;
+        }
+        
+        // Success!
+        showMessage(
+          mode === 'signup' ? 'Account created! Redirecting...' : 'Login successful! Redirecting...',
+          'success'
+        );
+        
+        // Redirect after short delay
+        setTimeout(() => {
+          window.location.href = returnTo;
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Auth error:', error);
+        showMessage('Network error. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = mode === 'signup' ? 'Sign Up' : 'Log In';
+      }
+    });
+    
+    // Initialize
+    updateMode();
+  </script>
+</Layout>
