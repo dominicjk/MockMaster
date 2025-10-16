@@ -147,38 +147,60 @@ const attemptViews: AttemptView[] = attempts.map(a => {
     <!-- User Profile and Progress Stats - Side by Side -->
     <div class="mb-6 grid grid-cols-1 lg:grid-cols-[1fr_3fr] gap-4 max-w-full overflow-hidden">
       <!-- User Profile Section -->
-      <div class="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-4 border border-pink-100/50 dark:border-slate-700/50 min-w-0" style="box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">User Profile</h2>
+      <div class="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-3 border border-pink-100/50 dark:border-slate-700/50 min-w-0 flex flex-col" style="box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);">
+        <h2 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">User Profile</h2>
         
         <!-- Loading State -->
-        <div id="profile-loading" class="text-center py-3">
-          <p class="text-gray-600 dark:text-gray-400 text-sm">Loading profile...</p>
+        <div id="profile-loading" class="text-center py-2">
+          <p class="text-gray-600 dark:text-gray-400 text-xs">Loading profile...</p>
         </div>
 
         <!-- Profile Content -->
-        <div id="profile-form-container" class="hidden">
-          <div class="space-y-3">
+        <div id="profile-form-container" class="hidden flex-1 flex flex-col">
+          <div class="space-y-2">
             <div>
               <label for="firstName" class="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">First Name</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                required
-                maxlength="50"
-                class="w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-100"
-              />
+              <div class="relative">
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  required
+                  maxlength="50"
+                  class="w-full px-2.5 py-1 pr-8 text-xs border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-100"
+                />
+                <button
+                  id="save-firstName"
+                  class="hidden absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded bg-green-500 hover:bg-green-600 text-white transition"
+                  title="Save first name"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <div>
               <label for="lastName" class="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Last Name</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                maxlength="50"
-                class="w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-100"
-              />
+              <div class="relative">
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  maxlength="50"
+                  class="w-full px-2.5 py-1 pr-8 text-xs border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-100"
+                />
+                <button
+                  id="save-lastName"
+                  class="hidden absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded bg-green-500 hover:bg-green-600 text-white transition"
+                  title="Save last name"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <div>
@@ -187,58 +209,57 @@ const attemptViews: AttemptView[] = attempts.map(a => {
                 type="email"
                 id="email"
                 disabled
-                class="w-full px-3 py-1.5 text-sm border rounded-lg bg-gray-100 dark:bg-slate-900 dark:border-slate-600 cursor-not-allowed text-gray-600 dark:text-gray-400"
+                class="w-full px-2.5 py-1 text-xs border rounded-lg bg-gray-100 dark:bg-slate-900 dark:border-slate-600 cursor-not-allowed text-gray-600 dark:text-gray-400"
               />
             </div>
         
             <div id="name-error" class="text-red-500 text-xs hidden"></div>
-            <div id="name-success" class="text-green-500 text-xs hidden"></div>
           </div>
         </div>
       </div>
       
       <!-- Progress Stats Section -->
-      <div class="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-4 border border-pink-100/50 dark:border-slate-700/50 min-w-0 overflow-hidden" style="box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);">
+      <div class="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-3 border border-pink-100/50 dark:border-slate-700/50 min-w-0 overflow-hidden flex flex-col" style="box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);">
         <!-- Difficulty Stats -->
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-8 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
-          <div class="flex flex-wrap items-center gap-3 flex-1">
-            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
-              <span class="text-sm font-medium">Easy</span>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-7 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
+          <div class="flex flex-wrap items-center gap-2 flex-1">
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 cursor-pointer hover:opacity-80 transition" data-pill-type="difficulty" data-pill-value="Easy">
+              <span class="text-xs font-medium">Easy</span>
               <span id="easy-proportion" class="text-xs opacity-70"></span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
-              <span class="text-sm font-medium">Medium</span>
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 cursor-pointer hover:opacity-80 transition" data-pill-type="difficulty" data-pill-value="Medium">
+              <span class="text-xs font-medium">Medium</span>
               <span id="medium-proportion" class="text-xs opacity-70"></span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
-              <span class="text-sm font-medium">Hard</span>
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 cursor-pointer hover:opacity-80 transition" data-pill-type="difficulty" data-pill-value="Hard">
+              <span class="text-xs font-medium">Hard</span>
               <span id="hard-proportion" class="text-xs opacity-70"></span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
-              <span class="text-sm font-medium">Very Hard</span>
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 cursor-pointer hover:opacity-80 transition" data-pill-type="difficulty" data-pill-value="Very Hard">
+              <span class="text-xs font-medium">Very Hard</span>
               <span id="very-hard-proportion" class="text-xs opacity-70"></span>
             </div>
           </div>
-          <div class="w-8 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
+          <div class="w-7 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
         </div>
 
         <!-- Year Stats with Navigation -->
-        <div class="flex items-center gap-3 mb-4">
+        <div class="flex items-center gap-2 mb-3">
           <!-- Left scroll button -->
           <button 
             id="year-scroll-left" 
-            class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
+            class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Scroll years left"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
           </button>
 
           <!-- Year pills container with horizontal scroll -->
           <div class="overflow-hidden flex-1">
-            <div id="year-pills-container" class="flex gap-3 transition-transform duration-300" style="transform: translateX(0);">
+            <div id="year-pills-container" class="flex gap-2 transition-transform duration-300" style="transform: translateX(0);">
               <!-- Year pills will be inserted here by JavaScript -->
             </div>
           </div>
@@ -246,42 +267,42 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           <!-- Right scroll button -->
           <button 
             id="year-scroll-right" 
-            class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
+            class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Scroll years right"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
           </button>
         </div>
 
         <!-- Paper Stats -->
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-8 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
-          <div class="flex flex-wrap items-center gap-3 flex-1">
-            <div id="paper-pills-container" class="flex gap-3">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-7 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
+          <div class="flex flex-wrap items-center gap-2 flex-1">
+            <div id="paper-pills-container" class="flex gap-2">
               <!-- Paper pills will be inserted here by JavaScript -->
             </div>
           </div>
-          <div class="w-8 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
+          <div class="w-7 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
         </div>
 
         <!-- Topic Stats with Navigation -->
-        <div class="flex items-center gap-3 mb-4">
+        <div class="flex items-center gap-2 mb-3">
           <!-- Left scroll button -->
           <button 
             id="topic-scroll-left" 
-            class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
+            class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Scroll topics left"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
           </button>
 
           <!-- Topic pills container with horizontal scroll -->
           <div class="overflow-hidden flex-1">
-            <div id="topic-pills-container" class="flex gap-3 transition-transform duration-300" style="transform: translateX(0);">
+            <div id="topic-pills-container" class="flex gap-2 transition-transform duration-300" style="transform: translateX(0);">
               <!-- Topic pills will be inserted here by JavaScript -->
             </div>
           </div>
@@ -289,80 +310,24 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           <!-- Right scroll button -->
           <button 
             id="topic-scroll-right" 
-            class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
+            class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Scroll topics right"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
           </button>
         </div>
 
         <!-- Question Type Stats -->
-        <div class="flex items-center gap-3">
-          <div class="w-8 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
-          <div class="flex flex-wrap items-center gap-3 flex-1">
-            <div id="type-pills-container" class="flex gap-3">
+        <div class="flex items-center gap-2">
+          <div class="w-7 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
+          <div class="flex flex-wrap items-center gap-2 flex-1">
+            <div id="type-pills-container" class="flex gap-2">
               <!-- Type pills will be inserted here by JavaScript -->
             </div>
           </div>
-          <div class="w-8 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
-        </div>
-      </div>
-    </div>
-    
-    <div class="flex items-center justify-between mb-4">
-      <!-- Topic Filter Dropdown (moved from profile section) -->
-      <div class="w-56">
-        {stats ? (
-          <select id="topic-filter" class="h-10 w-full text-base rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none bg-no-repeat bg-right pr-10" style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e'); background-size: 1.25rem; background-position: right 0.75rem center;">
-            <option value="__all">All Topics</option>
-            {Object.keys(stats.topics).sort().map(t => <option value={t}>{TOPIC_LABELS[t] || t.replace(/[-_]/g,' ').replace(/\b\w/g, c=>c.toUpperCase())}</option>)}
-          </select>
-        ) : (
-          <div class="h-10 animate-pulse bg-gray-200 dark:bg-slate-700 rounded-xl" />
-        )}
-      </div>
-      
-      <!-- Question Count Display with Mini Progress Circle -->
-      <div class="flex items-center gap-3">
-        <!-- Count Display -->
-        <div class="text-left min-w-[140px]" style="transition: opacity 0.15s ease-out, transform 0.15s ease-out;">
-          <p class="text-lg transition-all duration-300 ease-out">
-            <span id="completed-count" class="font-bold text-gray-900 dark:text-gray-100">
-              {attempts.length}
-            </span>
-            <span class="text-gray-500 dark:text-gray-400">
-              / {stats?.total || 0} Completed
-            </span>
-          </p>
-        </div>
-        
-        <!-- Mini Circular Progress -->
-        <div class="relative w-10 h-10 flex-shrink-0">
-          <svg class="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="4"
-              class="text-gray-200 dark:text-slate-700"
-            />
-            <circle
-              id="mini-progress-bar"
-              cx="24"
-              cy="24"
-              r="20"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="4"
-              stroke-linecap="round"
-              class="text-pink-500 dark:text-pink-600 transition-all duration-500"
-              style={`stroke-dasharray: ${2 * Math.PI * 20}; stroke-dashoffset: ${2 * Math.PI * 20 * (1 - (stats?.total ? Math.min(1, attempts.length / stats.total) : 0))}`}
-            />
-          </svg>
+          <div class="w-7 flex-shrink-0"></div> <!-- Spacer to align with scroll buttons -->
         </div>
       </div>
     </div>
@@ -388,11 +353,85 @@ const attemptViews: AttemptView[] = attempts.map(a => {
         <a href="/maths/practice" class="inline-flex items-center px-5 py-2.5 rounded-lg bg-red-200 text-red-800 font-medium hover:bg-red-300 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 dark:focus:ring-offset-slate-900 transition">Go to Practice</a>
       </div>
     </div>
+    
+    {/* Empty state for filtered results */}
+    <div id="filtered-empty-state" class="hidden">
+      <div class="flex flex-col items-center justify-center py-24 text-center text-gray-500 dark:text-gray-400">
+        <div class="w-24 h-24 mb-6 opacity-60">
+          <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </div>
+        <p class="text-lg font-medium mb-2">No matching attempts</p>
+        <p class="max-w-md text-sm mb-6">No attempts found matching your current filters. Try selecting different filters.</p>
+      </div>
+    </div>
   <div id="topic-labels" data-topic-labels={JSON.stringify(TOPIC_LABELS)} class="hidden"></div>
   {stats && <div id="progress-stats" data-stats={JSON.stringify(stats)} class="hidden"></div>}
-  <div class="grid gap-4 md:gap-6 hidden" id="attempt-grid" data-backend={BACKEND_BASE}>
+  
+  <!-- Attempts Container with Header -->
+  <div class="hidden" id="attempts-container">
+    <div class="flex items-center justify-between mb-4">
+      <!-- Filter Dropdown Button -->
+      <div class="relative">
+        <button id="filter-toggle-btn" class="inline-flex items-center justify-center gap-1.5 h-7 px-3 rounded-lg text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 transition text-xs font-medium" title="Sort attempts">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span id="filter-label">Sort</span>
+        </button>
+        
+        <!-- Dropdown Menu -->
+        <div id="filter-dropdown" class="hidden absolute left-0 top-full mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50">
+          <button class="sort-option w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition flex items-center justify-between" data-sort="recent">
+            <span>Most Recent</span>
+            <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          </button>
+          <button class="sort-option w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition flex items-center justify-between" data-sort="oldest">
+            <span>Least Recent</span>
+            <svg class="h-4 w-4 text-gray-500 dark:text-gray-400 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Progress Circle with Count -->
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-700 dark:text-gray-300">
+          <span id="completed-count-inline" class="font-semibold">{attempts.length}</span>
+          <span class="text-gray-500 dark:text-gray-400">/{stats?.total || 0}</span>
+        </span>
+        <div class="relative w-7 h-7 flex-shrink-0">
+          <svg class="w-full h-full transform -rotate-90" viewBox="0 0 48 48">
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="4"
+              class="text-gray-200 dark:text-slate-700"
+            />
+            <circle
+              id="mini-progress-bar-inline"
+              cx="24"
+              cy="24"
+              r="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="4"
+              stroke-linecap="round"
+              class="text-blue-500 dark:text-blue-400 transition-all duration-500"
+              style={`stroke-dasharray: ${2 * Math.PI * 20}; stroke-dashoffset: ${2 * Math.PI * 20 * (1 - (stats?.total ? Math.min(1, attempts.length / stats.total) : 0))}`}
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  
+    <div class="grid gap-4 md:gap-5" id="attempt-grid" data-backend={BACKEND_BASE}>
       {attemptViews.map(({ a, diffText, diffClasses, topics, overLimit }) => (
-        <div class="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm flex flex-col gap-3" data-attempt={a.questionId} data-difficulty={diffText || ''} data-time={a.timeTakenSeconds || ''} data-question-name={a.question?.name || ''}>
+        <div class="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm flex flex-col gap-3 transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-slate-750 hover:border-gray-300 dark:hover:border-slate-600 cursor-pointer" data-attempt={a.questionId} data-difficulty={diffText || ''} data-time={a.timeTakenSeconds || ''} data-question-name={a.question?.name || ''}>
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-3">
@@ -416,7 +455,7 @@ const attemptViews: AttemptView[] = attempts.map(a => {
                   
                   return (
                     <h2 class="m-0 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight">
-                      <a href={practiceHref} class="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">{displayName}</a>
+                      <a href={practiceHref} class="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">{displayName}</a>
                     </h2>
                   );
                 })()}
@@ -451,12 +490,15 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           {a.notes && (
             <div class="relative">
               <div class="notes-clamped text-sm text-gray-700 dark:text-gray-300" data-full={a.notes}>{a.notes}</div>
-              <button class="expand-notes text-xs mt-1 text-blue-600 dark:text-blue-400 hover:underline">Expand</button>
+              <button class="expand-notes absolute bottom-0 right-0 inline-flex items-center justify-center w-6 h-6 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white dark:bg-slate-800 rounded transition" title="Expand notes">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg>
+              </button>
             </div>
           )}
         </div>
       ))}
     </div>
+  </div>
   </section>
   </div>
 
@@ -483,17 +525,26 @@ const attemptViews: AttemptView[] = attempts.map(a => {
     </div>
   </div>
 
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="fixed bottom-0 left-1/2 -translate-x-1/2 mb-8 px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg opacity-0 pointer-events-none transition-all duration-300 transform translate-y-4 z-50">
+    <span id="toast-message">Profile updated successfully!</span>
+  </div>
+
   <script>
     (function(){
       const grid = document.getElementById('attempt-grid');
+      const attemptsContainer = document.getElementById('attempts-container');
       const emptyState = document.getElementById('empty-progress-state');
       const loadingSpinner = document.getElementById('attempts-loading');
       const progressStatsEl = document.getElementById('progress-stats');
-      const topicSelect = document.getElementById('topic-filter') as HTMLSelectElement | null;
       const topicLabelsEl = document.getElementById('topic-labels');
       let topicLabels: Record<string,string> = {};
       if (topicLabelsEl) { try { topicLabels = JSON.parse(topicLabelsEl.getAttribute('data-topic-labels') || '{}'); } catch { /* ignore */ } }
       const backendBase = grid?.getAttribute('data-backend') || 'http://localhost:3001';
+      
+      // Filter state - changed to array for stacked filters
+      let currentFilters: Array<{type: string, value: string}> = [];
+      let allAttempts: any[] = [];
       
       // Fetch attempts from database on page load
       async function fetchAttemptsFromDatabase() {
@@ -523,30 +574,48 @@ const attemptViews: AttemptView[] = attempts.map(a => {
       }
       
       // Render attempts to the grid
-      function renderAttempts(attempts: any[]) {
-        if (!grid) return;
+      async function renderAttempts(attempts: any[]) {
+        console.log(`renderAttempts called with ${attempts.length} attempts`);
+        
+        if (!grid) {
+          console.error('Grid element not found!');
+          return;
+        }
         
         // Hide loading spinner
         if (loadingSpinner) loadingSpinner.classList.add('hidden');
         
+        const filteredEmptyState = document.getElementById('filtered-empty-state');
+        
         if (attempts.length === 0) {
-          // Show empty state
-          if (emptyState) emptyState.classList.remove('hidden');
-          if (grid) grid.classList.add('hidden');
+          // Show appropriate empty state based on whether filters are active
+          if (currentFilters.length > 0) {
+            // Filters are active - show filtered empty state
+            if (filteredEmptyState) filteredEmptyState.classList.remove('hidden');
+            if (emptyState) emptyState.classList.add('hidden');
+          } else {
+            // No filters - show regular empty state
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (filteredEmptyState) filteredEmptyState.classList.add('hidden');
+          }
+          if (attemptsContainer) attemptsContainer.classList.add('hidden');
           return;
         }
         
-        // Show grid, hide empty state
-        if (grid) grid.classList.remove('hidden');
+        // Show grid container, hide both empty states
+        if (attemptsContainer) attemptsContainer.classList.remove('hidden');
         if (emptyState) emptyState.classList.add('hidden');
+        if (filteredEmptyState) filteredEmptyState.classList.add('hidden');
         
         // Clear existing server-rendered attempts
         grid.innerHTML = '';
         
+        console.log(`About to render ${attempts.length} cards to grid`);
+        
         // Render each attempt
         attempts.forEach((attempt: any) => {
           const card = document.createElement('div');
-          card.className = 'rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm flex flex-col gap-3';
+          card.className = 'rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm flex flex-col gap-3 transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-slate-750 hover:border-gray-300 dark:hover:border-slate-600 cursor-pointer';
           
           // Format difficulty
           let diffChip = '';
@@ -606,13 +675,13 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           
           // Notes display
           const notesBlock = attempt.notes ? 
-            `<div class="relative"><div class="notes-clamped text-sm text-gray-700 dark:text-gray-300" data-full="${(attempt.notes || '').replace(/"/g, '&quot;')}">${attempt.notes}</div><button class="expand-notes text-xs mt-1 text-blue-600 dark:text-blue-400 hover:underline">Expand</button></div>` : '';
+            `<div class="relative"><div class="notes-clamped text-sm text-gray-700 dark:text-gray-300" data-full="${(attempt.notes || '').replace(/"/g, '&quot;')}">${attempt.notes}</div><button class="expand-notes absolute bottom-0 right-0 inline-flex items-center justify-center w-6 h-6 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white dark:bg-slate-800 rounded transition" title="Expand notes"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg></button></div>` : '';
           
           card.innerHTML = `
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1">
                 <div class="flex flex-wrap items-center gap-3">
-                  <h2 class="m-0 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight"><a href="${practiceHref}" class="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">${displayName}</a></h2>
+                  <h2 class="m-0 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight"><a href="${practiceHref}" class="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">${displayName}</a></h2>
                   <div class="flex flex-wrap items-center gap-2 ml-1 pt-0.5">${diffChip}${topicChips}</div>
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${dateStr}</p>
@@ -630,18 +699,147 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           card.setAttribute('data-difficulty', diffText);
           card.setAttribute('data-time', timeTaken || '');
           card.setAttribute('data-question-name', attempt.question_name || '');
+          card.setAttribute('data-question-type', attempt.question_type || '');
+          card.setAttribute('data-paper', attempt.paper || '');
           
           grid.appendChild(card);
         });
         
+        console.log(`Finished appending ${attempts.length} cards to grid`);
+        console.log(`Cards now in grid: ${grid.querySelectorAll('[data-attempt]').length}`);
+        
         // Recompute progress after rendering
         recomputeProgress();
+        
+        // Wait for DOM to be fully updated before counting pills
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        
+        // Verify cards are in DOM
+        const testGrid = document.getElementById('attempt-grid');
+        const testCards = testGrid?.querySelectorAll('[data-attempt]').length || 0;
+        console.log(`Before pill updates: ${testCards} cards in DOM`);
+        
+        // Update all pill statistics after cards are rendered
+        await updateDifficultyProportions();
+        await updateYearStats();
+        await updatePaperStats();
+        await updateTopicStats();
+        await updateTypeStats();
+        
+        // Apply overflow detection for notes
+        setTimeout(() => applyOverflowDetection(), 50);
       }
       
       // Load attempts from database on page load
       fetchAttemptsFromDatabase().then(attempts => {
+        allAttempts = attempts;
         renderAttempts(attempts);
       });
+      
+      // Filter attempts by criterion
+      function applyFilter(type: string, value: string) {
+        // Check if this filter already exists in the array
+        const filterIndex = currentFilters.findIndex(f => f.type === type && f.value === value);
+        
+        if (filterIndex >= 0) {
+          // Filter exists - remove it
+          currentFilters.splice(filterIndex, 1);
+        } else {
+          // Filter doesn't exist - add it
+          currentFilters.push({ type, value });
+        }
+        
+        // Update pill states immediately before hiding content
+        updatePillActiveStates();
+        
+        // Show loading indicator and hide attempts
+        const attemptsContainer = document.getElementById('attempts-container');
+        const loadingSpinner = document.getElementById('attempts-loading');
+        if (attemptsContainer) attemptsContainer.classList.add('hidden');
+        if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+        
+        // Apply all filters cumulatively
+        let filtered = allAttempts;
+        
+        for (const filter of currentFilters) {
+          switch (filter.type) {
+            case 'difficulty':
+              filtered = filtered.filter(a => {
+                const diff = String(a.difficulty || '').toLowerCase();
+                return diff === filter.value.toLowerCase() || 
+                       (filter.value === 'Easy' && diff === '1') ||
+                       (filter.value === 'Medium' && diff === '2') ||
+                       (filter.value === 'Hard' && diff === '3') ||
+                       (filter.value === 'Very Hard' && diff === '4');
+              });
+              break;
+            case 'year':
+              filtered = filtered.filter(a => a.question_name && a.question_name.includes(filter.value));
+              break;
+            case 'paper':
+              filtered = filtered.filter(a => a.paper === filter.value);
+              break;
+            case 'topic':
+              filtered = filtered.filter(a => {
+                if (Array.isArray(a.related_topics)) {
+                  return a.related_topics.includes(filter.value);
+                }
+                return a.parent_topic === filter.value;
+              });
+              break;
+            case 'type':
+              filtered = filtered.filter(a => {
+                if (filter.value === 'State') {
+                  return a.question_type === 'state';
+                } else {
+                  return a.question_type === 'custom';
+                }
+              });
+              break;
+          }
+        }
+        
+        setTimeout(() => {
+          renderAttempts(filtered);
+          // renderAttempts will handle showing/hiding attemptsContainer
+        }, 200);
+      }
+      
+      function updatePillActiveStates() {
+        // First, remove all active classes from all pills
+        document.querySelectorAll('[data-pill-type]').forEach(pill => {
+          pill.classList.remove('pill-active');
+          const pillType = pill.getAttribute('data-pill-type');
+          if (pillType === 'difficulty') {
+            pill.classList.remove('ring-2', 'ring-black', 'dark:ring-white');
+          } else {
+            pill.classList.remove('!bg-gray-200', 'dark:!bg-slate-600');
+          }
+        });
+        
+        // If no filters, we're done
+        if (currentFilters.length === 0) return;
+        
+        // Find and mark all active pills
+        document.querySelectorAll('[data-pill-type]').forEach(pill => {
+          const pillType = pill.getAttribute('data-pill-type');
+          const pillValue = pill.getAttribute('data-pill-value');
+          
+          // Check if this pill matches any filter in the array
+          const isActive = currentFilters.some(f => f.type === pillType && f.value === pillValue);
+          
+          if (isActive) {
+            pill.classList.add('pill-active');
+            if (pillType === 'difficulty') {
+              // Add black outline for difficulty pills
+              pill.classList.add('ring-2', 'ring-black', 'dark:ring-white');
+            } else {
+              // Add darker background for regular pills (lighter than before)
+              pill.classList.add('!bg-gray-200', 'dark:!bg-slate-600');
+            }
+          }
+        });
+      }
       
       function loadLocalAttempts(){
         try {
@@ -658,66 +856,69 @@ const attemptViews: AttemptView[] = attempts.map(a => {
 
       function recomputeProgress(){
         if(!('total' in statsData)) return;
-        const selectedTopic = topicSelect && topicSelect.value !== '__all' ? topicSelect.value : null;
         const cards = Array.from(grid?.querySelectorAll('[data-attempt]') || []);
         const unique = new Map<string, Element>();
         cards.forEach(c => { const id = c.getAttribute('data-attempt'); if(id) unique.set(id,c); });
         let total = 0; let completed = 0;
-        if (!selectedTopic) {
+        
+        // Use current filters if set
+        if (currentFilters.length === 0) {
           total = (statsData.total ?? 0) as number;
           completed = unique.size;
         } else {
-          total = statsData.topics && statsData.topics[selectedTopic] ? statsData.topics[selectedTopic] : 0;
+          // Check if any filter is a topic filter
+          const topicFilter = currentFilters.find(f => f.type === 'topic');
+          if (topicFilter) {
+            total = statsData.topics && statsData.topics[topicFilter.value] ? statsData.topics[topicFilter.value] : 0;
+          } else {
+            total = (statsData.total ?? 0) as number;
+          }
+          
+          // Count completed attempts that match all filters
           unique.forEach(card => {
-            const topics = Array.from(card.querySelectorAll('[data-topic]')).map(e=>e.getAttribute('data-topic')).filter((v): v is string => !!v);
-            let match = topics.includes(selectedTopic);
-            if (!match && topics.length === 0) {
-              const id = card.getAttribute('data-attempt') || '';
-              if (id.split('-')[0] === selectedTopic) match = true;
+            let matchesAll = true;
+            
+            for (const filter of currentFilters) {
+              let matches = false;
+              
+              if (filter.type === 'topic') {
+                const topics = Array.from(card.querySelectorAll('[data-topic]')).map(e=>e.getAttribute('data-topic')).filter((v): v is string => !!v);
+                matches = topics.includes(filter.value);
+                if (!matches && topics.length === 0) {
+                  const id = card.getAttribute('data-attempt') || '';
+                  if (id.split('-')[0] === filter.value) matches = true;
+                }
+              } else if (filter.type === 'difficulty') {
+                const diffChip = card.querySelector('[data-difficulty-chip]');
+                const diffText = diffChip?.textContent?.trim();
+                matches = diffText === filter.value;
+              }
+              // Add other filter types as needed
+              
+              if (!matches) {
+                matchesAll = false;
+                break;
+              }
             }
-            if (match) completed++;
+            
+            if (matchesAll) completed++;
           });
         }
         
-        // Update completed count display with animation
-        const completedCountEl = document.getElementById('completed-count');
-        if (completedCountEl) {
-          const parentDiv = completedCountEl.closest('.text-right');
-          if (parentDiv && parentDiv instanceof HTMLElement) {
-            // Add fade-out animation
-            parentDiv.style.opacity = '0';
-            parentDiv.style.transform = 'scale(0.95)';
-            parentDiv.style.transition = 'all 0.15s ease-out';
-            
-            setTimeout(() => {
-              parentDiv.innerHTML = `
-                <p class="text-lg transition-all duration-300 ease-out">
-                  <span id="completed-count" class="font-bold text-gray-900 dark:text-gray-100">
-                    ${completed}
-                  </span>
-                  <span class="text-gray-500 dark:text-gray-400">
-                    / ${total} Completed
-                  </span>
-                </p>
-              `;
-              
-              // Force reflow and fade-in animation
-              requestAnimationFrame(() => {
-                parentDiv.style.opacity = '1';
-                parentDiv.style.transform = 'scale(1)';
-              });
-            }, 150);
-          }
-        }
-        
-        // Update mini progress circle
-        const miniProgressBar = document.getElementById('mini-progress-bar');
-        if (miniProgressBar) {
+        // Update inline progress circle in attempts container
+        const miniProgressBarInline = document.getElementById('mini-progress-bar-inline');
+        if (miniProgressBarInline) {
           const radius = 20;
           const circumference = 2 * Math.PI * radius;
           const progress = total ? Math.min(1, completed / total) : 0;
           const offset = circumference * (1 - progress);
-          (miniProgressBar as HTMLElement).style.strokeDashoffset = String(offset);
+          (miniProgressBarInline as HTMLElement).style.strokeDashoffset = String(offset);
+        }
+        
+        // Update inline completed count in attempts container
+        const completedCountInline = document.getElementById('completed-count-inline');
+        if (completedCountInline) {
+          completedCountInline.textContent = String(completed);
         }
         
         // Update difficulty stats
@@ -729,7 +930,7 @@ const attemptViews: AttemptView[] = attempts.map(a => {
         if (easyCountEl || mediumCountEl || hardCountEl || veryHardCountEl) {
           let easyCount = 0, mediumCount = 0, hardCount = 0, veryHardCount = 0;
           
-          if (!selectedTopic) {
+          if (currentFilters.length === 0) {
             // Count all attempts
             unique.forEach(card => {
               const diffChip = card.querySelector('[data-difficulty-chip]');
@@ -742,15 +943,34 @@ const attemptViews: AttemptView[] = attempts.map(a => {
               }
             });
           } else {
-            // Count only attempts for selected topic
+            // Count only attempts that match all active filters
             unique.forEach(card => {
-              const topics = Array.from(card.querySelectorAll('[data-topic]')).map(e=>e.getAttribute('data-topic')).filter((v): v is string => !!v);
-              let match = topics.includes(selectedTopic);
-              if (!match && topics.length === 0) {
-                const id = card.getAttribute('data-attempt') || '';
-                if (id.split('-')[0] === selectedTopic) match = true;
+              let matchesAll = true;
+              
+              for (const filter of currentFilters) {
+                let matches = false;
+                
+                if (filter.type === 'topic') {
+                  const topics = Array.from(card.querySelectorAll('[data-topic]')).map(e=>e.getAttribute('data-topic')).filter((v): v is string => !!v);
+                  matches = topics.includes(filter.value);
+                  if (!matches && topics.length === 0) {
+                    const id = card.getAttribute('data-attempt') || '';
+                    if (id.split('-')[0] === filter.value) matches = true;
+                  }
+                } else if (filter.type === 'difficulty') {
+                  const diffChip = card.querySelector('[data-difficulty-chip]');
+                  const diffText = diffChip?.textContent?.trim();
+                  matches = diffText === filter.value;
+                }
+                // Add other filter types as needed
+                
+                if (!matches) {
+                  matchesAll = false;
+                  break;
+                }
               }
-              if (match) {
+              
+              if (matchesAll) {
                 const diffChip = card.querySelector('[data-difficulty-chip]');
                 if (diffChip) {
                   const diffText = diffChip.textContent?.trim();
@@ -847,7 +1067,7 @@ const attemptViews: AttemptView[] = attempts.map(a => {
                     ${(() => {
                       const primaryTopic = (topic || (a.questionId ? a.questionId.split('-')[0] : 'unknown'));
                       const practiceHref = `/maths/practice/${primaryTopic}?q=${a.questionId}`;
-                      return `<h2 class="m-0 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight"><a href="${practiceHref}" class="hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">${displayName}</a></h2>`;
+                      return `<h2 class="m-0 font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight"><a href="${practiceHref}" class="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm">${displayName}</a></h2>`;
                     })()}
                     <div class="flex flex-wrap items-center gap-2 ml-1 pt-0.5">${diffChip}${localTopicChip}</div>
                   </div>
@@ -920,12 +1140,14 @@ const attemptViews: AttemptView[] = attempts.map(a => {
             if (!notesEl) {
               const block = document.createElement('div');
               block.className = 'relative';
-              block.innerHTML = `<div class="notes-clamped text-sm text-gray-700 dark:text-gray-300" data-full="${newNotes.replace(/"/g,'&quot;')}">${newNotes}</div><button class="expand-notes text-xs mt-1 text-blue-600 dark:text-blue-400 hover:underline">Expand</button>`;
+              block.innerHTML = `<div class="notes-clamped text-sm text-gray-700 dark:text-gray-300" data-full="${newNotes.replace(/"/g,'&quot;')}">${newNotes}</div><button class="expand-notes absolute bottom-0 right-0 inline-flex items-center justify-center w-6 h-6 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white dark:bg-slate-800 rounded transition" title="Expand notes"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg></button>`;
               card.appendChild(block);
               notesEl = block.querySelector('.notes-clamped') as HTMLElement | null;
+              setTimeout(() => applyOverflowDetection(), 50);
             } else {
               notesEl.textContent = newNotes;
               notesEl.setAttribute('data-full', newNotes);
+              setTimeout(() => applyOverflowDetection(), 50);
             }
           }
         }
@@ -957,6 +1179,26 @@ const attemptViews: AttemptView[] = attempts.map(a => {
         const target = e.target as Element | null;
         if(!target) return;
 
+        // Make entire card clickable
+        const card = target.closest('[data-attempt]');
+        if (card && !target.closest('.edit-notes') && !target.closest('.expand-notes') && !target.closest('a')) {
+          const titleLink = card.querySelector('h2 a') as HTMLAnchorElement | null;
+          if (titleLink && titleLink.href) {
+            window.location.href = titleLink.href;
+            return;
+          }
+        }
+
+        // Difficulty pill click
+        const difficultyPill = target.closest('[data-pill-type="difficulty"]');
+        if (difficultyPill) {
+          const value = difficultyPill.getAttribute('data-pill-value');
+          if (value) {
+            applyFilter('difficulty', value);
+            return;
+          }
+        }
+
         // Expand / Collapse notes
         const expandBtn = target.closest('.expand-notes');
         if (expandBtn) {
@@ -964,10 +1206,10 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           if(wrapper instanceof HTMLElement) {
             if(wrapper.classList.contains('expanded')) {
               wrapper.classList.remove('expanded');
-              (expandBtn as HTMLElement).textContent = 'Expand';
+              (expandBtn as HTMLElement).style.display = '';
             } else {
               wrapper.classList.add('expanded');
-              (expandBtn as HTMLElement).textContent = 'Collapse';
+              (expandBtn as HTMLElement).style.display = 'none';
             }
           }
           return;
@@ -976,6 +1218,7 @@ const attemptViews: AttemptView[] = attempts.map(a => {
         // Edit notes button
         const editBtn = target.closest('.edit-notes');
         if (editBtn) {
+          e.stopPropagation(); // Prevent card click
           const qid = (editBtn as HTMLElement).getAttribute('data-question-id');
           if(!qid) return;
           const card = (editBtn as HTMLElement).closest('[data-attempt]');
@@ -1013,8 +1256,112 @@ const attemptViews: AttemptView[] = attempts.map(a => {
         }
       });
       recomputeProgress();
-      if (topicSelect) {
-        topicSelect.addEventListener('change', recomputeProgress);
+      
+      // ============ Filter Dropdown and Sort Functionality ============
+      const filterToggleBtn = document.getElementById('filter-toggle-btn');
+      const filterDropdown = document.getElementById('filter-dropdown');
+      const filterLabel = document.getElementById('filter-label');
+      const progressStatsContainer = progressStatsEl?.closest('.bg-white\\/70');
+      let currentSort = 'recent'; // Track current sort order
+      
+      if (filterToggleBtn && filterDropdown) {
+        // Toggle dropdown
+        filterToggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          filterDropdown.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!filterToggleBtn.contains(e.target as Node) && !filterDropdown.contains(e.target as Node)) {
+            filterDropdown.classList.add('hidden');
+          }
+        });
+        
+        // Handle sort options
+        document.querySelectorAll('.sort-option').forEach(option => {
+          option.addEventListener('click', () => {
+            const sortType = option.getAttribute('data-sort');
+            
+            // Update checkmarks
+            document.querySelectorAll('.sort-option svg').forEach(svg => svg.classList.add('hidden'));
+            const checkmark = option.querySelector('svg');
+            if (checkmark) checkmark.classList.remove('hidden');
+            
+            // Sort attempts
+            if (sortType) {
+              currentSort = sortType;
+              if (filterLabel) {
+                filterLabel.textContent = sortType === 'recent' ? 'Most Recent' : 'Least Recent';
+              }
+              
+              // Sort allAttempts array
+              allAttempts.sort((a, b) => {
+                const dateA = new Date(a.completed_at || a.last_updated_at || 0).getTime();
+                const dateB = new Date(b.completed_at || b.last_updated_at || 0).getTime();
+                return sortType === 'recent' ? dateB - dateA : dateA - dateB;
+              });
+              
+              // Re-render with current filters
+              if (currentFilters.length > 0) {
+                // Re-apply all filters
+                let filtered = allAttempts;
+                for (const filter of currentFilters) {
+                  switch (filter.type) {
+                    case 'difficulty':
+                      filtered = filtered.filter(a => {
+                        const diff = String(a.difficulty || '').toLowerCase();
+                        return diff === filter.value.toLowerCase() || 
+                               (filter.value === 'Easy' && diff === '1') ||
+                               (filter.value === 'Medium' && diff === '2') ||
+                               (filter.value === 'Hard' && diff === '3') ||
+                               (filter.value === 'Very Hard' && diff === '4');
+                      });
+                      break;
+                    case 'year':
+                      filtered = filtered.filter(a => a.question_name && a.question_name.includes(filter.value));
+                      break;
+                    case 'paper':
+                      filtered = filtered.filter(a => a.paper === filter.value);
+                      break;
+                    case 'topic':
+                      filtered = filtered.filter(a => {
+                        if (Array.isArray(a.related_topics)) {
+                          return a.related_topics.includes(filter.value);
+                        }
+                        return a.parent_topic === filter.value;
+                      });
+                      break;
+                    case 'type':
+                      filtered = filtered.filter(a => {
+                        if (filter.value === 'State') {
+                          return a.question_type === 'state';
+                        } else {
+                          return a.question_type === 'custom';
+                        }
+                      });
+                      break;
+                  }
+                }
+                renderAttempts(filtered);
+              } else {
+                renderAttempts(allAttempts);
+              }
+            }
+            
+            filterDropdown.classList.add('hidden');
+          });
+        });
+      }
+      
+      // ============ Clear Filters Button ============
+      const clearFiltersBtn = document.getElementById('clear-filters-btn');
+      if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+          currentFilters = [];
+          renderAttempts(allAttempts);
+          updatePillActiveStates();
+        });
       }
 
       // ============ Year Stats Management ============
@@ -1143,11 +1490,14 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           const displayYear = year.replace(/\bProject\b/i, 'Project Maths');
           
           const pill = document.createElement('div');
-          pill.className = 'flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 transition-all duration-300';
+          pill.className = 'flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300 transition-all duration-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-600';
+          pill.setAttribute('data-pill-type', 'year');
+          pill.setAttribute('data-pill-value', year);
           pill.innerHTML = `
-            <span class="text-sm font-medium">${displayYear}</span>
+            <span class="text-xs font-medium">${displayYear}</span>
             <span class="text-xs opacity-70">(${completed}/${total})</span>
           `;
+          pill.addEventListener('click', () => applyFilter('year', year));
           container.appendChild(pill);
         });
         
@@ -1276,20 +1626,25 @@ const attemptViews: AttemptView[] = attempts.map(a => {
 
         for (const paper of papers) {
           // Count completed from user's database attempts in grid
-          const grid = document.getElementById('attempts-grid');
+          const grid = document.getElementById('attempt-grid');
           const cards = Array.from(grid?.querySelectorAll('[data-attempt]') || []);
           const unique = new Map<string, Element>();
           cards.forEach(c => { const id = c.getAttribute('data-attempt'); if(id) unique.set(id,c); });
 
+          console.log(`Paper "${paper.label}": Found ${cards.length} cards, ${unique.size} unique`);
+
           let completed = 0;
 
           unique.forEach(card => {
-            const nameEl = card.querySelector('[data-question-name]');
-            const name = nameEl?.getAttribute('data-question-name');
-            if (name && name.includes(paper.pattern)) {
+            // Use data-paper attribute from database
+            const paperAttr = card.getAttribute('data-paper');
+            console.log(`Checking card for paper "${paper.pattern}": data-paper="${paperAttr}"`);
+            if (paperAttr === paper.pattern) {
               completed++;
             }
           });
+
+          console.log(`Paper "${paper.label}": completed=${completed}`);
 
           // Count total from all questions
           const total = allQuestions.filter((q: any) => {
@@ -1297,11 +1652,14 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           }).length;
 
           const pill = document.createElement('div');
-          pill.className = 'flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+          pill.className = 'flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-600';
+          pill.setAttribute('data-pill-type', 'paper');
+          pill.setAttribute('data-pill-value', paper.pattern);
           pill.innerHTML = `
-            <span class="text-sm font-medium">${paper.label}</span>
+            <span class="text-xs font-medium">${paper.label}</span>
             <span class="text-xs opacity-70">(${completed}/${total})</span>
           `;
+          pill.addEventListener('click', () => applyFilter('paper', paper.pattern));
           container.appendChild(pill);
         }
       }
@@ -1352,7 +1710,7 @@ const attemptViews: AttemptView[] = attempts.map(a => {
 
         for (const topic of topics) {
           // Count completed from user's database attempts in grid
-          const grid = document.getElementById('attempts-grid');
+          const grid = document.getElementById('attempt-grid');
           const cards = Array.from(grid?.querySelectorAll('[data-attempt]') || []);
           const unique = new Map<string, Element>();
           cards.forEach(c => { const id = c.getAttribute('data-attempt'); if(id) unique.set(id,c); });
@@ -1382,11 +1740,14 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           });
 
           const pill = document.createElement('div');
-          pill.className = 'flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+          pill.className = 'flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-600';
+          pill.setAttribute('data-pill-type', 'topic');
+          pill.setAttribute('data-pill-value', topic);
           pill.innerHTML = `
-            <span class="text-sm font-medium">${topicLabels[topic] || topic}</span>
+            <span class="text-xs font-medium">${topicLabels[topic] || topic}</span>
             <span class="text-xs opacity-70">(${completed}/${total})</span>
           `;
+          pill.addEventListener('click', () => applyFilter('topic', topic));
           container.appendChild(pill);
         }
 
@@ -1494,25 +1855,25 @@ const attemptViews: AttemptView[] = attempts.map(a => {
 
         for (const type of types) {
           // Count completed from user's database attempts in grid
-          const grid = document.getElementById('attempts-grid');
+          const grid = document.getElementById('attempt-grid');
           const cards = Array.from(grid?.querySelectorAll('[data-attempt]') || []);
           const unique = new Map<string, Element>();
           cards.forEach(c => { const id = c.getAttribute('data-attempt'); if(id) unique.set(id,c); });
 
+          console.log(`Type "${type}": Found ${cards.length} cards, ${unique.size} unique`);
+
           let completed = 0;
 
           unique.forEach(card => {
-            const nameEl = card.querySelector('[data-question-name]');
-            const name = nameEl?.getAttribute('data-question-name');
-            if (name) {
-              // Infer type: State questions have year patterns like "2024", "2023 Deferred", etc.
-              const hasYear = /^\d{4}/.test(name);
-              const isState = hasYear;
-              if ((type === 'State' && isState) || (type === 'Custom' && !isState)) {
-                completed++;
-              }
+            // Use data-question-type attribute from database
+            const questionType = card.getAttribute('data-question-type');
+            console.log(`Checking card for type "${type}": data-question-type="${questionType}"`);
+            if (questionType && questionType.toLowerCase() === type.toLowerCase()) {
+              completed++;
             }
           });
+
+          console.log(`Type "${type}": completed=${completed}`);
 
           // Count total from all questions
           const total = allQuestions.filter((q: any) => {
@@ -1522,22 +1883,20 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           }).length;
 
           const pill = document.createElement('div');
-          pill.className = 'flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+          pill.className = 'flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-slate-600';
+          pill.setAttribute('data-pill-type', 'type');
+          pill.setAttribute('data-pill-value', type);
           pill.innerHTML = `
-            <span class="text-sm font-medium">${type}</span>
+            <span class="text-xs font-medium">${type}</span>
             <span class="text-xs opacity-70">(${completed}/${total})</span>
           `;
+          pill.addEventListener('click', () => applyFilter('type', type));
           container.appendChild(pill);
         }
       }
 
-      // Initial load of all stats
-      updateDifficultyProportions();
-      updateYearStats();
-      updatePaperStats();
-      updateTopicStats();
-      updateTypeStats();
-
+      // Pills will be updated after cards are rendered in renderAttempts()
+      
       // Invalidate cache when new questions might be added (listen to storage events)
       window.addEventListener('storage', (ev) => {
         if (ev.key === 'questionAttempts') {
@@ -1557,15 +1916,6 @@ const attemptViews: AttemptView[] = attempts.map(a => {
         updateTopicStats();
         updateTypeStats();
       };
-
-      // Update stats when topic changes
-      if (topicSelect) {
-        const originalListener = () => {
-          recomputeProgress();
-        };
-        topicSelect.removeEventListener('change', recomputeProgress);
-        topicSelect.addEventListener('change', originalListener);
-      }
     })();
 
     // Profile management
@@ -1574,10 +1924,29 @@ const attemptViews: AttemptView[] = attempts.map(a => {
       const profileLoading = document.getElementById('profile-loading');
       const profileFormContainer = document.getElementById('profile-form-container');
       const nameError = document.getElementById('name-error');
-      const nameSuccess = document.getElementById('name-success');
       
       let currentFirstName = '';
       let currentLastName = '';
+
+      // Toast notification function
+      function showToast(message: string) {
+        const toast = document.getElementById('toast-notification');
+        const toastMessage = document.getElementById('toast-message');
+        
+        if (toast && toastMessage) {
+          toastMessage.textContent = message;
+          
+          // Show toast with animation
+          toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+          toast.classList.add('opacity-100', 'translate-y-0');
+          
+          // Hide after 1.5 seconds
+          setTimeout(() => {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+          }, 1500);
+        }
+      }
 
       // Load user profile
       async function loadProfile() {
@@ -1626,7 +1995,6 @@ const attemptViews: AttemptView[] = attempts.map(a => {
       // Update profile function
       async function updateProfile(firstName: string, lastName: string) {
         if (nameError) nameError.classList.add('hidden');
-        if (nameSuccess) nameSuccess.classList.add('hidden');
         
         if (!firstName.trim()) {
           if (nameError) {
@@ -1658,10 +2026,8 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           currentFirstName = firstName.trim();
           currentLastName = lastName.trim();
           
-          if (nameSuccess) {
-            nameSuccess.textContent = 'Profile updated successfully!';
-            nameSuccess.classList.remove('hidden');
-          }
+          // Show toast notification
+          showToast('Profile updated successfully!');
           
           // Update the header username if it exists
           const authStatus = document.getElementById('auth-status');
@@ -1676,10 +2042,6 @@ const attemptViews: AttemptView[] = attempts.map(a => {
             }
           }
           
-          setTimeout(() => {
-            if (nameSuccess) nameSuccess.classList.add('hidden');
-          }, 3000);
-          
           return true;
         } catch (error) {
           if (nameError) {
@@ -1690,28 +2052,60 @@ const attemptViews: AttemptView[] = attempts.map(a => {
         }
       }
 
-      // Handle blur events on name fields
+      // Handle input changes to show/hide save buttons
       const firstNameInput = document.getElementById('firstName') as HTMLInputElement;
       const lastNameInput = document.getElementById('lastName') as HTMLInputElement;
+      const saveFirstNameBtn = document.getElementById('save-firstName');
+      const saveLastNameBtn = document.getElementById('save-lastName');
       
-      if (firstNameInput) {
-        firstNameInput.addEventListener('blur', async () => {
+      if (firstNameInput && saveFirstNameBtn) {
+        // Show save button when user types
+        firstNameInput.addEventListener('input', () => {
+          const newFirstName = firstNameInput.value.trim();
+          if (newFirstName !== currentFirstName) {
+            saveFirstNameBtn.classList.remove('hidden');
+          } else {
+            saveFirstNameBtn.classList.add('hidden');
+          }
+        });
+        
+        // Handle save button click
+        saveFirstNameBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
           const newFirstName = firstNameInput.value.trim();
           const currentLastNameValue = lastNameInput?.value.trim() || '';
           
           if (newFirstName !== currentFirstName) {
-            await updateProfile(newFirstName, currentLastNameValue);
+            const success = await updateProfile(newFirstName, currentLastNameValue);
+            if (success) {
+              saveFirstNameBtn.classList.add('hidden');
+            }
           }
         });
       }
       
-      if (lastNameInput) {
-        lastNameInput.addEventListener('blur', async () => {
+      if (lastNameInput && saveLastNameBtn) {
+        // Show save button when user types
+        lastNameInput.addEventListener('input', () => {
+          const newLastName = lastNameInput.value.trim();
+          if (newLastName !== currentLastName) {
+            saveLastNameBtn.classList.remove('hidden');
+          } else {
+            saveLastNameBtn.classList.add('hidden');
+          }
+        });
+        
+        // Handle save button click
+        saveLastNameBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
           const newLastName = lastNameInput.value.trim();
           const currentFirstNameValue = firstNameInput?.value.trim() || '';
           
           if (newLastName !== currentLastName) {
-            await updateProfile(currentFirstNameValue, newLastName);
+            const success = await updateProfile(currentFirstNameValue, newLastName);
+            if (success) {
+              saveLastNameBtn.classList.add('hidden');
+            }
           }
         });
       }
