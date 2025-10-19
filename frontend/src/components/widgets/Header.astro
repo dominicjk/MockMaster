@@ -152,7 +152,10 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
           }
   </div>
         <!-- <UserMenu /> --> <!-- TEMPORARILY DISABLED -->
-  <span id="auth-status" class="ml-3 text-sm"></span>
+  <span id="auth-status" class="ml-3 text-sm inline-block min-w-[80px]">
+    <!-- Default login button shown immediately -->
+    <a href="/login" class="inline-block py-2.5 px-5.5 md:px-6 font-semibold shadow-none text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors">Log in</a>
+  </span>
         {
           actions?.length ? (
             <span class="ml-4 rtl:ml-0 rtl:mr-4">
@@ -170,7 +173,8 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
 </header>
 <script>
   // Lightweight client-side auth status indicator with dropdown
-  (async function authStatus(){
+  // Re-run on every page navigation (including view transitions)
+  async function checkAuthStatus(){
     const el = document.getElementById('auth-status');
     if(!el) return;
     
@@ -241,12 +245,18 @@ const currentPath = `/${trimSlash(new URL(Astro.url).pathname)}`;
         });
         
       } else {
-        // Login button styled to match Upgrade button dimensions
+        // Login button styled to match Upgrade button dimensions (keep it visible)
         const rt = encodeURIComponent(window.location.pathname + window.location.search);
-        el.innerHTML = `<a href="/login?returnTo=${rt}" class="inline-block py-2.5 px-5.5 md:px-6 font-semibold shadow-none text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors">Log in</a>`;
-      }
-    } catch {
-      el.textContent = '';
+      el.innerHTML = `<a href="/login?returnTo=${rt}" class="inline-block py-2.5 px-5.5 md:px-6 font-semibold shadow-none text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors">Log in</a>`;
     }
-  })();
+  } catch {
+    // On error, ensure login button remains visible
+    const rt = encodeURIComponent(window.location.pathname + window.location.search);
+    el.innerHTML = `<a href="/login?returnTo=${rt}" class="inline-block py-2.5 px-5.5 md:px-6 font-semibold shadow-none text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors">Log in</a>`;
+  }
+}
+
+  // Run on initial load and on every page navigation (view transitions)
+  document.addEventListener('astro:page-load', checkAuthStatus);
+  checkAuthStatus(); // Also run immediately for initial page load
 </script>

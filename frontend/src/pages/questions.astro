@@ -1,7 +1,9 @@
 ---
 // src/pages/questions.astro
 import Layout from '~/layouts/PageLayout.astro';
-import bundleThumbnail from '~/assets/images/bundle_questions/Geometric_Theoream_PNG.png';
+// Bundle thumbnails - commented out for now, will be used later
+// import bundleThumbnail from '~/assets/images/bundle_questions/Geometric_Theoream_PNG.png';
+// import constructionThumbnail from '~/assets/images/bundle_questions/Constructions_Question.png';
 
 const metadata = {
   title: 'Questions - Browse All Problems',
@@ -23,68 +25,18 @@ const metadata = {
   <div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
     <div class="mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
       
-      <!-- Question Bundles Section (LeetCode style) -->
+      {/* Question Bundles Section - COMMENTED OUT - Will be used later
       <div class="mb-8">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Question Bundles</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Bundle Card 1 -->
-          <div class="flex flex-col gap-2">
-            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400">Prescribed Geometric Proofs</h3>
-            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 hover:shadow-lg transition-shadow cursor-pointer overflow-visible relative h-64">
-              <!-- Thumbnail positioned absolutely to outer card -->
-              <img src={bundleThumbnail.src} alt="Bundle thumbnail" class="absolute bottom-0 left-20 w-48 h-full object-contain object-bottom scale-[1.85] origin-bottom z-10" style="max-height: 110%;" />
-              
-              <div class="flex h-full">
-                <!-- Space for thumbnail -->
-                <div class="w-80 flex-shrink-0"></div>
-                <!-- Content on the right -->
-                <div class="flex-1 p-4 pr-6 flex flex-col justify-end items-end relative z-0">
-                  <div class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400 text-right">
-                    <span>0 Questions</span>
-                    <span>0% Complete</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bundle Card 2 -->
-          <div class="flex flex-col gap-2">
-            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400">Bundle Name</h3>
-            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 p-6 hover:shadow-lg transition-shadow cursor-pointer h-64 flex flex-col justify-between">
-              <div class="flex items-start justify-start mb-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                  </svg>
-                </div>
-              </div>
-              <div class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
-                <span>0 Questions</span>
-                <span>0% Complete</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bundle Card 3 -->
-          <div class="flex flex-col gap-2">
-            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400">Bundle Name</h3>
-            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 p-6 hover:shadow-lg transition-shadow cursor-pointer h-64 flex flex-col justify-between">
-              <div class="flex items-start justify-start mb-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center">
-                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                </div>
-              </div>
-              <div class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
-                <span>0 Questions</span>
-                <span>0% Complete</span>
-              </div>
+        <div class="relative">
+          <div class="overflow-x-auto scrollbar-hide bundle-cards-container" style="scroll-behavior: smooth;">
+            <div class="flex gap-4 pb-2">
+              Bundle cards here...
             </div>
           </div>
         </div>
       </div>
+      */}
 
       <!-- Quick Filter Pills (LeetCode style) -->
       <div class="mb-6">
@@ -144,6 +96,7 @@ const metadata = {
             <select id="sort-filter" class="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-400">
               <option value="year-desc" selected>Newest First</option>
               <option value="year-asc">Oldest First</option>
+              <option value="favourites">⭐ Favourites</option>
               <option value="completed">Completed</option>
               <option value="incomplete">Incomplete</option>
               <option value="state-exams">State Exams</option>
@@ -825,6 +778,10 @@ const metadata = {
             return compareExamQuestions(a, b, false); // false = newest first
           });
           
+        case 'favourites':
+          // Filter to show only favourited questions
+          return sorted.filter(q => userFavourites.has(q.id));
+          
         case 'completed':
           return sorted.filter(q => q.completed);
           
@@ -1000,6 +957,134 @@ const metadata = {
 
     function getFavouriteIds(): string[] { try { return JSON.parse(localStorage.getItem('favouriteQuestions') || '[]'); } catch { return []; } }
     function isFavourite(id: string): boolean { return getFavouriteIds().includes(id); }
+    
+    // Favourites management - Fetch from backend
+    let userFavourites: Set<string> = new Set();
+    
+    async function loadUserFavourites() {
+      try {
+        const response = await fetch('http://localhost:3001/api/favourites', {
+          method: 'GET',
+          credentials: 'include' // Include session cookie
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          userFavourites = new Set(data.favourites.map((f: any) => f.question_id));
+          console.log(`✨ Loaded ${userFavourites.size} favourites from database`);
+          
+          // Update UI to show favourite stars
+          refreshFavouriteStars();
+        } else if (response.status === 401) {
+          // User not authenticated, use localStorage fallback
+          console.log('User not authenticated, using localStorage for favourites');
+          userFavourites = new Set(getFavouriteIds());
+        }
+      } catch (error) {
+        console.error('Error loading favourites:', error);
+        // Fallback to localStorage
+        userFavourites = new Set(getFavouriteIds());
+      }
+    }
+    
+    function refreshFavouriteStars() {
+      // Update all visible star icons
+      const questionRows = document.querySelectorAll('.question-row-enter');
+      questionRows.forEach((row) => {
+        const starContainer = row.querySelector('.relative.flex.items-center.justify-center');
+        if (starContainer) {
+          const questionId = (row as any)._questionId; // We'll store this when creating rows
+          if (questionId && userFavourites.has(questionId)) {
+            // Add star if not present
+            if (!starContainer.querySelector('svg')) {
+              const star = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              star.setAttribute('class', 'absolute -top-2 -left-2 w-3.5 h-3.5 text-yellow-500');
+              star.setAttribute('fill', 'currentColor');
+              star.setAttribute('viewBox', '0 0 24 24');
+              star.setAttribute('aria-label', 'Favourite');
+              star.innerHTML = '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>';
+              starContainer.insertBefore(star, starContainer.firstChild);
+            }
+          } else {
+            // Remove star if present
+            const star = starContainer.querySelector('svg');
+            if (star) star.remove();
+          }
+        }
+      });
+    }
+    
+    async function toggleFavourite(questionId: string, questionData?: any) {
+      const isFav = userFavourites.has(questionId);
+      
+      console.log('🔄 toggleFavourite called', { questionId, isFav, questionData });
+      
+      try {
+        if (isFav) {
+          // Remove from favourites
+          console.log(`🗑️ Attempting to remove ${questionId} from favourites...`);
+          const response = await fetch(`http://localhost:3001/api/favourites/remove/${encodeURIComponent(questionId)}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+          
+          console.log('Response status:', response.status, response.statusText);
+          
+          if (response.ok) {
+            userFavourites.delete(questionId);
+            console.log(`✅ Removed ${questionId} from favourites`);
+          } else {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('❌ Failed to remove favourite:', errorData);
+            throw new Error(errorData.error || 'Failed to remove favourite');
+          }
+        } else {
+          // Add to favourites
+          const payload = {
+            questionId: questionId,
+            questionName: questionData?.name || questionData?.title || '',
+            parentTopic: Array.isArray(questionData?.topic) ? questionData.topic[0] : questionData?.topic || '',
+            difficulty: questionData?.difficulty || '',
+            paper: questionData?.paper || '',
+            year: questionData?.year || '',
+            questionType: questionData?.questionType || 'state'
+          };
+          
+          console.log('➕ Attempting to add to favourites...', payload);
+          
+          const response = await fetch('http://localhost:3001/api/favourites/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+          });
+          
+          console.log('Response status:', response.status, response.statusText);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Server response:', data);
+            userFavourites.add(questionId);
+            console.log(`✅ Added ${questionId} to favourites`);
+          } else {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('❌ Failed to add favourite:', errorData);
+            throw new Error(errorData.error || 'Failed to add favourite');
+          }
+        }
+        
+        // Update UI
+        refreshFavouriteStars();
+        
+        // Also update localStorage as backup
+        localStorage.setItem('favouriteQuestions', JSON.stringify([...userFavourites]));
+        
+      } catch (error) {
+        console.error('❌ Error toggling favourite:', error);
+        alert('Failed to update favourite. Please try again. Check console for details.');
+      }
+    }
+    
     function createQuestionRow(question: Question, index: number): HTMLElement {
       const row = document.createElement('div');
       row.className = 'px-4 py-2 hover:bg-pink-50/50 dark:hover:bg-slate-700/50 cursor-pointer transition-all duration-200 question-row-enter hover:shadow-md hover:scale-[1.01] border-b border-pink-100/30 dark:border-slate-700/30';
@@ -1068,17 +1153,31 @@ const metadata = {
         name = question.name || question.title || `Question ${index + 1}`;
       }
       
-      // Favourited star rendered absolutely so status dot remains centered
-      const favIcon = isFavourite(question.id)
-        ? '<svg class="absolute -top-2 -left-2 w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" aria-label="Favourite"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
-        : '';
+      // Combined status icon: completed/incomplete + favourite
+      const isFav = userFavourites.has(question.id);
+      const isComplete = question.completed;
+      
+      let statusIcon = '';
+      if (isFav && isComplete) {
+        // Favourite + Complete: Green checkmark with yellow star
+        statusIcon = '<div class="flex items-center gap-0.5"><svg class="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg><svg class="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>';
+      } else if (isFav && !isComplete) {
+        // Favourite + Incomplete: Grey circle with yellow star
+        statusIcon = '<div class="flex items-center gap-0.5"><div class="w-3 h-3 rounded-full bg-gray-300 dark:bg-slate-600"></div><svg class="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>';
+      } else if (!isFav && isComplete) {
+        // Complete only: Green checkmark
+        statusIcon = '<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+      } else {
+        // Incomplete only: Grey circle
+        statusIcon = '<div class="w-3.5 h-3.5 rounded-full bg-gray-300 dark:bg-slate-600"></div>';
+      }
+      
       row.innerHTML = `
         <div class="grid grid-cols-12 gap-3 items-center question-grid py-1">
-          <!-- Status Column (with optional favourite star leading) -->
+          <!-- Status Column -->
           <div class="col-span-1 flex justify-center">
-            <div class="relative flex items-center justify-center w-6 h-6">
-              ${favIcon}
-              <div class="w-3 h-3 rounded-full ${question.completed ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'} transition-colors duration-200"></div>
+            <div class="status-icon cursor-pointer hover:scale-110 transition-transform">
+              ${statusIcon}
             </div>
           </div>
           <!-- Title Column -->
@@ -1101,19 +1200,17 @@ const metadata = {
           </div>
         </div>`;
 
+      // Store question ID on the row for later use
+      (row as any)._questionId = question.id;
+      
       // Add click handler to navigate to practice page with specific question
       row.addEventListener('click', (e) => {
-        // Check if clicking on status indicator to toggle completion
         const target = e.target as HTMLElement;
-        if (target.classList.contains('w-3') && target.classList.contains('h-3')) {
+        
+        // Check if clicking on status icon to toggle favourite
+        if (target.classList.contains('status-icon') || target.closest('.status-icon')) {
           e.stopPropagation();
-          toggleQuestionCompleted(question.id, !question.completed);
-          // Update the visual indicator
-          if (question.completed) {
-            target.className = 'w-3 h-3 rounded-full bg-green-500 transition-colors duration-200';
-          } else {
-            target.className = 'w-3 h-3 rounded-full bg-gray-300 dark:bg-slate-600 transition-colors duration-200';
-          }
+          toggleFavourite(question.id, question);
           return;
         }
         
@@ -1325,6 +1422,9 @@ const metadata = {
 
     // Initialize page function
     function initializePage() {
+      // Load favourites from database
+      loadUserFavourites();
+      
       // Load questions when page loads with timeout protection
       loadAllQuestionsWithTimeout();
 
@@ -1600,17 +1700,34 @@ const metadata = {
                 last5Years.push(`${year} Deferred`);
               }
               
+              console.log('🔍 Recent 5 Years filter activated');
+              console.log('Years to match:', last5Years);
+              
               // Reset dropdown filters
               if (topicFilter) topicFilter.value = '';
               if (difficultyFilter) difficultyFilter.value = '';
               
+              // Helper function to extract year from question name/title
+              const extractYear = (nm: unknown) => {
+                const nameStr = String(nm || '');
+                const m = /^([0-9]{4})/.exec(nameStr);
+                return m ? m[1] : '';
+              };
+              
               const recent5YearsQuestions = allQuestions.filter(q => {
-                const year = q.year || '';
-                return last5Years.some(y => 
-                  year.toString().includes(y) || 
-                  year.toString() === y
+                const yearFromName = extractYear(q.name || q.title || '');
+                const matches = last5Years.some(y => 
+                  yearFromName === y || 
+                  yearFromName === y.split(' ')[0] // Match "2024" to "2024 Deferred"
                 );
+                // Debug: log first few matches/misses
+                if (allQuestions.indexOf(q) < 5) {
+                  console.log(`Question name: "${q.name || q.title}" - Year: "${yearFromName}" - Matches: ${matches}`);
+                }
+                return matches;
               });
+              
+              console.log(`Filtered ${recent5YearsQuestions.length} questions out of ${allQuestions.length}`);
               
               // Sort the filtered questions
               filteredQuestions = sortQuestions(recent5YearsQuestions, currentSort);

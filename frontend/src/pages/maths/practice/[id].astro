@@ -93,13 +93,13 @@ const metadata = { title: `Practice - ${id}` };
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Select issue:</label>
         <div class="space-y-2">
           <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Question too blurry">
-            Question too blurry
+            Question Too Blurry
           </button>
           <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Question too hard">
-            Question too hard
+            Question Too Hard
           </button>
           <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Incorrect solution">
-            Incorrect solution
+            Incorrect Solution
           </button>
           <button class="report-reason-btn w-full p-3 text-left border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-reason="Other">
             Other
@@ -342,18 +342,12 @@ const metadata = { title: `Practice - ${id}` };
     function isFavourite(id: string | undefined | null): boolean {
       if (!id) return false; return getFavouriteIds().includes(String(id));
     }
-    function toggleFavourite(id: string | undefined | null) {
-      if (!id) return;
-      const list = getFavouriteIds();
-      const idx = list.indexOf(id);
-      if (idx === -1) list.push(id); else list.splice(idx,1);
-      setFavouriteIds(list);
-      updateFavouriteStar();
-    }
+    // toggleFavourite moved to database-backed version below
     function updateFavouriteStar() {
       const btn = document.getElementById('sidebar-favourite');
-      if (!btn) return;
-      const fav = isFavourite(currentQuestion?.id);
+      if (!btn || !currentQuestion?.id) return;
+      // Check both database Set and localStorage fallback
+      const fav = userFavourites.has(currentQuestion.id) || isFavourite(currentQuestion.id);
       btn.setAttribute('aria-pressed', fav ? 'true' : 'false');
       btn.title = fav ? 'Remove from Favourites' : 'Add to Favourites';
       btn.innerHTML = fav ? `
@@ -365,14 +359,122 @@ const metadata = { title: `Practice - ${id}` };
         </svg>`;
     }
 
+    // Database-backed favourites management
+    let userFavourites: Set<string> = new Set();
+
+    async function loadUserFavourites() {
+      try {
+        const response = await fetch('http://localhost:3001/api/favourites', {
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          userFavourites = new Set(data.favourites.map((f: any) => f.question_id));
+          console.log('✅ Loaded favourites from database:', userFavourites.size);
+          updateFavouriteStar();
+        } else if (response.status === 401) {
+          // Not authenticated, use localStorage fallback
+          console.log('ℹ️ Not authenticated, using localStorage for favourites');
+          userFavourites = new Set(getFavouriteIds());
+          updateFavouriteStar();
+        }
+      } catch (error) {
+        console.error('❌ Error loading favourites:', error);
+        // Fallback to localStorage
+        userFavourites = new Set(getFavouriteIds());
+        updateFavouriteStar();
+      }
+    }
+
+    async function toggleFavourite(questionId: string | null, questionData?: any) {
+      if (!questionId) {
+        console.warn('⚠️ No question ID provided');
+        return;
+      }
+
+      const isFav = userFavourites.has(questionId);
+      
+      console.log('🔄 toggleFavourite called', { questionId, isFav, questionData });
+      
+      try {
+        if (isFav) {
+          // Remove from favourites
+          console.log(`🗑️ Attempting to remove ${questionId} from favourites...`);
+          const response = await fetch(`http://localhost:3001/api/favourites/remove/${encodeURIComponent(questionId)}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+          
+          console.log('Response status:', response.status, response.statusText);
+          
+          if (response.ok) {
+            userFavourites.delete(questionId);
+            console.log(`✅ Removed ${questionId} from favourites`);
+            
+            // Update localStorage as backup
+            const localFavs = getFavouriteIds().filter(id => id !== questionId);
+            setFavouriteIds(localFavs);
+          } else {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('❌ Failed to remove favourite:', errorData);
+            throw new Error(errorData.error || 'Failed to remove favourite');
+          }
+        } else {
+          // Add to favourites
+          const payload = {
+            questionId: questionId,
+            questionName: questionData?.name || questionData?.title || questionData?.displayName || '',
+            parentTopic: Array.isArray(questionData?.topic) ? questionData.topic[0] : questionData?.topic || '',
+            difficulty: questionData?.difficulty || '',
+            paper: questionData?.paper || '',
+            year: questionData?.year || '',
+            questionType: questionData?.questionType || 'state'
+          };
+          
+          console.log('➕ Attempting to add to favourites...', payload);
+          
+          const response = await fetch('http://localhost:3001/api/favourites/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+          });
+          
+          console.log('Response status:', response.status, response.statusText);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Server response:', data);
+            userFavourites.add(questionId);
+            console.log(`✅ Added ${questionId} to favourites`);
+            
+            // Update localStorage as backup
+            const localFavs = getFavouriteIds();
+            if (!localFavs.includes(questionId)) {
+              localFavs.push(questionId);
+              setFavouriteIds(localFavs);
+            }
+          } else {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('❌ Failed to add favourite:', errorData);
+            throw new Error(errorData.error || 'Failed to add favourite');
+          }
+        }
+        
+        // Update UI
+        updateFavouriteStar();
+        
+      } catch (error) {
+        console.error('❌ Error toggling favourite:', error);
+        alert('Failed to update favourite. Please try again. Check console for details.');
+      }
+    }
+
     // Attach favourite toggle listener once DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
-      const favBtn = document.getElementById('sidebar-favourite');
-      if (favBtn) {
-        favBtn.addEventListener('click', () => {
-          toggleFavourite(currentQuestion?.id || null);
-        });
-      }
+      // Load favourites from database on page load
+      loadUserFavourites();
     });
 
     // Client-side formatting functions
@@ -1082,42 +1184,75 @@ const metadata = { title: `Practice - ${id}` };
       if (messageEl) messageEl.textContent = message;
     }
 
-    // Friendly empty / error state renderer (tumbleweed style)
+    // Clean error state with overlay (no results)
     function showFriendlyEmptyState(reason = 'No questions available for the current filters.') {
-      const container = document.getElementById('question-container');
-      if (!container) return;
+      // Hide the sidebar/options when showing error
       const sidebar = document.getElementById('sidebar');
-      let targetHeight = 0;
       if (sidebar) {
-        targetHeight = sidebar.clientHeight;
-      } else {
-        targetHeight = Math.max(500, window.innerHeight - 140);
+        sidebar.style.display = 'none';
       }
-  const hStyle = `min-height:${targetHeight}px;`;
-  const resetUrl = PRACTICE_RESET_URL;
-      container.innerHTML = `
-        <div class="flex flex-col gap-6 items-center justify-center text-center px-8 py-12 w-full bg-white dark:bg-slate-900" style="${hStyle}">
-          <div class="relative w-40 h-40 opacity-70 animate-spin-slow select-none" aria-hidden="true">
-            <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" class="w-full h-full text-gray-300 dark:text-slate-600">
-              <circle cx="60" cy="60" r="38" stroke-width="3" stroke-dasharray="6 10" />
-              <path d="M25 70c10 18 32 30 50 26M32 48c6-14 20-24 33-24 14 0 26 10 32 22M44 92c-6-6-12-14-14-22M90 86c4-8 6-18 4-26M54 30c-4 6-6 10-6 16" stroke-width="2" />
-              <path d="M18 96c18 6 40 8 60 6 14-2 28-6 38-12" stroke-width="2" stroke-dasharray="4 12" />
+      
+      // Hide the question panel
+      const questionPanel = document.getElementById('question-panel');
+      if (questionPanel) {
+        questionPanel.style.marginLeft = '0';
+      }
+      
+      const resetUrl = PRACTICE_RESET_URL;
+      
+      // Create or update error overlay (positioned below navbar, z-index below navbar)
+      let errorOverlay = document.getElementById('error-overlay');
+      if (!errorOverlay) {
+        errorOverlay = document.createElement('div');
+        errorOverlay.id = 'error-overlay';
+        errorOverlay.className = 'fixed inset-0 bg-white dark:bg-slate-900 z-30 flex items-center justify-center';
+        errorOverlay.style.paddingTop = '80px'; // Account for navbar height
+        document.body.appendChild(errorOverlay);
+      }
+      
+      errorOverlay.innerHTML = `
+        <div class="flex flex-col gap-6 items-center justify-center text-center px-8 py-12 max-w-lg">
+          <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
+            <svg class="w-10 h-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">No Questions Found</h2>
-            <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-4">${reason}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-500 max-w-md mx-auto">Try changing your parameters (topic / year / length / custom toggle) to discover more questions.</p>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">No Questions Found</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-2">${reason}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-500">Try changing your filter parameters (topic, year range, question length, or custom toggle) to find available questions.</p>
           </div>
           <div class="flex flex-wrap gap-3 justify-center">
-            <button type="button" id="retry-load" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">Retry</button>
-            <a id="reset-filters-link" data-hard-reset href="${resetUrl}" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-400">Reset Filters</a>
+            <button type="button" id="retry-load" class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+              Retry
+            </button>
+            <a id="reset-filters-link" data-hard-reset href="${resetUrl}" class="px-5 py-2.5 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors">
+              Reset All Filters
+            </a>
           </div>
         </div>`;
       const retryBtn = document.getElementById('retry-load');
       if (retryBtn) {
         retryBtn.addEventListener('click', async () => {
-          showLoadingScreen('Trying again...');
+          // Hide error overlay
+          const errorOverlay = document.getElementById('error-overlay');
+          if (errorOverlay) {
+            errorOverlay.style.display = 'none';
+          }
+          
+          // Show sidebar again
+          const sidebar = document.getElementById('sidebar');
+          if (sidebar) {
+            sidebar.style.display = 'block';
+          }
+          
+          // Restore question panel margin
+          const questionPanel = document.getElementById('question-panel');
+          if (questionPanel) {
+            questionPanel.style.marginLeft = '20rem';
+          }
+          
+          showLoadingScreen('Retrying...');
           try {
             await loadQuestion({});
           } finally {
@@ -1723,10 +1858,13 @@ const metadata = { title: `Practice - ${id}` };
 
       // Favourite (star) button
       const favBtn = document.getElementById('sidebar-favourite');
-      if (favBtn) favBtn.addEventListener('click', () => {
-        // TODO: Implement add/remove favourite logic here
-        favBtn.classList.toggle('text-yellow-400');
-        favBtn.classList.toggle('fill-yellow-400');
+      if (favBtn) favBtn.addEventListener('click', async () => {
+        if (!currentQuestion || !currentQuestion.id) {
+          console.warn('⚠️ No current question to favourite');
+          return;
+        }
+        
+        await toggleFavourite(currentQuestion.id, currentQuestion);
       });
 
       // Tab switching

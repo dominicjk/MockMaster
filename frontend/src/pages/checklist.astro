@@ -1,0 +1,463 @@
+---
+// src/pages/checklist.astro
+import Layout from '~/layouts/PageLayout.astro';
+
+const metadata = {
+  title: 'Skills Checklist - Track Your Progress',
+  description: 'Track your mathematical skills progress across all topics and sub-topics.',
+};
+
+// Checklist data structure with associated question IDs
+const checklistData = [
+  {
+    topic: 'Number Systems',
+    subtopics: [
+      {
+        name: 'Number Sets',
+        skills: [
+          {
+            text: 'I can define the different number sets (natural, irrational, real, complex etc.)',
+            questionIds: ['2019-algebra-q1', '2020-algebra-q2']
+          },
+          {
+            text: 'I can classify numbers into different number sets (natural, irrational, real, complex etc.)',
+            questionIds: ['2019-algebra-q3', '2021-algebra-q1']
+          },
+        ]
+      },
+      {
+        name: 'Arithmetic & Numerical Notation',
+        skills: [
+          {
+            text: 'I understand how to convert numbers into scientific notation.',
+            questionIds: ['2019-algebra-q8']
+          },
+          {
+            text: 'I can solve quadratic inequalities',
+            questionIds: ['2020-algebra-q9', '2021-algebra-q5']
+          },
+          {
+            text: 'I can represent solutions on a number line',
+            questionIds: []
+          },
+        ]
+      }
+    ]
+  },
+  {
+    topic: 'Algebra',
+    subtopics: [
+      {
+        name: 'Simultaneous Equations',
+        skills: [
+          {
+            text: 'I can solve two systems simultaneous equations',
+            questionIds: ['2019-algebra-q10', '2020-algebra-q11']
+          },
+          {
+            text: 'I can solve three systems simultaneous equations',
+            questionIds: ['2021-algebra-q7', '2022-algebra-q2']
+          },
+          {
+            text: 'I can solve simultaneous equations with one linear and one quadratic',
+            questionIds: ['2020-algebra-q12']
+          },
+        ]
+      },
+      {
+        name: 'Quadratic Equations',
+        skills: [
+          {
+            text: 'I can solve quadratic equations by factoring',
+            questionIds: ['2018-algebra-q5', '2020-algebra-q4']
+          },
+          {
+            text: 'I can solve quadratic equations using the quadratic formula',
+            questionIds: ['2019-algebra-q6']
+          },
+          {
+            text: 'I can complete the square',
+            questionIds: ['2020-algebra-q7', '2021-algebra-q8']
+          },
+        ]
+      }
+    ]
+  },
+  {
+    topic: 'Differentiation',
+    subtopics: [
+      {
+        name: 'Basic Differentiation',
+        skills: [
+          {
+            text: 'I can differentiate polynomial functions',
+            questionIds: ['2019-calc-q1', '2020-calc-q2']
+          },
+          {
+            text: 'I can find the gradient at a point',
+            questionIds: ['2021-calc-q1']
+          },
+          {
+            text: 'I can find stationary points',
+            questionIds: ['2020-calc-q3', '2021-calc-q4']
+          },
+        ]
+      },
+      {
+        name: 'Applications',
+        skills: [
+          {
+            text: 'I can find maximum and minimum values',
+            questionIds: ['2019-calc-q5']
+          },
+          {
+            text: 'I can solve optimization problems',
+            questionIds: ['2020-calc-q6', '2021-calc-q7']
+          },
+          {
+            text: 'I can find rates of change',
+            questionIds: []
+          },
+        ]
+      }
+    ]
+  },
+  {
+    topic: 'Integration',
+    subtopics: [
+      {
+        name: 'Basic Integration',
+        skills: [
+          {
+            text: 'I can integrate polynomial functions',
+            questionIds: ['2019-calc-q8', '2020-calc-q9']
+          },
+          {
+            text: 'I can find indefinite integrals',
+            questionIds: ['2021-calc-q10']
+          },
+          {
+            text: 'I can evaluate definite integrals',
+            questionIds: ['2020-calc-q11', '2021-calc-q12']
+          },
+        ]
+      },
+      {
+        name: 'Applications',
+        skills: [
+          {
+            text: 'I can find areas under curves',
+            questionIds: ['2019-calc-q13']
+          },
+          {
+            text: 'I can find areas between curves',
+            questionIds: ['2020-calc-q14']
+          },
+          {
+            text: 'I can solve area problems',
+            questionIds: ['2021-calc-q15', '2022-calc-q3']
+          },
+        ]
+      }
+    ]
+  },
+  {
+    topic: 'Trigonometry',
+    subtopics: [
+      {
+        name: 'Trigonometric Functions',
+        skills: [
+          {
+            text: 'I can work with sine, cosine, and tangent',
+            questionIds: ['2019-trig-q1', '2020-trig-q2']
+          },
+          {
+            text: 'I can solve trigonometric equations',
+            questionIds: ['2021-trig-q3']
+          },
+          {
+            text: 'I can use trigonometric identities',
+            questionIds: ['2020-trig-q4', '2021-trig-q5']
+          },
+        ]
+      },
+      {
+        name: 'Graphs',
+        skills: [
+          {
+            text: 'I can sketch trigonometric graphs',
+            questionIds: ['2019-trig-q6']
+          },
+          {
+            text: 'I can apply transformations to trig graphs',
+            questionIds: ['2020-trig-q7']
+          },
+          {
+            text: 'I can find periods and amplitudes',
+            questionIds: []
+          },
+        ]
+      }
+    ]
+  },
+  {
+    topic: 'Geometry',
+    subtopics: [
+      {
+        name: 'Coordinate Geometry',
+        skills: [
+          {
+            text: 'I can find the equation of a line',
+            questionIds: ['2019-geom-q1', '2020-geom-q2']
+          },
+          {
+            text: 'I can find the distance between two points',
+            questionIds: ['2021-geom-q3']
+          },
+          {
+            text: 'I can find the midpoint of a line segment',
+            questionIds: []
+          },
+        ]
+      },
+      {
+        name: 'Circle Theorems',
+        skills: [
+          {
+            text: 'I can apply circle theorems',
+            questionIds: ['2019-geom-q4', '2020-geom-q5']
+          },
+          {
+            text: 'I can find angles in circles',
+            questionIds: ['2021-geom-q6']
+          },
+          {
+            text: 'I can work with tangents and chords',
+            questionIds: ['2020-geom-q7', '2022-geom-q1']
+          },
+        ]
+      }
+    ]
+  }
+];
+---
+
+<Layout metadata={metadata}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Skills Checklist</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Track your progress across all mathematical topics and skills
+      </p>
+    </div>
+
+    <!-- Progress Summary -->
+    <div class="mb-8 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Overall Progress</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">0 of 0 skills completed</p>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-bold text-gray-600 dark:text-gray-400">0%</div>
+          <p class="text-sm text-gray-500 dark:text-gray-500">Complete</p>
+        </div>
+      </div>
+      <div class="mt-4 w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3">
+        <div class="bg-gray-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Checklist -->
+    <div class="space-y-4 checklist-container">
+      {checklistData.map((topicData, topicIndex) => (
+        <div class="topic-section bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 overflow-hidden">
+          <!-- Topic Header (Level 1) -->
+          <button 
+            class="topic-toggle w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+            data-topic-index={topicIndex}
+          >
+            <div class="flex items-center gap-3">
+              <svg class="topic-chevron w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{topicData.topic}</h2>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              <span class="topic-progress">0 / {topicData.subtopics.reduce((sum, st) => sum + st.skills.length, 0)}</span>
+            </div>
+          </button>
+
+          <!-- Subtopics (Level 2) -->
+          <div class="topic-content hidden">
+            <div class="px-6 pb-4 space-y-3">
+              {topicData.subtopics.map((subtopic, subtopicIndex) => (
+                <div class="subtopic-section border-l-2 border-gray-200 dark:border-slate-600 pl-4">
+                  <!-- Subtopic Header -->
+                  <button 
+                    class="subtopic-toggle w-full py-3 flex items-center justify-between hover:opacity-80 transition-opacity"
+                    data-topic-index={topicIndex}
+                    data-subtopic-index={subtopicIndex}
+                  >
+                    <div class="flex items-center gap-2">
+                      <svg class="subtopic-chevron w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                      </svg>
+                      <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">{subtopic.name}</h3>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                      <span class="subtopic-progress">0 / {subtopic.skills.length}</span>
+                    </div>
+                  </button>
+
+                  <!-- Skills (Level 3) -->
+                  <div class="subtopic-content hidden mt-2 space-y-2">
+                    {subtopic.skills.map((skill, skillIndex) => (
+                      <div class="skill-item">
+                        <label class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+                          <input 
+                            type="checkbox" 
+                            class="skill-checkbox mt-1 w-5 h-5 rounded border-gray-300 dark:border-slate-600 text-gray-600 focus:ring-gray-500 focus:ring-offset-0 accent-gray-600"
+                            data-topic-index={topicIndex}
+                            data-subtopic-index={subtopicIndex}
+                            data-skill-index={skillIndex}
+                          />
+                          <span class="skill-text text-gray-700 dark:text-gray-300 flex-1">{skill.text}</span>
+                        </label>
+                        {skill.questionIds && skill.questionIds.length > 0 && (
+                          <div class="flex flex-wrap gap-2 ml-11 mt-2 pb-2">
+                            {skill.questionIds.map((qid) => (
+                              <a 
+                                href={`/questions/${qid}`}
+                                class="text-xs px-2 py-1 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors"
+                              >
+                                {qid}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <script>
+    // Load saved progress from localStorage
+    function loadProgress() {
+      const saved = localStorage.getItem('checklist-progress');
+      return saved ? JSON.parse(saved) : {};
+    }
+
+    // Save progress to localStorage
+    function saveProgress(progress: Record<string, boolean>) {
+      localStorage.setItem('checklist-progress', JSON.stringify(progress));
+    }
+
+    // Initialize progress
+    const progress = loadProgress();
+
+    // Update progress counters
+    function updateProgress() {
+      const checkboxes = document.querySelectorAll('.skill-checkbox') as NodeListOf<HTMLInputElement>;
+      const totalSkills = checkboxes.length;
+      const completedSkills = Array.from(checkboxes).filter(cb => cb.checked).length;
+      const percentage = totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
+
+      // Update overall progress
+      const overallProgressText = document.querySelector('.mb-8 .text-sm.text-gray-600');
+      const overallProgressPercent = document.querySelector('.mb-8 .text-3xl');
+      const overallProgressBar = document.querySelector('.bg-gray-600') as HTMLElement;
+
+      if (overallProgressText) overallProgressText.textContent = `${completedSkills} of ${totalSkills} skills completed`;
+      if (overallProgressPercent) overallProgressPercent.textContent = `${percentage}%`;
+      if (overallProgressBar) overallProgressBar.style.width = `${percentage}%`;
+
+      // Update topic progress
+      document.querySelectorAll('.topic-section').forEach((section) => {
+        const topicCheckboxes = section.querySelectorAll('.skill-checkbox') as NodeListOf<HTMLInputElement>;
+        const topicCompleted = Array.from(topicCheckboxes).filter(cb => cb.checked).length;
+        const topicTotal = topicCheckboxes.length;
+        const topicProgress = section.querySelector('.topic-progress');
+        if (topicProgress) topicProgress.textContent = `${topicCompleted} / ${topicTotal}`;
+      });
+
+      // Update subtopic progress
+      document.querySelectorAll('.subtopic-section').forEach((section) => {
+        const subtopicCheckboxes = section.querySelectorAll('.skill-checkbox') as NodeListOf<HTMLInputElement>;
+        const subtopicCompleted = Array.from(subtopicCheckboxes).filter(cb => cb.checked).length;
+        const subtopicTotal = subtopicCheckboxes.length;
+        const subtopicProgress = section.querySelector('.subtopic-progress');
+        if (subtopicProgress) subtopicProgress.textContent = `${subtopicCompleted} / ${subtopicTotal}`;
+      });
+    }
+
+    // Toggle topic sections
+    document.querySelectorAll('.topic-toggle').forEach(button => {
+      button.addEventListener('click', () => {
+        const section = button.closest('.topic-section');
+        const content = section?.querySelector('.topic-content');
+        const chevron = button.querySelector('.topic-chevron');
+
+        content?.classList.toggle('hidden');
+        chevron?.classList.toggle('rotate-90');
+      });
+    });
+
+    // Toggle subtopic sections
+    document.querySelectorAll('.subtopic-toggle').forEach(button => {
+      button.addEventListener('click', () => {
+        const section = button.closest('.subtopic-section');
+        const content = section?.querySelector('.subtopic-content');
+        const chevron = button.querySelector('.subtopic-chevron');
+
+        content?.classList.toggle('hidden');
+        chevron?.classList.toggle('rotate-90');
+      });
+    });
+
+    // Handle checkbox changes
+    document.querySelectorAll('.skill-checkbox').forEach(checkbox => {
+      const cb = checkbox as HTMLInputElement;
+      const key = `${cb.dataset.topicIndex}-${cb.dataset.subtopicIndex}-${cb.dataset.skillIndex}`;
+      
+      // Restore saved state
+      if (progress[key]) {
+        cb.checked = true;
+      }
+
+      // Save on change
+      cb.addEventListener('change', () => {
+        progress[key] = cb.checked;
+        saveProgress(progress);
+        updateProgress();
+      });
+    });
+
+    // Initial progress update
+    updateProgress();
+  </script>
+
+  <style>
+    .topic-chevron,
+    .subtopic-chevron {
+      transition: transform 0.2s ease;
+    }
+
+    .rotate-90 {
+      transform: rotate(90deg);
+    }
+
+    .skill-checkbox:checked ~ .skill-text {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+  </style>
+</Layout>

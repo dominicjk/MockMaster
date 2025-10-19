@@ -127,7 +127,20 @@ const attemptViews: AttemptView[] = attempts.map(a => {
 ---
 
 <Layout metadata={{ title: 'Your Profile' }}>
+  <!-- Loading Screen Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Loading Progress</h2>
+      <p class="text-gray-600 dark:text-gray-400" id="loading-message">Fetching your progress data...</p>
+    </div>
+  </div>
+
   <style>
+    #loading-overlay {
+      transition: opacity 0.3s ease;
+    }
+
     /* Custom dropdown styling for rounder appearance */
     #topic-filter option {
       border-radius: 0.5rem;
@@ -532,6 +545,33 @@ const attemptViews: AttemptView[] = attempts.map(a => {
 
   <script>
     (function(){
+      // CRITICAL: Block self-prefetch at the VERY START to prevent freeze
+      const CURRENT_PATH = window.location.pathname;
+      const CURRENT_FULL_URL = window.location.href;
+      console.log('🛡️ EARLY BLOCKER: Installing self-prefetch protection for:', CURRENT_PATH);
+      
+      // Override fetch IMMEDIATELY to block prefetch of current page
+      const _fetch = window.fetch;
+      window.fetch = function(url, options) {
+        const urlStr = typeof url === 'string' ? url : (url instanceof Request ? url.url : String(url));
+        
+        // Check if fetching the current page
+        if (urlStr && (urlStr === CURRENT_FULL_URL || 
+                       urlStr.includes(CURRENT_PATH) || 
+                       urlStr.endsWith(CURRENT_PATH))) {
+          console.log('🚫🚫🚫 EARLY BLOCKER: BLOCKED FETCH TO CURRENT PAGE:', urlStr);
+          // Return empty response immediately to prevent freeze
+          return Promise.resolve(new Response('', { 
+            status: 200, 
+            statusText: 'Blocked',
+            headers: new Headers({ 'Content-Type': 'text/html' })
+          }));
+        }
+        return _fetch.call(this, url, options);
+      };
+      
+      console.log('✅ EARLY BLOCKER: Fetch interceptor installed');
+      
       const grid = document.getElementById('attempt-grid');
       const attemptsContainer = document.getElementById('attempts-container');
       const emptyState = document.getElementById('empty-progress-state');
@@ -546,16 +586,114 @@ const attemptViews: AttemptView[] = attempts.map(a => {
       let currentFilters: Array<{type: string, value: string}> = [];
       let allAttempts: any[] = [];
       
-      // Fetch attempts from database on page load
-      async function fetchAttemptsFromDatabase() {
+      // Auto-refresh timeout variables
+      let loadingTimeout: number | null = null;
+      let warningTimeout: number | null = null;
+      let isLoaded = false;
+
+      function showLoadingMessage(message: string) {
+        const messageEl = document.getElementById('loading-message');
+        if (messageEl) messageEl.textContent = message;
+      }
+
+      function hideLoadingScreen() {
+        console.log('🎭 hideLoadingScreen: Starting...');
+        const overlay = document.getElementById('loading-overlay');
+        console.log('🎭 hideLoadingScreen: Got overlay element:', !!overlay);
+        if (overlay) {
+          console.log('🎭 hideLoadingScreen: Setting opacity to 0...');
+          overlay.style.opacity = '0';
+          console.log('🎭 hideLoadingScreen: Scheduling display none in 300ms...');
+          setTimeout(() => {
+            console.log('🎭 hideLoadingScreen: Setting display to none...');
+            overlay.style.display = 'none';
+            overlay.style.opacity = '1';
+            console.log('🎭 hideLoadingScreen: Display none complete');
+          }, 300);
+        }
+        console.log('🎭 hideLoadingScreen: Calling clearLoadingTimeout...');
+        clearLoadingTimeout();
+        console.log('✅ hideLoadingScreen: Complete');
+      }
+
+      function startLoadingTimeout() {
+        // Show warning after 5 seconds (since we have 2-3 retry attempts)
+        warningTimeout = window.setTimeout(() => {
+          if (!isLoaded) {
+            console.warn('⚠️ Progress data taking longer than expected...');
+            showLoadingMessage("Still loading... This is taking longer than usual.");
+          }
+        }, 5000);
+        
+        // Auto-refresh after 8 seconds (giving retries time to complete)
+        loadingTimeout = window.setTimeout(() => {
+          if (!isLoaded) {
+            console.warn('🔄 Progress taking too long to load, auto-refreshing page...');
+            showLoadingMessage("Taking too long. Refreshing page...");
+            
+            setTimeout(() => {
+              console.log('🔄 Auto-refreshing page now...');
+              window.location.reload();
+            }, 800);
+          } else {
+            if (warningTimeout) clearTimeout(warningTimeout);
+          }
+        }, 8000); // 8 seconds timeout (allows for retries)
+      }
+
+      function clearLoadingTimeout() {
+        console.log('⏰ clearLoadingTimeout: Starting...');
+        if (loadingTimeout) {
+          console.log('⏰ clearLoadingTimeout: Clearing loadingTimeout...');
+          clearTimeout(loadingTimeout);
+          loadingTimeout = null;
+          console.log('⏰ clearLoadingTimeout: loadingTimeout cleared');
+        }
+        if (warningTimeout) {
+          console.log('⏰ clearLoadingTimeout: Clearing warningTimeout...');
+          clearTimeout(warningTimeout);
+          warningTimeout = null;
+          console.log('⏰ clearLoadingTimeout: warningTimeout cleared');
+        }
+        console.log('⏰ clearLoadingTimeout: Setting isLoaded = true...');
+        isLoaded = true;
+        console.log('✅ Progress loading completed successfully, timeout cleared');
+      }
+      
+      // Fetch attempts from database on page load with timeout and retry
+      async function fetchAttemptsFromDatabase(retryCount = 0) {
+        const maxRetries = 2;
+        const timeoutMs = 2000; // 2 seconds timeout
+        
         try {
+          console.log(`🔄 Fetching attempts (attempt ${retryCount + 1}/${maxRetries + 1})...`);
+          
+          // Create abort controller for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => {
+            console.warn('⏱️ Fetch timeout, aborting request...');
+            controller.abort();
+          }, timeoutMs);
+          
           const response = await fetch(`${backendBase}/api/attempts`, {
             credentials: 'include',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
           
           if (!response.ok) {
             console.warn('Failed to fetch attempts from database:', response.status);
+            
+            // Retry on failure if retries available
+            if (retryCount < maxRetries) {
+              console.log(`⚠️ Request failed, retrying in 500ms...`);
+              showLoadingMessage(`Request failed, retrying... (${retryCount + 1}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, 500));
+              return fetchAttemptsFromDatabase(retryCount + 1);
+            }
+            
             // Hide loading, show empty state
             if (loadingSpinner) loadingSpinner.classList.add('hidden');
             if (emptyState) emptyState.classList.remove('hidden');
@@ -563,9 +701,32 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           }
           
           const data = await response.json();
+          console.log(`✅ Successfully fetched ${data.attempts?.length || 0} attempts`);
           return data.attempts || [];
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a timeout/abort error
+          if (error.name === 'AbortError') {
+            console.warn('⏱️ Request timed out after 2 seconds');
+            
+            // Retry on timeout if retries available
+            if (retryCount < maxRetries) {
+              console.log(`🔄 Retrying fetch (attempt ${retryCount + 2}/${maxRetries + 1})...`);
+              showLoadingMessage(`Request timed out, retrying... (${retryCount + 1}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, 300));
+              return fetchAttemptsFromDatabase(retryCount + 1);
+            }
+          }
+          
           console.error('Error fetching attempts:', error);
+          
+          // Final retry if retries available
+          if (retryCount < maxRetries) {
+            console.log(`⚠️ Error occurred, retrying in 500ms...`);
+            showLoadingMessage(`Connection error, retrying... (${retryCount + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return fetchAttemptsFromDatabase(retryCount + 1);
+          }
+          
           // Hide loading, show empty state
           if (loadingSpinner) loadingSpinner.classList.add('hidden');
           if (emptyState) emptyState.classList.remove('hidden');
@@ -705,36 +866,108 @@ const attemptViews: AttemptView[] = attempts.map(a => {
           grid.appendChild(card);
         });
         
-        console.log(`Finished appending ${attempts.length} cards to grid`);
-        console.log(`Cards now in grid: ${grid.querySelectorAll('[data-attempt]').length}`);
+        console.log(`✅ Finished appending ${attempts.length} cards to grid`);
+        console.log(`📊 Cards now in grid: ${grid.querySelectorAll('[data-attempt]').length}`);
         
+        console.log('🎬 STEP 1: About to hide loading screen...');
+        // Hide loading screen immediately after cards are rendered
+        // This prevents UI freezing while statistics compute
+        hideLoadingScreen();
+        console.log('✅ STEP 1 COMPLETE: Loading screen hidden');
+        
+        console.log('🎬 STEP 2: About to recompute progress...');
         // Recompute progress after rendering
         recomputeProgress();
+        console.log('✅ STEP 2 COMPLETE: Progress recomputed');
         
+        console.log('🎬 STEP 3: Waiting for animation frame...');
         // Wait for DOM to be fully updated before counting pills
         await new Promise(resolve => requestAnimationFrame(resolve));
+        console.log('✅ STEP 3 COMPLETE: Animation frame done');
         
+        console.log('🎬 STEP 4: Verifying cards in DOM...');
         // Verify cards are in DOM
         const testGrid = document.getElementById('attempt-grid');
         const testCards = testGrid?.querySelectorAll('[data-attempt]').length || 0;
-        console.log(`Before pill updates: ${testCards} cards in DOM`);
+        console.log(`✅ STEP 4 COMPLETE: ${testCards} cards verified in DOM`);
         
-        // Update all pill statistics after cards are rendered
-        await updateDifficultyProportions();
-        await updateYearStats();
-        await updatePaperStats();
-        await updateTopicStats();
-        await updateTypeStats();
+        console.log('🎬 STEP 5: Scheduling statistics updates...');
+        // Update all pill statistics in background (non-blocking)
+        // Use setTimeout to prevent blocking the main thread
+        setTimeout(async () => {
+          console.log('📊 Stats Update: Starting updateDifficultyProportions...');
+          await updateDifficultyProportions();
+          console.log('✅ Stats Update: updateDifficultyProportions done');
+          
+          console.log('📊 Stats Update: Starting updateYearStats...');
+          await updateYearStats();
+          console.log('✅ Stats Update: updateYearStats done');
+          
+          console.log('📊 Stats Update: Starting updatePaperStats...');
+          await updatePaperStats();
+          console.log('✅ Stats Update: updatePaperStats done');
+          
+          console.log('📊 Stats Update: Starting updateTopicStats...');
+          await updateTopicStats();
+          console.log('✅ Stats Update: updateTopicStats done');
+          
+          console.log('📊 Stats Update: Starting updateTypeStats...');
+          await updateTypeStats();
+          console.log('✅ Stats Update: updateTypeStats done');
+          
+          console.log('🎉 ALL STATISTICS UPDATED SUCCESSFULLY');
+        }, 0);
+        console.log('✅ STEP 5 COMPLETE: Statistics scheduled');
         
+        console.log('🎬 STEP 6: Scheduling overflow detection...');
         // Apply overflow detection for notes
-        setTimeout(() => applyOverflowDetection(), 50);
+        setTimeout(() => {
+          console.log('📝 Overflow detection: Starting...');
+          applyOverflowDetection();
+          console.log('✅ Overflow detection: Complete');
+        }, 50);
+        console.log('✅ STEP 6 COMPLETE: Overflow detection scheduled');
+        
+        console.log('🎉 RENDER ATTEMPTS FUNCTION COMPLETE - EXITING');
       }
       
-      // Load attempts from database on page load
-      fetchAttemptsFromDatabase().then(attempts => {
-        allAttempts = attempts;
-        renderAttempts(attempts);
+      // Load attempts from database on page load with timeout protection
+      async function loadProgressData() {
+        console.log('🚀 LOAD PROGRESS DATA: Starting...');
+        startLoadingTimeout();
+        
+        try {
+          console.log('📡 LOAD PROGRESS DATA: Fetching attempts from database...');
+          const attempts = await fetchAttemptsFromDatabase();
+          console.log(`📡 LOAD PROGRESS DATA: Received ${attempts.length} attempts`);
+          
+          allAttempts = attempts;
+          
+          console.log('🎨 LOAD PROGRESS DATA: About to render attempts...');
+          await renderAttempts(attempts);
+          console.log('✅ LOAD PROGRESS DATA: Render complete');
+          
+          console.log('⏰ LOAD PROGRESS DATA: Clearing timeout...');
+          clearLoadingTimeout();
+          console.log('✅ LOAD PROGRESS DATA: Timeout cleared');
+          
+          console.log('🎉 LOAD PROGRESS DATA: FUNCTION COMPLETE - EXITING');
+        } catch (error) {
+          console.error('❌ Failed to load progress data:', error);
+          hideLoadingScreen();
+          throw error;
+        }
+      }
+      
+      // Initialize on page load
+      console.log('🌟 PROGRESS PAGE SCRIPT: Initializing...');
+      loadProgressData().then(() => {
+        console.log('🎊 PROGRESS PAGE SCRIPT: loadProgressData completed successfully');
+      }).catch((error) => {
+        console.error('💥 PROGRESS PAGE SCRIPT: loadProgressData failed with error:', error);
       });
+      console.log('🌟 PROGRESS PAGE SCRIPT: loadProgressData called (async)');
+      console.log('📜 PROGRESS PAGE SCRIPT: Reached end of script block');
       
       // Filter attempts by criterion
       function applyFilter(type: string, value: string) {
@@ -1950,27 +2183,35 @@ const attemptViews: AttemptView[] = attempts.map(a => {
 
       // Load user profile
       async function loadProfile() {
+        console.log('👤 loadProfile: Starting...');
         try {
+          console.log('👤 loadProfile: Fetching profile from API...');
           const response = await fetch(`${API_BASE}/me`, {
             credentials: 'include'
           });
+          console.log('👤 loadProfile: Received response, status:', response.status);
           
           if (!response.ok) {
             if (response.status === 401) {
+              console.log('👤 loadProfile: Unauthorized, redirecting to login...');
               window.location.href = '/login?returnTo=/progress';
               return;
             }
             throw new Error('Failed to load profile');
           }
           
+          console.log('👤 loadProfile: Parsing JSON...');
           const data = await response.json();
           const user = data.user;
+          console.log('👤 loadProfile: User data received:', user?.firstName, user?.email);
           
           // Populate form fields
+          console.log('👤 loadProfile: Getting form elements...');
           const firstNameInput = document.getElementById('firstName') as HTMLInputElement;
           const lastNameInput = document.getElementById('lastName') as HTMLInputElement;
           const emailInput = document.getElementById('email') as HTMLInputElement;
           
+          console.log('👤 loadProfile: Populating form fields...');
           if (firstNameInput) {
             firstNameInput.value = user.firstName || '';
             currentFirstName = user.firstName || '';
@@ -1980,12 +2221,15 @@ const attemptViews: AttemptView[] = attempts.map(a => {
             currentLastName = user.lastName || '';
           }
           if (emailInput) emailInput.value = user.email || '';
+          console.log('👤 loadProfile: Form fields populated');
           
           // Show profile form
+          console.log('👤 loadProfile: Showing profile form...');
           if (profileLoading) profileLoading.classList.add('hidden');
           if (profileFormContainer) profileFormContainer.classList.remove('hidden');
+          console.log('✅ loadProfile: Complete');
         } catch (error) {
-          console.error('Error loading profile:', error);
+          console.error('❌ loadProfile: Error loading profile:', error);
           if (profileLoading) {
             profileLoading.innerHTML = '<p class="text-red-500">Failed to load profile</p>';
           }
@@ -2111,8 +2355,121 @@ const attemptViews: AttemptView[] = attempts.map(a => {
       }
 
       // Load profile on page load
-      loadProfile();
+      console.log('👤 PROFILE: About to call loadProfile()...');
+      loadProfile().then(() => {
+        console.log('✅ PROFILE: loadProfile() completed successfully');
+      }).catch((error) => {
+        console.error('❌ PROFILE: loadProfile() failed:', error);
+      });
+      console.log('👤 PROFILE: loadProfile() called (async)');
+      
+      console.log('🏁 REACHED END OF MAIN SCRIPT IIFE');
     })();
+    
+    console.log('🏁🏁🏁 REACHED ABSOLUTE END OF SCRIPT TAG');
+    
+    // CRITICAL FIX: Prevent Astro from prefetching the current page (causes infinite loop/freeze)
+    console.log('🚫 Setting up prefetch blocker...');
+    const currentPath = window.location.pathname;
+    
+    // MOST IMPORTANT: Intercept fetch requests to prevent prefetch of current page
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      const url = args[0];
+      const urlString = typeof url === 'string' ? url : url instanceof URL ? url.href : url?.url;
+      
+      if (urlString && (urlString.includes(currentPath) || urlString.endsWith(currentPath))) {
+        // Check if this is a prefetch request (usually HEAD or GET with specific headers)
+        const options = args[1] || {};
+        const isPrefetch = options.method === 'HEAD' || 
+                          (options.headers && 
+                           (options.headers['Purpose'] === 'prefetch' || 
+                            options.headers['purpose'] === 'prefetch' ||
+                            options.headers['X-Purpose'] === 'prefetch'));
+        
+        if (isPrefetch || urlString === window.location.href) {
+          console.log('🚫 FETCH INTERCEPTED: Blocked prefetch request to:', urlString);
+          // Return a resolved promise with minimal response
+          return Promise.resolve(new Response('', { 
+            status: 200, 
+            statusText: 'OK (Blocked by self-prefetch protection)',
+            headers: new Headers()
+          }));
+        }
+      }
+      
+      return originalFetch.apply(this, args);
+    };
+    console.log('✅ Fetch interceptor installed');
+    
+    // Function to block self-referencing prefetch links
+    function blockSelfPrefetch() {
+      let blockedCount = 0;
+      // Remove prefetch attribute from links to current page
+      document.querySelectorAll(`a[href*="${currentPath}"]`).forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPath || href === currentPath + '/' || href === '/' + currentPath) {
+          link.removeAttribute('data-astro-prefetch');
+          link.style.pointerEvents = 'none'; // Prevent click on self-link
+          blockedCount++;
+        }
+      });
+      
+      // Also remove any prefetch link tags that point to current page
+      document.querySelectorAll('link[rel="prefetch"]').forEach(prefetchLink => {
+        const href = prefetchLink.getAttribute('href');
+        if (href && (href.includes(currentPath) || href.endsWith(currentPath))) {
+          console.log('🚫 REMOVING PREFETCH LINK TAG:', href);
+          prefetchLink.remove();
+          blockedCount++;
+        }
+      });
+      
+      if (blockedCount > 0) {
+        console.log(`🚫 BLOCKED: Removed ${blockedCount} self-referencing prefetch(es)`);
+      }
+    }
+    
+    // Run immediately
+    blockSelfPrefetch();
+    
+    // Watch for dynamically added prefetch links using MutationObserver
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeName === 'LINK' && node.getAttribute('rel') === 'prefetch') {
+              const href = node.getAttribute('href');
+              if (href && (href.includes(currentPath) || href.endsWith(currentPath))) {
+                console.log('🚫 INTERCEPTED: Removing dynamically added prefetch link:', href);
+                node.remove();
+              }
+            }
+          });
+        }
+      }
+    });
+    
+    // Observe head for link tag additions
+    observer.observe(document.head, { childList: true, subtree: true });
+    
+    // Also intercept Astro's prefetch event
+    document.addEventListener('astro:before-preparation', (event) => {
+      if (event.detail && event.detail.to) {
+        const targetPath = new URL(event.detail.to, window.location.origin).pathname;
+        if (targetPath === currentPath || targetPath === currentPath + '/') {
+          console.log('🚫 EVENT BLOCKED: Prevented prefetch of current page:', targetPath);
+          event.preventDefault();
+        }
+      }
+    });
+    
+    // Run blocker again after a short delay to catch late additions
+    setTimeout(blockSelfPrefetch, 100);
+    setTimeout(blockSelfPrefetch, 500);
+    setTimeout(blockSelfPrefetch, 1000);
+    
+    console.log('✅ Prefetch blocker setup complete with MutationObserver');
   </script>
   <style>
     .notes-clamped { max-height: 4.5rem; overflow: hidden; position: relative; }

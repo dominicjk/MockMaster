@@ -15,6 +15,7 @@ import contactRouter from './routes/contact.js';
 import authRouter from './routes/auth.js';
 import userAuthRouter from './routes/userAuth.js';
 import attemptsRouter from './routes/attempts.js';
+import favouritesRouter from './routes/favourites.js';
 import cookieParser from 'cookie-parser';
 import UserModel from './database/users.js';
 import EmailService from './services/emailService.js';
@@ -107,6 +108,7 @@ app.use('/api/topics', topicsRouter);
 app.use('/api/auth', authRouter); // JWT-based auth endpoints (email code login + optional Google OAuth)
 app.use('/api/user-auth', userAuthRouter); // Session-based auth endpoints (signup/login with bcrypt)
 app.use('/api/attempts', attemptsRouter); // Database-backed attempts management
+app.use('/api/favourites', favouritesRouter); // Favourites management
 app.use('/api/progress', progressRouter);
 app.use('/api/contact', contactRouter);
 

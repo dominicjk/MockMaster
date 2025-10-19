@@ -1,63 +1,54 @@
 ---
 import Layout from '~/layouts/PageLayout.astro';
-const metadata = { title: 'Login / Sign Up' };
+const metadata = { title: 'Sign In' };
 ---
 
 <Layout metadata={metadata}>
-  <main class="max-w-md mx-auto mt-16 p-6 bg-white dark:bg-slate-800 rounded-xl shadow">
-    <h1 class="text-2xl font-bold mb-4" id="form-title">Sign Up</h1>
-    <p class="text-sm text-gray-600 dark:text-gray-400 mb-6" id="form-description">
-      Create your account with email and password
-    </p>
+  <main class="max-w-md mx-auto mt-16 mb-16 p-6 bg-white dark:bg-slate-800 rounded-xl shadow">
+    <h1 class="text-2xl font-bold mb-6 text-center" id="form-title">Sign In</h1>
 
     <!-- Signup/Login Form -->
     <form id="auth-form" class="space-y-4">
-      <!-- Name field (only for signup) -->
-      <div id="name-fields">
+      <!-- Name fields (only for signup) -->
+      <div id="name-fields" class="hidden">
         <div>
-          <label class="block text-sm font-medium mb-1" for="first-name">First Name</label>
           <input 
             id="first-name" 
             type="text" 
-            required 
             class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
-            placeholder="John"
+            placeholder="First Name"
           />
         </div>
         <div class="mt-3">
-          <label class="block text-sm font-medium mb-1" for="last-name">Last Name</label>
           <input 
             id="last-name" 
             type="text" 
-            required 
             class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
-            placeholder="Doe"
+            placeholder="Last Name"
           />
         </div>
       </div>
 
       <!-- Email -->
       <div>
-        <label class="block text-sm font-medium mb-1" for="email">Email</label>
         <input 
           id="email" 
           type="email" 
           required 
           class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
-          placeholder="you@example.com"
+          placeholder="Email"
         />
       </div>
 
       <!-- Password -->
       <div>
-        <label class="block text-sm font-medium mb-1" for="password">Password</label>
         <input 
           id="password" 
           type="password" 
           required 
           minlength="8"
           class="w-full px-3 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700" 
-          placeholder="Minimum 8 characters"
+          placeholder="Password"
         />
       </div>
 
@@ -65,70 +56,69 @@ const metadata = { title: 'Login / Sign Up' };
       <button 
         type="submit" 
         id="submit-btn"
-        class="w-full py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700"
+        class="w-full py-2 rounded bg-gray-300 dark:bg-slate-600 text-gray-800 dark:text-gray-100 font-medium hover:bg-gray-400 dark:hover:bg-slate-500"
       >
-        Sign Up
+        Sign In
       </button>
 
-      <!-- Toggle between login/signup -->
-      <button 
-        type="button" 
-        id="toggle-mode"
-        class="w-full py-2 rounded bg-gray-200 dark:bg-slate-600 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-slate-500"
-      >
-        Already have an account? Log in
-      </button>
+      <!-- Toggle text (below button) -->
+      <p class="text-center text-sm text-gray-600 dark:text-gray-400 mt-3">
+        <span id="toggle-text">Need an account? </span>
+        <a href="#" id="toggle-link" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">Sign Up</a>
+      </p>
     </form>
 
     <!-- Messages -->
     <div id="messages" class="mt-4 text-sm"></div>
   </main>
 
-  <script>
+  <script is:inline>
     const API_BASE = 'http://localhost:3001/api/user-auth';
     
     // Form elements
-    const form = document.getElementById('auth-form') as HTMLFormElement;
-    const formTitle = document.getElementById('form-title') as HTMLHeadingElement;
-    const formDescription = document.getElementById('form-description') as HTMLParagraphElement;
-    const nameFields = document.getElementById('name-fields') as HTMLDivElement;
-    const firstNameInput = document.getElementById('first-name') as HTMLInputElement;
-    const lastNameInput = document.getElementById('last-name') as HTMLInputElement;
-    const emailInput = document.getElementById('email') as HTMLInputElement;
-    const passwordInput = document.getElementById('password') as HTMLInputElement;
-    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-    const toggleBtn = document.getElementById('toggle-mode') as HTMLButtonElement;
-    const messages = document.getElementById('messages') as HTMLDivElement;
+    const form = document.getElementById('auth-form');
+    const formTitle = document.getElementById('form-title');
+    const nameFields = document.getElementById('name-fields');
+    const firstNameInput = document.getElementById('first-name');
+    const lastNameInput = document.getElementById('last-name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const submitBtn = document.getElementById('submit-btn');
+    const toggleText = document.getElementById('toggle-text');
+    const toggleLink = document.getElementById('toggle-link');
+    const messages = document.getElementById('messages');
     
     // Get return URL from query params
     const returnTo = new URLSearchParams(window.location.search).get('returnTo') || '/';
     
-    // Track current mode
-    let mode: 'signup' | 'login' = 'signup';
+    // Track current mode - default to login
+    let mode = 'login';
     
     // Display message helper
-    function showMessage(msg: string, type: 'success' | 'error' | 'info' = 'info') {
-      const bgColor = type === 'error' ? 'bg-red-100 text-red-700' : 
-                      type === 'success' ? 'bg-green-100 text-green-700' : 
-                      'bg-blue-100 text-blue-800';
-      messages.innerHTML = `<div class="p-3 rounded ${bgColor}">${msg}</div>`;
+    function showMessage(msg, type = 'info') {
+      const textColor = type === 'error' ? 'text-red-600 dark:text-red-400' : 
+                        type === 'success' ? 'text-green-600 dark:text-green-400' : 
+                        'text-blue-600 dark:text-blue-400';
+      messages.innerHTML = `<div class="${textColor}">${msg}</div>`;
     }
     
     // Toggle between signup and login
     function updateMode() {
       if (mode === 'signup') {
         formTitle.textContent = 'Sign Up';
-        formDescription.textContent = 'Create your account with email and password';
         submitBtn.textContent = 'Sign Up';
-        toggleBtn.textContent = 'Already have an account? Log in';
+        toggleText.textContent = 'Have an account? ';
+        toggleLink.textContent = 'Sign In';
+        passwordInput.placeholder = 'Password (min 8 characters)';
         nameFields.classList.remove('hidden');
         firstNameInput.required = true;
         lastNameInput.required = true;
       } else {
-        formTitle.textContent = 'Log In';
-        formDescription.textContent = 'Welcome back! Enter your credentials';
-        submitBtn.textContent = 'Log In';
-        toggleBtn.textContent = 'Need to create an account? Sign up';
+        formTitle.textContent = 'Sign In';
+        submitBtn.textContent = 'Sign In';
+        toggleText.textContent = 'Need an account? ';
+        toggleLink.textContent = 'Sign Up';
+        passwordInput.placeholder = 'Password';
         nameFields.classList.add('hidden');
         firstNameInput.required = false;
         lastNameInput.required = false;
@@ -136,8 +126,9 @@ const metadata = { title: 'Login / Sign Up' };
       messages.innerHTML = '';
     }
     
-    // Toggle mode button
-    toggleBtn.addEventListener('click', () => {
+    // Toggle mode link
+    toggleLink.addEventListener('click', (e) => {
+      e.preventDefault();
       mode = mode === 'signup' ? 'login' : 'signup';
       updateMode();
     });
@@ -157,14 +148,17 @@ const metadata = { title: 'Login / Sign Up' };
         return;
       }
       
-      if (password.length < 8) {
-        showMessage('Password must be at least 8 characters', 'error');
-        return;
-      }
-      
-      if (mode === 'signup' && (!firstName || !lastName)) {
-        showMessage('Please enter your first and last name', 'error');
-        return;
+      // Only validate password length for signup
+      if (mode === 'signup') {
+        if (password.length < 8) {
+          showMessage('Password must be at least 8 characters', 'error');
+          return;
+        }
+        
+        if (!firstName || !lastName) {
+          showMessage('Please enter your first and last name', 'error');
+          return;
+        }
       }
       
       // Disable form while processing
@@ -187,28 +181,24 @@ const metadata = { title: 'Login / Sign Up' };
         const data = await response.json();
         
         if (!response.ok) {
-          showMessage(data.error || 'Authentication failed', 'error');
+          // Show appropriate error message based on mode
+          const errorMessage = mode === 'login' 
+            ? 'The e-mail address and/or password you specified are not correct' 
+            : (data.error || 'Authentication failed');
+          showMessage(errorMessage, 'error');
           submitBtn.disabled = false;
-          submitBtn.textContent = mode === 'signup' ? 'Sign Up' : 'Log In';
+          submitBtn.textContent = mode === 'signup' ? 'Sign Up' : 'Sign In';
           return;
         }
         
-        // Success!
-        showMessage(
-          mode === 'signup' ? 'Account created! Redirecting...' : 'Login successful! Redirecting...',
-          'success'
-        );
-        
-        // Redirect after short delay
-        setTimeout(() => {
-          window.location.href = returnTo;
-        }, 1000);
+        // Success - redirect immediately (keep loading state visible)
+        window.location.href = returnTo;
         
       } catch (error) {
         console.error('Auth error:', error);
         showMessage('Network error. Please try again.', 'error');
         submitBtn.disabled = false;
-        submitBtn.textContent = mode === 'signup' ? 'Sign Up' : 'Log In';
+        submitBtn.textContent = mode === 'signup' ? 'Sign Up' : 'Sign In';
       }
     });
     
