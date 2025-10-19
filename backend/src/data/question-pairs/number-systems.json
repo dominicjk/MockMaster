@@ -2,7 +2,7 @@
     {
         "id": "num-1001",
         "question-type":"lc", 
-        "topic": ["number-systems"],
+        "topic": ["number"],
         "level": "lc",
         "difficulty": 1,
         "timeLimitMinute": 6,
@@ -16,7 +16,7 @@
     {
         "id": "num-1003",
         "question-type":"lc", 
-        "topic": ["number-systems", "algebra"],
+        "topic": ["number", "algebra"],
         "level": "lc",
         "difficulty": 2,
         "timeLimitMinute": 10,
