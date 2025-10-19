@@ -1,0 +1,408 @@
+---
+// src/pages/maths/practice-all/[id].astro
+import Layout from '~/layouts/PageLayout.astro';
+
+export function getStaticPaths() {
+  const ids = [
+    'all', 'mixed', 'start',
+    'number','algebra','complex-numbers','sequences-and-series','financial-maths','induction',
+    'functions','differentiation','integration','the-line','the-circle','geometry','trigonometry',
+    'probability','statistics',
+  ];
+  return ids.map((id) => ({ params: { id } }));
+}
+
+const { id } = Astro.params;
+const metadata = { title: `All Questions - ${id}` };
+---
+
+<Layout metadata={metadata}>
+  <!-- Loading Screen -->
+  <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">Loading Questions</h2>
+      <p class="text-gray-600 dark:text-gray-400" id="loading-message">Fetching your questions...</p>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="min-h-screen bg-gray-50 dark:bg-slate-900 py-8">
+    <div class="max-w-5xl mx-auto px-4">
+      <!-- Header -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 sticky top-0 z-10">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 id="page-title" class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              All Questions
+            </h1>
+            <p id="questions-count" class="text-gray-600 dark:text-gray-400">
+              Loading questions...
+            </p>
+          </div>
+          <a href="/maths/practice" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Practice
+          </a>
+        </div>
+      </div>
+
+      <!-- Questions Container -->
+      <div id="questions-container" class="space-y-8">
+        <!-- Questions will be dynamically inserted here -->
+      </div>
+
+      <!-- Load More Button -->
+      <div id="load-more-container" class="text-center mt-8 hidden">
+        <button id="load-more-btn" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+          Load More Questions
+        </button>
+      </div>
+
+      <!-- End Message -->
+      <div id="end-message" class="text-center py-8 text-gray-600 dark:text-gray-400 hidden">
+        <p class="text-lg font-semibold">You've reached the end!</p>
+        <p class="mt-2">All questions have been loaded.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const YEAR_FIRST = 2024;
+    const YEAR_LAST = 2012;
+
+    interface Question {
+      id: string;
+      name?: string;
+      displayName?: string;
+      title?: string;
+      topic?: string | string[];
+      difficulty?: string | number;
+      paper?: string;
+      year?: string;
+      questionTifUrl?: string;
+      questionPngUrl?: string;
+      questionImageUrl?: string;
+      solutionTifUrl?: string;
+      solutionPngUrl?: string;
+      [key: string]: unknown;
+    }
+
+    let allQuestions: Question[] = [];
+    const displayedQuestions: Question[] = [];
+    let currentPage = 1;
+    const QUESTIONS_PER_PAGE = 20;
+    let totalQuestions = 0;
+    let hasMorePages = false;
+    let isLoading = false;
+
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const topics = urlParams.get('topics') || 'all';
+    const examOnly = urlParams.get('examOnly') === 'true';
+    const longOnly = urlParams.get('longOnly') === 'true';
+    const shortOnly = urlParams.get('shortOnly') === 'true';
+    const yearFrom = urlParams.get('yearFrom') || String(YEAR_FIRST);
+    const yearTo = urlParams.get('yearTo') || String(YEAR_LAST);
+    const customOnly = urlParams.get('customOnly') === 'true';
+
+    // Fetch questions from backend with pagination
+    async function fetchQuestions(page: number = 1) {
+      if (isLoading) return;
+      isLoading = true;
+      
+      try {
+        const queryParams = new URLSearchParams({
+          topics: topics,
+          examOnly: String(examOnly),
+          longOnly: String(longOnly),
+          shortOnly: String(shortOnly),
+          yearFrom: yearFrom,
+          yearTo: yearTo,
+          customOnly: String(customOnly),
+          count: '1000', // Request many questions to enable pagination
+          page: String(page),
+          pageSize: String(QUESTIONS_PER_PAGE)
+        });
+
+        console.log(`📡 Fetching page ${page} with params:`, queryParams.toString());
+
+        const response = await fetch(`http://localhost:3001/api/questions?${queryParams.toString()}`, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch questions: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        // Check if response has pagination metadata (new format)
+        if (data.questions && data.pagination) {
+          const newQuestions = data.questions || [];
+          allQuestions = [...allQuestions, ...newQuestions];
+          totalQuestions = data.pagination.total;
+          hasMorePages = data.pagination.hasMore;
+          
+          console.log(`✅ Loaded page ${page}: ${newQuestions.length} questions (total: ${allQuestions.length}/${totalQuestions})`);
+        } else {
+          // Fallback for old format (array response)
+          const questions = Array.isArray(data) ? data : [];
+          allQuestions = [...allQuestions, ...questions];
+          totalQuestions = allQuestions.length;
+          hasMorePages = false;
+          
+          console.log(`✅ Loaded ${questions.length} questions (legacy format)`);
+        }
+        
+        // Update UI
+        if (page === 1) {
+          hideLoadingScreen();
+          updateHeader();
+        }
+        displayNewQuestions();
+        updateLoadMoreButton();
+        
+      } catch (error) {
+        console.error('❌ Error fetching questions:', error);
+        if (page === 1) {
+          hideLoadingScreen();
+          showError('Failed to load questions. Please try again.');
+        } else {
+          alert('Failed to load more questions. Please try again.');
+        }
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    function hideLoadingScreen() {
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    function updateHeader() {
+      const countEl = document.getElementById('questions-count');
+      if (countEl) {
+        const displayText = totalQuestions > 0 
+          ? `${allQuestions.length} of ${totalQuestions} questions loaded`
+          : `${allQuestions.length} question${allQuestions.length !== 1 ? 's' : ''} loaded`;
+        countEl.textContent = displayText;
+      }
+    }
+
+    function displayNewQuestions() {
+      const container = document.getElementById('questions-container');
+      if (!container) return;
+
+      // Get questions that haven't been displayed yet
+      const startIndex = displayedQuestions.length;
+      const newQuestions = allQuestions.slice(startIndex);
+      
+      newQuestions.forEach((question) => {
+        const questionCard = createQuestionCard(question);
+        container.appendChild(questionCard);
+        displayedQuestions.push(question);
+      });
+    }
+
+    function updateLoadMoreButton() {
+      const loadMoreContainer = document.getElementById('load-more-container');
+      const endMessage = document.getElementById('end-message');
+      
+      if (hasMorePages && !isLoading) {
+        // Show load more button
+        if (loadMoreContainer) loadMoreContainer.classList.remove('hidden');
+        if (endMessage) endMessage.classList.add('hidden');
+      } else if (!hasMorePages) {
+        // Show end message
+        if (loadMoreContainer) loadMoreContainer.classList.add('hidden');
+        if (endMessage && allQuestions.length > 0) endMessage.classList.remove('hidden');
+      }
+    }
+
+    function loadMoreQuestions() {
+      if (isLoading || !hasMorePages) return;
+      currentPage++;
+      fetchQuestions(currentPage);
+    }
+
+    function createQuestionCard(question: Question): HTMLElement {
+      const card = document.createElement('div');
+      card.className = 'question-card bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden';
+
+      // Extract metadata
+      const questionName = question.displayName || question.name || question.title || question.id || 'Unknown Question';
+      const difficulty = formatDifficulty(question.difficulty);
+      const topic = Array.isArray(question.topic) ? question.topic.join(', ') : question.topic || '';
+      const paper = question.paper || '';
+      const year = question.year || '';
+      
+      // Get image URL
+      const imageUrl = question.questionImageUrl || question.questionPngUrl || question.questionTifUrl || '';
+
+      // Build metadata HTML
+      card.innerHTML = `
+        <!-- Metadata Header -->
+        <div class="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-700 dark:to-slate-600 border-b border-gray-200 dark:border-slate-600">
+          <div class="flex items-start justify-between gap-4">
+            <!-- Title and Badges -->
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                ${questionName}
+              </h3>
+              <div class="flex flex-wrap items-center gap-2 text-sm">
+                ${topic ? `<span class="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-full font-medium">${formatTopicName(topic)}</span>` : ''}
+                ${difficulty ? `<span class="px-2 py-1 ${difficulty.color} rounded-full font-medium">${difficulty.label}</span>` : ''}
+                ${paper ? `<span class="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-full">${paper}</span>` : ''}
+                ${year ? `<span class="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-full">${year}</span>` : ''}
+              </div>
+            </div>
+            
+            <!-- Action Buttons - Top Right -->
+            <div class="flex items-center gap-2">
+              <button class="favourite-btn p-2 rounded-lg hover:bg-white/50 dark:hover:bg-slate-800/50 transition" data-question-id="${question.id}" title="Add to Favourites">
+                <svg class="w-6 h-6 text-gray-400 hover:text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </button>
+              <button class="view-solution-btn px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg font-semibold transition text-sm whitespace-nowrap" data-question-id="${question.id}">
+                View Solution
+              </button>
+              <button class="practice-single-btn px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 rounded-lg font-semibold transition text-sm whitespace-nowrap" data-question-id="${question.id}">
+                Practice This
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Question Image -->
+        <div class="p-6">
+          ${imageUrl ? `
+            <img 
+              src="http://localhost:3001${imageUrl}" 
+              alt="${questionName}"
+              class="question-image w-full h-auto rounded-lg border border-gray-200 dark:border-slate-600"
+              data-question-id="${question.id}"
+              data-topic="${topic}"
+              data-showing="question"
+              loading="lazy"
+            />
+          ` : `
+            <div class="w-full h-64 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+              <p class="text-gray-500 dark:text-gray-400">Question image not available</p>
+            </div>
+          `}
+        </div>
+      `;
+
+      return card;
+    }
+
+    function formatDifficulty(difficulty: string | number | undefined): { label: string; color: string } | null {
+      if (!difficulty) return null;
+      
+      const difficultyNum = typeof difficulty === 'string' ? parseInt(difficulty) : difficulty;
+      const normalized = Math.min(Math.max(difficultyNum, 1), 3);
+      
+      const config: { [key: number]: { label: string; color: string } } = {
+        1: { label: 'Easy', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+        2: { label: 'Medium', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300' },
+        3: { label: 'Hard', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' }
+      };
+      
+      return config[normalized] || null;
+    }
+
+    function formatTopicName(topic: string): string {
+      return topic
+        .split(',')[0]
+        .replace(/[-_]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    function showError(message: string) {
+      const container = document.getElementById('questions-container');
+      if (container) {
+        container.innerHTML = `
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+            <p class="text-red-800 dark:text-red-200 font-semibold">${message}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Event delegation for dynamic buttons
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      
+      // Load More button
+      if (target.id === 'load-more-btn' || target.closest('#load-more-btn')) {
+        loadMoreQuestions();
+      }
+      
+      // Practice Single Question button
+      if (target.classList.contains('practice-single-btn') || target.closest('.practice-single-btn')) {
+        const btn = target.classList.contains('practice-single-btn') ? target : target.closest('.practice-single-btn');
+        const questionId = btn?.getAttribute('data-question-id');
+        if (questionId) {
+          window.location.href = `/maths/practice/all?q=${questionId}`;
+        }
+      }
+      
+      // View Solution button
+      if (target.classList.contains('view-solution-btn') || target.closest('.view-solution-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const btn = (target.classList.contains('view-solution-btn') ? target : target.closest('.view-solution-btn')) as HTMLButtonElement;
+        console.log('View solution clicked!', btn);
+        
+        const questionId = btn?.getAttribute('data-question-id');
+        console.log('Question ID:', questionId);
+        
+        if (questionId && btn) {
+          const card = btn.closest('.question-card') as HTMLElement;
+          console.log('Card found:', card);
+          
+          const img = card?.querySelector('.question-image') as HTMLImageElement;
+          console.log('Image found:', img);
+          
+          if (img && card) {
+            const topic = img.dataset.topic;
+            const showing = img.dataset.showing || 'question';
+            
+            console.log('Toggle solution:', { questionId, topic, showing });
+            
+            if (showing === 'question') {
+              // Switch to solution
+              const solutionUrl = `http://localhost:3001/questions/${topic}/answers/${questionId}-ans.png`;
+              console.log('Loading solution:', solutionUrl);
+              img.src = solutionUrl;
+              img.dataset.showing = 'solution';
+              btn.textContent = 'View Question';
+            } else {
+              // Switch back to question
+              const questionUrl = `http://localhost:3001/questions/${topic}/questions/${questionId}.png`;
+              console.log('Loading question:', questionUrl);
+              img.src = questionUrl;
+              img.dataset.showing = 'question';
+              btn.textContent = 'View Solution';
+            }
+          } else {
+            console.error('Image or card not found!');
+          }
+        } else {
+          console.error('Question ID or button not found!');
+        }
+      }
+    });
+
+    // Initialize on page load
+    fetchQuestions(currentPage);
+  </script>
+</Layout>

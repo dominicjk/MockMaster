@@ -364,22 +364,29 @@ const paper2Topics: Topic[] = [
         const selected = getSelectedTopics();
         const opts = getOptions();
         
-        if (selected.length === 0) {
-          // No topics selected = all questions (use a general topic like 'all')
-          const safeOpts = Object.fromEntries(Object.entries(opts).filter(([,v]) => v !== '' && v !== undefined));
-          const query = new URLSearchParams({ topics: 'all', ...safeOpts });
-          window.location.href = `/maths/practice/all?${query.toString()}`;
-        } else if (selected.length === 1) {
-          // Single topic selected = go directly to that topic
-          const safeOpts2 = Object.fromEntries(Object.entries(opts).filter(([,v]) => v !== '' && v !== undefined));
-          const query = new URLSearchParams({ ...safeOpts2 });
-          window.location.href = `/maths/practice/${selected[0].id}?${query.toString()}`;
-        } else {
-          // Multiple topics selected = use comma-separated list
-          const safeOpts3 = Object.fromEntries(Object.entries(opts).filter(([,v]) => v !== '' && v !== undefined));
-          const query = new URLSearchParams({ topics: selected.map((t) => t.id).join(','), ...safeOpts3 });
-          window.location.href = `/maths/practice/mixed?${query.toString()}`;
+        // Determine the topic ID for routing
+        let topicId = 'all';
+        if (selected.length === 1) {
+          topicId = selected[0].id;
+        } else if (selected.length > 1) {
+          topicId = 'mixed';
         }
+        
+        // Build query parameters
+        const queryParams = {
+          topicId: topicId,
+          topics: selected.length === 0 ? 'all' : selected.map((t) => t.id).join(','),
+          ...opts
+        };
+        
+        // Filter out empty/undefined values
+        const safeParams = Object.fromEntries(
+          Object.entries(queryParams).filter(([,v]) => v !== '' && v !== undefined)
+        );
+        
+        // Navigate to mode selector page
+        const query = new URLSearchParams(safeParams);
+        window.location.href = `/maths/practice-mode-selector?${query.toString()}`;
       });
     }
 

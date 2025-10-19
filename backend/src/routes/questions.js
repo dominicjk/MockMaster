@@ -296,9 +296,12 @@ router.get('/', async (req, res) => {
       prioritized = [...subsetGroup, ...supersetGroup];
     }
 
-    // Handle count parameter for multiple questions
+    // Handle count parameter for multiple questions with pagination
     const requestedCount = count ? parseInt(count) : 1;
-    if (requestedCount > 1) {
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const pageSize = req.query.pageSize ? parseInt(req.query.pageSize) : requestedCount;
+    
+    if (requestedCount > 1 || page > 1) {
       // Multi-select honoring prioritization while introducing randomness within tiers
       const selection = [];
       const subsetSlice = [];
@@ -313,20 +316,39 @@ router.get('/', async (req, res) => {
       } else {
         supersetSlice.push(...prioritized); // no prioritization context
       }
-      const shuffleInPlace = (arr) => arr.sort(() => Math.random() - 0.5);
-      shuffleInPlace(subsetSlice);
-      shuffleInPlace(supersetSlice);
-      for (const q of [...subsetSlice, ...supersetSlice]) {
-        if (selection.length >= requestedCount) break;
-        selection.push(q);
+      
+      // Only shuffle if we're doing random selection (count < total)
+      // For pagination (getting all), preserve order
+      if (requestedCount < prioritized.length) {
+        const shuffleInPlace = (arr) => arr.sort(() => Math.random() - 0.5);
+        shuffleInPlace(subsetSlice);
+        shuffleInPlace(supersetSlice);
       }
-      const selectedQuestions = selection;
-      const result = await Promise.all(selectedQuestions.map(async q => {
+      
+      const allAvailable = [...subsetSlice, ...supersetSlice];
+      
+      // Apply pagination
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedQuestions = allAvailable.slice(startIndex, endIndex);
+      
+      const result = await Promise.all(paginatedQuestions.map(async q => {
         const s = serializeQuestion(q);
         if (req.userId) s.completedForUser = await UserModel.hasCompleted(req.userId, q.id);
         return s;
       }));
-      res.json(result);
+      
+      // Return with pagination metadata
+      res.json({
+        questions: result,
+        pagination: {
+          page: page,
+          pageSize: pageSize,
+          total: allAvailable.length,
+          totalPages: Math.ceil(allAvailable.length / pageSize),
+          hasMore: endIndex < allAvailable.length
+        }
+      });
     } else {
       // Single selection: pick from highest-priority tier if available
       let pool = prioritized;

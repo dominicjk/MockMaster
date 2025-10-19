@@ -1,0 +1,176 @@
+---
+// src/pages/maths/practice-mode-selector.astro
+import Layout from '~/layouts/PageLayout.astro';
+
+const metadata = { 
+  title: 'Select Practice Mode',
+  description: 'Choose how you want to practice your questions'
+};
+---
+
+<Layout metadata={metadata}>
+  <div class="min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-4xl w-full">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          Select Practice Mode
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400">
+          Choose how you'd like to practice your questions
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Standard Practice Mode -->
+        <div id="standard-mode-card" class="group cursor-pointer">
+          <div class="bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-2xl p-8 transition-all hover:border-blue-500 hover:shadow-xl hover:-translate-y-1">
+            <div class="flex flex-col items-center text-center">
+              <!-- Icon -->
+              <div class="w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <svg class="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              
+              <!-- Title -->
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                Practice Mode
+              </h2>
+              
+              <!-- Description -->
+              <p class="text-gray-600 dark:text-gray-400 mb-6">
+                Focus on one question at a time with timer, zoom controls, and detailed options panel.
+              </p>
+              
+              <!-- Features -->
+              <ul class="text-sm text-left text-gray-700 dark:text-gray-300 space-y-2 mb-6">
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Timer and progress tracking</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Zoom and navigation controls</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Save attempts with notes</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Best for focused practice</span>
+                </li>
+              </ul>
+              
+              <!-- Button -->
+              <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                Select Practice Mode
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- All Questions Mode -->
+        <div id="all-questions-mode-card" class="group cursor-pointer">
+          <div class="bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-2xl p-8 transition-all hover:border-purple-500 hover:shadow-xl hover:-translate-y-1">
+            <div class="flex flex-col items-center text-center">
+              <!-- Icon -->
+              <div class="w-20 h-20 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <svg class="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                </svg>
+              </div>
+              
+              <!-- Title -->
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                All Questions Mode
+              </h2>
+              
+              <!-- Description -->
+              <p class="text-gray-600 dark:text-gray-400 mb-6">
+                View all questions in a scrollable list. Perfect for reviewing multiple questions quickly.
+              </p>
+              
+              <!-- Features -->
+              <ul class="text-sm text-left text-gray-700 dark:text-gray-300 space-y-2 mb-6">
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>See all questions at once</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Scroll through questions smoothly</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Quick overview and comparison</span>
+                </li>
+                <li class="flex items-start">
+                  <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Best for exam review</span>
+                </li>
+              </ul>
+              
+              <!-- Button -->
+              <button class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                Select All Questions Mode
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Get URL parameters from the current page
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Extract practice session parameters
+    const topics = urlParams.get('topics') || 'all';
+    const examOnly = urlParams.get('examOnly') || 'false';
+    const longOnly = urlParams.get('longOnly') || 'false';
+    const shortOnly = urlParams.get('shortOnly') || 'false';
+    const yearFrom = urlParams.get('yearFrom') || '2024';
+    const yearTo = urlParams.get('yearTo') || '2012';
+    const customOnly = urlParams.get('customOnly') || 'false';
+    const topicId = urlParams.get('topicId') || 'all';
+
+    // Build query string for both modes
+    const queryString = `topics=${topics}&examOnly=${examOnly}&longOnly=${longOnly}&shortOnly=${shortOnly}&yearFrom=${yearFrom}&yearTo=${yearTo}&customOnly=${customOnly}`;
+
+    // Handle Standard Practice Mode selection
+    const standardCard = document.getElementById('standard-mode-card');
+    if (standardCard) {
+      standardCard.addEventListener('click', () => {
+        // Navigate to standard practice page
+        window.location.href = `/maths/practice/${topicId}?${queryString}`;
+      });
+    }
+
+    // Handle All Questions Mode selection
+    const allQuestionsCard = document.getElementById('all-questions-mode-card');
+    if (allQuestionsCard) {
+      allQuestionsCard.addEventListener('click', () => {
+        // Navigate to all questions view
+        window.location.href = `/maths/practice-all/${topicId}?${queryString}`;
+      });
+    }
+  </script>
+</Layout>
