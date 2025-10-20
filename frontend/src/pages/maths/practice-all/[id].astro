@@ -97,6 +97,130 @@ const metadata = { title: `All Questions - ${id}` };
     let totalQuestions = 0;
     let hasMorePages = false;
     let isLoading = false;
+    
+    // Favourites tracking
+    const userFavourites = new Set<string>();
+    let favouritesLoaded = false;
+
+    // Load user favourites from backend
+    async function loadUserFavourites() {
+      try {
+        const response = await fetch('http://localhost:3001/api/favourites', {
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          userFavourites.clear();
+          
+          // Handle both array and object responses
+          const favourites = Array.isArray(data) ? data : (data.favourites || []);
+          
+          favourites.forEach((fav: { question_id: string } | string) => {
+            // Handle both object with question_id and plain string
+            const questionId = typeof fav === 'string' ? fav : fav.question_id;
+            if (questionId) {
+              userFavourites.add(questionId);
+            }
+          });
+          
+          favouritesLoaded = true;
+          console.log('✅ Loaded favourites:', userFavourites.size, [...userFavourites]);
+        } else if (response.status === 401) {
+          console.log('⚠️ User not authenticated, using localStorage for favourites');
+          // Fallback to localStorage
+          const stored = localStorage.getItem('favouriteQuestions');
+          if (stored) {
+            const favs = JSON.parse(stored);
+            favs.forEach((id: string) => userFavourites.add(id));
+          }
+          favouritesLoaded = true;
+        }
+      } catch (error) {
+        console.error('❌ Error loading favourites:', error);
+        favouritesLoaded = true;
+      }
+    }
+
+    // Toggle favourite status
+    async function toggleFavourite(questionId: string, questionData?: Question) {
+      const isFavourited = userFavourites.has(questionId);
+      
+      try {
+        if (isFavourited) {
+          // Remove favourite
+          const response = await fetch(`http://localhost:3001/api/favourites/remove/${questionId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+          
+          if (response.ok) {
+            userFavourites.delete(questionId);
+            updateFavouriteStars();
+            console.log('🗑️ Removed from favourites:', questionId);
+          } else {
+            throw new Error('Failed to remove favourite');
+          }
+        } else {
+          // Add favourite
+          const payload = {
+            questionId,
+            name: questionData?.name || questionData?.displayName || questionId,
+            topic: Array.isArray(questionData?.topic) ? questionData.topic[0] : questionData?.topic || '',
+            difficulty: questionData?.difficulty || '',
+            paper: questionData?.paper || '',
+            year: questionData?.year || '',
+            type: questionData?.['question-type'] || questionData?.['isShort'] ? 'short' : 'long'
+          };
+          
+          const response = await fetch('http://localhost:3001/api/favourites/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload),
+          });
+          
+          if (response.ok) {
+            userFavourites.add(questionId);
+            updateFavouriteStars();
+            console.log('⭐ Added to favourites:', questionId);
+          } else {
+            throw new Error('Failed to add favourite');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error toggling favourite:', error);
+        // Fallback to localStorage
+        if (isFavourited) {
+          userFavourites.delete(questionId);
+        } else {
+          userFavourites.add(questionId);
+        }
+        localStorage.setItem('favouriteQuestions', JSON.stringify([...userFavourites]));
+        updateFavouriteStars();
+      }
+    }
+
+    // Update favourite star icons
+    function updateFavouriteStars() {
+      document.querySelectorAll('.favourite-btn').forEach((btn) => {
+        const questionId = btn.getAttribute('data-question-id');
+        if (questionId) {
+          const svg = btn.querySelector('svg');
+          if (svg) {
+            if (userFavourites.has(questionId)) {
+              svg.setAttribute('fill', 'currentColor');
+              svg.classList.remove('text-gray-400');
+              svg.classList.add('text-yellow-500');
+            } else {
+              svg.setAttribute('fill', 'none');
+              svg.classList.remove('text-yellow-500');
+              svg.classList.add('text-gray-400');
+            }
+          }
+        }
+      });
+    }
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -206,6 +330,9 @@ const metadata = { title: `All Questions - ${id}` };
         container.appendChild(questionCard);
         displayedQuestions.push(question);
       });
+      
+      // Update favourite stars after adding new questions
+      updateFavouriteStars();
     }
 
     function updateLoadMoreButton() {
@@ -345,12 +472,33 @@ const metadata = { title: `All Questions - ${id}` };
         loadMoreQuestions();
       }
       
+      // Favourite button
+      if (target.closest('.favourite-btn')) {
+        const btn = target.closest('.favourite-btn') as HTMLElement;
+        const questionId = btn.getAttribute('data-question-id');
+        if (questionId) {
+          // Find the question data
+          const questionData = allQuestions.find(q => q.id === questionId);
+          toggleFavourite(questionId, questionData);
+        }
+      }
+      
       // Practice Single Question button
       if (target.classList.contains('practice-single-btn') || target.closest('.practice-single-btn')) {
         const btn = target.classList.contains('practice-single-btn') ? target : target.closest('.practice-single-btn');
         const questionId = btn?.getAttribute('data-question-id');
         if (questionId) {
-          window.location.href = `/maths/practice/all?q=${questionId}`;
+          // Create sequence of all question IDs for navigation
+          const allQuestionIds = allQuestions.map(q => q.id).filter(Boolean);
+          
+          // Store sequence in sessionStorage for the practice page to use
+          sessionStorage.setItem('practiceSequence', JSON.stringify({
+            ids: allQuestionIds,
+            source: 'all-questions-view'
+          }));
+          
+          // Navigate to practice page with sequence parameter
+          window.location.href = `/maths/practice/all?q=${questionId}&sequence=session`;
         }
       }
       
@@ -382,16 +530,63 @@ const metadata = { title: `All Questions - ${id}` };
               // Switch to solution
               const solutionUrl = `http://localhost:3001/questions/${topic}/answers/${questionId}-ans.png`;
               console.log('Loading solution:', solutionUrl);
-              img.src = solutionUrl;
-              img.dataset.showing = 'solution';
-              btn.textContent = 'View Question';
+              
+              // Create a temporary image to test if solution exists
+              const tempImg = new Image();
+              tempImg.onload = () => {
+                // Solution exists, display it
+                img.src = solutionUrl;
+                img.dataset.showing = 'solution';
+                btn.textContent = 'View Question';
+              };
+              tempImg.onerror = () => {
+                // Solution doesn't exist, show error message
+                const imageContainer = img.parentElement;
+                if (imageContainer) {
+                  imageContainer.innerHTML = `
+                    <div class="w-full min-h-[400px] bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center p-8">
+                      <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Solution Not Available</h3>
+                        <p class="text-gray-500 dark:text-gray-400">Solution does not exist for this question</p>
+                      </div>
+                    </div>
+                  `;
+                }
+                btn.textContent = 'View Question';
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+              };
+              tempImg.src = solutionUrl;
             } else {
               // Switch back to question
               const questionUrl = `http://localhost:3001/questions/${topic}/questions/${questionId}.png`;
               console.log('Loading question:', questionUrl);
-              img.src = questionUrl;
+              
+              // Restore the original image
+              const imageContainer = img.parentElement;
+              if (imageContainer && !imageContainer.querySelector('img')) {
+                // Recreate the image element if it was replaced with error message
+                imageContainer.innerHTML = `
+                  <img 
+                    src="${questionUrl}" 
+                    alt="Question"
+                    class="question-image w-full h-auto rounded-lg border border-gray-200 dark:border-slate-600"
+                    data-question-id="${questionId}"
+                    data-topic="${topic}"
+                    data-showing="question"
+                    loading="lazy"
+                  />
+                `;
+              } else {
+                img.src = questionUrl;
+              }
               img.dataset.showing = 'question';
               btn.textContent = 'View Solution';
+              btn.disabled = false;
+              btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
           } else {
             console.error('Image or card not found!');
@@ -403,6 +598,11 @@ const metadata = { title: `All Questions - ${id}` };
     });
 
     // Initialize on page load
-    fetchQuestions(currentPage);
+    async function init() {
+      await loadUserFavourites();
+      await fetchQuestions(currentPage);
+    }
+    
+    init();
   </script>
 </Layout>

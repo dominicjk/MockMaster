@@ -216,7 +216,12 @@ const metadata = { title: `Practice - ${id}` };
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
-        <button id="save-attempt" class="w-full pill-action" type="button">Save Attempt</button>
+        <button id="save-attempt" class="w-full p-3 rounded-lg bg-transparent border border-gray-300 dark:border-slate-600 text-gray-400 hover:text-blue-500 hover:bg-blue-50 hover:border-blue-500 dark:hover:bg-blue-900/20 dark:hover:border-blue-500 transition-colors flex items-center justify-center gap-2" type="button" title="Save Attempt">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="text-sm">Save Attempt</span>
+        </button>
       </div>
 
       <!-- Report Section -->
