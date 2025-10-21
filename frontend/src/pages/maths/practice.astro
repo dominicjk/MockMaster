@@ -1,21 +1,5 @@
 ---
 import Layout from '~/layouts/PageLayout.astro';
-import PracticeTopicCard from '~/components/maths/PracticeTopicCard.astro';
-import NumberSystemsIconUrl from '~/assets/images/subject-icons/math-icons/NumberSystems.svg?url';
-import AlgebraIconUrl from '~/assets/images/subject-icons/math-icons/Algebra.svg?url';
-import SequencesAndSeriesIconUrl from '~/assets/images/subject-icons/math-icons/SequencesAndSeries.svg?url';
-import FinancialMathsIconUrl from '~/assets/images/subject-icons/math-icons/FinancialMaths.svg?url';
-import InductionIconUrl from '~/assets/images/subject-icons/math-icons/Induction.svg?url';
-import ComplexNumbersIconUrl from '~/assets/images/subject-icons/math-icons/ComplexNumbers.svg?url';
-import TheLineIconUrl from '~/assets/images/subject-icons/math-icons/TheLine.svg?url';
-import ProbabilityIconUrl from '~/assets/images/subject-icons/math-icons/Probability.svg?url';
-import StatisticsIconUrl from '~/assets/images/subject-icons/math-icons/Statistics.svg?url';
-import TrigonometryIconUrl from '~/assets/images/subject-icons/math-icons/Trigonometry.svg?url';
-import TheCircleIconUrl from '~/assets/images/subject-icons/math-icons/Circle.svg?url';
-import GeometryIconUrl from '~/assets/images/subject-icons/math-icons/Geometry.svg?url';
-import DifferentiationIconUrl from '~/assets/images/subject-icons/math-icons/Differentiation.svg?url';  
-import IntegrationIconUrl from '~/assets/images/subject-icons/math-icons/Integration.svg?url';
-import FunctionsIconUrl from '~/assets/images/subject-icons/math-icons/Functions.svg?url';
 
 const metadata = {
   title: 'Maths - Practice',
@@ -24,180 +8,219 @@ const metadata = {
 interface Topic {
   id: string;
   title: string;
-  iconSrc?: string;
+  description: string;
+  category: 'Paper 1' | 'Paper 2';
 }
 
-const paper1Topics: Topic[] = [
-  { id: 'number', title: 'Number Systems', iconSrc: NumberSystemsIconUrl },
-  { id: 'algebra', title: 'Algebra', iconSrc: AlgebraIconUrl },
-  { id: 'complex-numbers', title: 'Complex Numbers', iconSrc: ComplexNumbersIconUrl },
-  { id: 'sequences-and-series', title: 'Sequences & Series', iconSrc: SequencesAndSeriesIconUrl },
-  { id: 'financial-maths', title: 'Financial Maths', iconSrc: FinancialMathsIconUrl },
-  { id: 'induction', title: 'Induction', iconSrc: InductionIconUrl },
-  { id: 'functions', title: 'Functions', iconSrc: FunctionsIconUrl },
-  { id: 'differentiation', title: 'Differentiation', iconSrc: DifferentiationIconUrl },
-  { id: 'integration', title: 'Integration', iconSrc: IntegrationIconUrl },
+const topics: Topic[] = [
+  // Paper 1 Topics
+  { id: 'number', title: 'Number Systems', description: 'Number sets, scientific notation, and arithmetic', category: 'Paper 1' },
+  { id: 'algebra', title: 'Algebra', description: 'Equations, simultaneous equations, and polynomials', category: 'Paper 1' },
+  { id: 'complex-numbers', title: 'Complex Numbers', description: 'Imaginary numbers, operations, and argand diagrams', category: 'Paper 1' },
+  { id: 'sequences-and-series', title: 'Sequences & Series', description: 'Arithmetic and geometric sequences, summation', category: 'Paper 1' },
+  { id: 'financial-maths', title: 'Financial Maths', description: 'Interest, loans, annuities, and investments', category: 'Paper 1' },
+  { id: 'induction', title: 'Induction', description: 'Mathematical induction and proof techniques', category: 'Paper 1' },
+  { id: 'functions', title: 'Functions', description: 'Domain, range, composition, and transformations', category: 'Paper 1' },
+  { id: 'differentiation', title: 'Differentiation', description: 'Derivatives, rates of change, and optimization', category: 'Paper 1' },
+  { id: 'integration', title: 'Integration', description: 'Antiderivatives, areas under curves, and definite integrals', category: 'Paper 1' },
+  
+  // Paper 2 Topics
+  { id: 'the-line', title: 'The Line', description: 'Linear equations, slopes, and distance formulas', category: 'Paper 2' },
+  { id: 'the-circle', title: 'The Circle', description: 'Circle equations, tangents, and intersections', category: 'Paper 2' },
+  { id: 'geometry', title: 'Geometry', description: 'Shapes, theorems, and coordinate geometry', category: 'Paper 2' },
+  { id: 'trigonometry', title: 'Trigonometry', description: 'Sin, cos, tan, identities, and equations', category: 'Paper 2' },
+  { id: 'probability', title: 'Probability', description: 'Events, conditional probability, and distributions', category: 'Paper 2' },
+  { id: 'statistics', title: 'Statistics', description: 'Data analysis, mean, median, and standard deviation', category: 'Paper 2' },
 ];
 
-const paper2Topics: Topic[] = [
-  { id: 'the-line', title: 'Coord. Geometry > The Line', iconSrc: TheLineIconUrl },
-  { id: 'the-circle', title: 'Coord. Geometry > The Circle', iconSrc: TheCircleIconUrl },
-  { id: 'geometry', title: 'Geometry', iconSrc: GeometryIconUrl },
-  { id: 'trigonometry', title: 'Trigonometry', iconSrc: TrigonometryIconUrl },
-  { id: 'probability', title: 'Probability', iconSrc: ProbabilityIconUrl },
-  { id: 'statistics', title: 'Statistics', iconSrc: StatisticsIconUrl },
-];
+const paper1Topics = topics.filter(t => t.category === 'Paper 1');
+const paper2Topics = topics.filter(t => t.category === 'Paper 2');
 ---
 <Layout metadata={metadata}>
-  <!-- Light pink background section -->
-  <div class="bg-pink-50 dark:bg-pink-950/20">
-    <section class="py-12">
-      <div class="w-[80%] max-w-6xl mx-auto px-4 md:px-6">
-        <div class="text-center mb-8">
-          <h1 class="text-4xl font-bold mb-4">Practice Maths</h1>
-          <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">
-            Test your skills with exam-style practice questions and solutions.
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Practice Maths</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Test your skills with exam-style practice questions and solutions
+      </p>
+    </div>
+
+    <!-- Settings Panel - Sticky at top -->
+    <div class="sticky top-0 z-20 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 p-6 mb-8">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+        <div class="flex-1 min-w-0">
+          <p id="selectionHint" class="text-sm text-gray-600 dark:text-gray-400">
+            Select topics to practice, or start with all questions
           </p>
+          <div id="selectedHeaderTags" class="hidden flex flex-wrap gap-2 mt-2"></div>
         </div>
-
-        <div class="sticky top-0 z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 dark:supports-[backdrop-filter]:bg-slate-900/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 mb-4">
-          <div class="flex items-center justify-between gap-4">
-            <div class="grow min-w-0">
-              <p id="selectionHint" class="text-sm text-gray-700 dark:text-gray-300">Select specific subjects to practice, or start with no selection to practice all questions.</p>
-              <div id="selectedHeaderTags" class="hidden flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden h-9 items-center"></div>
-            </div>
-            <button id="globalStart" class="bg-gray-400 hover:bg-gray-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition">
-              Start Practice
-            </button>
-          </div>
-        </div>
-
-        <div class="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-        <div class="relative">
-          <button id="optionsToggle" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition" aria-expanded="false" aria-controls="optionsPanel">
-            Advanced Filter
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.25 8.29a.75.75 0 01-.02-1.08z"/></svg>
-          </button>
-          <div id="optionsPanel" class="hidden absolute mt-2 z-20 w-80 sm:w-96 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg p-4">
-            <div class="space-y-4">
-              <div class="flex flex-col gap-3">
-                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input id="optionsExamOnly" type="checkbox" class="h-4 w-4 accent-gray-600" /> State Exam Questions Only
-                </label>
-                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input id="optionsLongOnly" type="checkbox" class="h-4 w-4 accent-gray-600" /> Long Questions Only
-                </label>
-                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input id="optionsShortOnly" type="checkbox" class="h-4 w-4 accent-gray-600" /> Short Questions Only
-                </label>
-                <div class="pt-1 border-t border-gray-200 dark:border-slate-700"></div>
-                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300" title="Show only custom (non-exam) questions">
-                  <input id="optionsCustomOnly" type="checkbox" class="h-4 w-4 accent-gray-600" /> Custom Questions Only
-                </label>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year Range</label>
-                <div class="flex items-center gap-2">
-                  <select id="optionsYearFrom" class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
-                    <option value="2024" selected>2024</option>
-                    <option value="2024 Deferred">2024 Deferred</option>
-                    <option value="2023">2023</option>
-                    <option value="2023 Deferred">2023 Deferred</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                    <option value="2020">2020</option>
-                    <option value="2019">2019</option>
-                    <option value="2018">2018</option>
-                    <option value="2017">2017</option>
-                    <option value="2016">2016</option>
-                    <option value="2015">2015</option>
-                    <option value="2014">2014</option>
-                    <option value="2013">2013</option>
-                    <option value="2012">2012</option>
-                    <option value="2012 Sample">2012 Sample</option>
-                  </select>
-                  <span class="text-gray-500 dark:text-gray-400">to</span>
-                  <select id="optionsYearTo" class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-red-500">
-                    <option value="2024">2024</option>
-                    <option value="2024 Deferred">2024 Deferred</option>
-                    <option value="2023">2023</option>
-                    <option value="2023 Deferred">2023 Deferred</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                    <option value="2020">2020</option>
-                    <option value="2019">2019</option>
-                    <option value="2018">2018</option>
-                    <option value="2017">2017</option>
-                    <option value="2016">2016</option>
-                    <option value="2015">2015</option>
-                    <option value="2014">2014</option>
-                    <option value="2013">2013</option>
-                    <option value="2012" selected>2012</option>
-                    <option value="2012 Sample">2012 Sample</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
+        <button 
+          id="globalStart" 
+          class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors whitespace-nowrap"
+        >
+          Start Practice
+        </button>
       </div>
 
-      <div class="mb-6 flex items-center gap-4">
-        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-          <input id="selectAll" type="checkbox" class="h-4 w-4 accent-gray-600" />
-          <span class="text-sm text-gray-700 dark:text-gray-300">Select all subjects</span>
+      <!-- Advanced Filters -->
+      <div class="border-t border-gray-200 dark:border-slate-700 pt-4">
+        <button 
+          id="optionsToggle" 
+          type="button"
+          class="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+          aria-expanded="false"
+        >
+          <svg class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+          <span class="font-medium">Advanced Filters</span>
+        </button>
+
+        <div id="optionsPanel" class="hidden mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+              <input id="optionsExamOnly" type="checkbox" class="w-4 h-4 rounded accent-gray-600" />
+              <span>State Exam Questions Only</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+              <input id="optionsLongOnly" type="checkbox" class="w-4 h-4 rounded accent-gray-600" />
+              <span>Long Questions Only</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+              <input id="optionsShortOnly" type="checkbox" class="w-4 h-4 rounded accent-gray-600" />
+              <span>Short Questions Only</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+              <input id="optionsCustomOnly" type="checkbox" class="w-4 h-4 rounded accent-gray-600" />
+              <span>Custom Questions Only</span>
+            </label>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year Range</label>
+            <div class="flex items-center gap-2">
+              <select id="optionsYearFrom" class="flex-1 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2">
+                <option value="2024" selected>2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+                <option value="2019">2019</option>
+                <option value="2018">2018</option>
+                <option value="2017">2017</option>
+                <option value="2016">2016</option>
+                <option value="2015">2015</option>
+                <option value="2014">2014</option>
+                <option value="2013">2013</option>
+                <option value="2012">2012</option>
+              </select>
+              <span class="text-gray-500 dark:text-gray-400">to</span>
+              <select id="optionsYearTo" class="flex-1 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2">
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+                <option value="2019">2019</option>
+                <option value="2018">2018</option>
+                <option value="2017">2017</option>
+                <option value="2016">2016</option>
+                <option value="2015">2015</option>
+                <option value="2014">2014</option>
+                <option value="2013">2013</option>
+                <option value="2012" selected>2012</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Select All -->
+      <div class="border-t border-gray-200 dark:border-slate-700 pt-4 mt-4">
+        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+          <input id="selectAll" type="checkbox" class="w-4 h-4 rounded accent-gray-600" />
+          <span class="font-medium">Select all topics</span>
         </label>
       </div>
     </div>
-    </section>
-  </div>
 
-  <!-- Regular background section for Paper 1 and Paper 2 -->
-  <section class="py-8">
-    <div class="w-[80%] max-w-6xl mx-auto px-4 md:px-6">
-      <div class="space-y-12">
-        <section>
-          <h2 class="text-3xl font-extrabold mb-6">Paper 1</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 items-stretch">
-            {paper1Topics.map((topic) => (
-              <PracticeTopicCard id={topic.id} title={topic.title} iconSrc={topic.iconSrc ?? `/icons/${topic.id}.svg`}>
-              </PracticeTopicCard>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h2 class="text-3xl font-extrabold mb-6">Paper 2</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 items-stretch">
-            {paper2Topics.map((topic) => (
-              <PracticeTopicCard id={topic.id} title={topic.title} iconSrc={topic.iconSrc ?? `/icons/${topic.id}.svg`}>
-              </PracticeTopicCard>
-            ))}
-          </div>
-        </section>
+    <!-- Paper 1 Topics -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Paper 1</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {paper1Topics.map((topic) => (
+          <label class="topic-card bg-white dark:bg-slate-800 rounded-lg shadow-md border-2 border-gray-200 dark:border-slate-700 hover:border-gray-600 dark:hover:border-gray-500 transition-all cursor-pointer overflow-hidden group">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <input 
+                  type="checkbox" 
+                  class="topic-checkbox w-5 h-5 mt-1 rounded accent-gray-600 cursor-pointer"
+                  data-topic-id={topic.id}
+                  data-topic-title={topic.title}
+                />
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                    {topic.title}
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {topic.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </label>
+        ))}
       </div>
     </div>
 
-
-    <!-- <Pdf url="~/assets/questions/RandomQuestion.pdf" /> -->
-
-  </section>
+    <!-- Paper 2 Topics -->
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Paper 2</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {paper2Topics.map((topic) => (
+          <label class="topic-card bg-white dark:bg-slate-800 rounded-lg shadow-md border-2 border-gray-200 dark:border-slate-700 hover:border-gray-600 dark:hover:border-gray-500 transition-all cursor-pointer overflow-hidden group">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <input 
+                  type="checkbox" 
+                  class="topic-checkbox w-5 h-5 mt-1 rounded accent-gray-600 cursor-pointer"
+                  data-topic-id={topic.id}
+                  data-topic-title={topic.title}
+                />
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                    {topic.title}
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {topic.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </label>
+        ))}
+      </div>
+    </div>
+  </div>
 
   <script>
-    const checkboxSelector = '.topic-checkbox';
-    const globalStartButton = document.getElementById('globalStart');
-    const selectionHintEl = document.getElementById('selectionHint');
-    const selectedHeaderTagsContainer = document.getElementById('selectedHeaderTags');
-    const selectAllCheckbox = document.getElementById('selectAll');
+    document.addEventListener('DOMContentLoaded', function() {
+      const checkboxSelector = '.topic-checkbox';
+      const globalStartButton = document.getElementById('globalStart');
+      const selectionHintEl = document.getElementById('selectionHint');
+      const selectedHeaderTagsContainer = document.getElementById('selectedHeaderTags');
+      const selectAllCheckbox = document.getElementById('selectAll');
 
-    const optionsToggle = document.getElementById('optionsToggle');
-    const optionsPanel = document.getElementById('optionsPanel');
+      const optionsToggle = document.getElementById('optionsToggle');
+      const optionsPanel = document.getElementById('optionsPanel');
 
-    function isHtmlInputElement(el) {
-      return el instanceof HTMLInputElement;
-    }
+      console.log('Options toggle:', optionsToggle);
+      console.log('Options panel:', optionsPanel);
+
+      function isHtmlInputElement(el) {
+        return el instanceof HTMLInputElement;
+      }
 
     function getAllTopicInputs() {
       return Array.from(document.querySelectorAll(checkboxSelector)).filter((el) => isHtmlInputElement(el));
@@ -359,6 +382,42 @@ const paper2Topics: Topic[] = [
       }
     });
 
+    // Toggle advanced filters panel
+    if (optionsToggle && optionsPanel) {
+      optionsToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Toggle clicked');
+        console.log('Panel before toggle:', optionsPanel.classList.contains('hidden'));
+        console.log('Panel classList before:', optionsPanel.classList.toString());
+        console.log('Panel display before:', window.getComputedStyle(optionsPanel).display);
+        
+        const isHidden = optionsPanel.classList.contains('hidden');
+        
+        if (isHidden) {
+          optionsPanel.classList.remove('hidden');
+          optionsToggle.setAttribute('aria-expanded', 'true');
+        } else {
+          optionsPanel.classList.add('hidden');
+          optionsToggle.setAttribute('aria-expanded', 'false');
+        }
+        
+        console.log('Panel after toggle:', optionsPanel.classList.contains('hidden'));
+        console.log('Panel classList after:', optionsPanel.classList.toString());
+        console.log('Panel display after:', window.getComputedStyle(optionsPanel).display);
+        
+        // Rotate chevron icon
+        const svg = optionsToggle.querySelector('svg');
+        if (svg) {
+          if (isHidden) {
+            svg.style.transform = 'rotate(90deg)';
+          } else {
+            svg.style.transform = 'rotate(0deg)';
+          }
+        }
+      });
+    }
+
     if (globalStartButton) {
       globalStartButton.addEventListener('click', function () {
         const selected = getSelectedTopics();
@@ -408,5 +467,7 @@ const paper2Topics: Topic[] = [
     }
 
     updateGlobalButtonState();
+    
+    }); // End DOMContentLoaded
   </script>
 </Layout> 
